@@ -3,6 +3,7 @@ using System;
 namespace SageMM.Core;
 
 public enum ControlMode { Static, Ewma, Ml }
+public enum ControllerFallbackReason { None, InvalidTelemetry }
 
 /// <summary>All controller constants, including feature scales, in one reproducible configuration.</summary>
 public sealed record ControllerOptions(
@@ -20,7 +21,9 @@ public readonly record struct ControlDecision(
     double NextFlushSeconds,
     bool DisableCompaction,
     double PredictedPressure,
-    double Loss);
+    double Loss,
+    bool ShouldReclaim,
+    ControllerFallbackReason FallbackReason);
 
 /// <summary>
 /// A deterministic, online controller. A sample is used to predict the pressure of the
@@ -46,6 +49,20 @@ public sealed class DecisionEngine
     {
         if (minimumFlushSeconds <= 0 || maximumFlushSeconds < minimumFlushSeconds)
             throw new ArgumentOutOfRangeException(nameof(minimumFlushSeconds));
+        if (!IsValid(sample))
+        {
+            // Fail closed: keep the previous bounded interval, do not reclaim pages, and
+            // ensure that compaction remains available until trustworthy telemetry returns.
+            _compactionDisabled = false;
+            _deferrals = 0;
+            return new ControlDecision(
+                Math.Clamp(currentFlushSeconds, minimumFlushSeconds, maximumFlushSeconds),
+                DisableCompaction: false,
+                PredictedPressure: 0,
+                Loss: 0,
+                ShouldReclaim: false,
+                FallbackReason: ControllerFallbackReason.InvalidTelemetry);
+        }
 
         var features = Features(sample);
         double target = PressureTarget(sample);
@@ -84,7 +101,9 @@ public sealed class DecisionEngine
             Math.Clamp(next, minimumFlushSeconds, maximumFlushSeconds),
             _compactionDisabled,
             prediction,
-            loss);
+            loss,
+            ShouldReclaim: true,
+            FallbackReason: ControllerFallbackReason.None);
     }
 
     private double[] Features(TelemetrySample x) => new[] {
@@ -128,4 +147,10 @@ public sealed class DecisionEngine
         for (int i = 0; i < weights.Length; i++) result += weights[i] * features[i];
         return result;
     }
+
+    private static bool IsValid(TelemetrySample sample) =>
+        double.IsFinite(sample.GcPauseMs) && sample.GcPauseMs >= 0 &&
+        double.IsFinite(sample.FragRatio) && sample.FragRatio is >= 0 and <= 1 &&
+        double.IsFinite(sample.PageFaultsPerSec) && sample.PageFaultsPerSec >= 0 &&
+        double.IsFinite(sample.RssDeltaMB);
 }

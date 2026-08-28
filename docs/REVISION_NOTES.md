@@ -60,3 +60,15 @@ Release, where licensing permits: vendor runtime name and source revision; minim
 5. Reconcile 19%, 35%, OOM, eight-hour, and production claims against trace-backed outcomes. Distinguish RSS, PSS, managed heap, and `Private_Clean`; state numerator, denominator, statistic, and confidence interval.
 6. Put the ARM32/ARM64 2.6× annotation on the plotted data and improve captions so figures stand alone.
 7. Tighten the abstract after results are final: mechanisms, boundary, device/run count, held-out comparison, consistent effect sizes, uncertainty, and limitation.
+
+## Reviewer 4 closure
+
+Reviewer 4's five concerns map to concrete revision gates, all of which must be satisfied before the manuscript is described as complete:
+
+1. **Limited novelty:** narrow the claim to coordinated engineering and explicitly compare managed-runtime collectors, adaptive/threshold controllers, and application-directed page reclamation. Report a tuned threshold controller, not merely an untuned default. Do not describe GC sizing, value types, `madvise`, EWMA, or ridge regression as individually novel.
+2. **Narrow evaluation:** replace the two-device/five-run/30-minute basis with the multi-platform and adverse-workload protocol above. Until those measurements exist, confine conclusions to the evaluated DTV firmware and label broader embedded applicability as future validation.
+3. **Non-quantitative Table V:** replace expected-impact cells with the complete measured factorial schema above, including uncertainty and per-mechanism costs. If all 16 combinations cannot run, predeclare exclusions and use a reduced factorial analysis rather than implying isolation.
+4. **Weak ML justification:** include the target, normalized features, causal update, initialization, loss, freeze protocol, bounds, fallback, saturation, missing-telemetry, native-error, and no-candidate behavior defined in the architecture document. Compare ridge against fixed interval, tuned threshold, and EWMA using held-out traces.
+5. **Presentation:** apply the consistency audit above and use the canonical baseline names in every figure, table, caption, and paragraph: `Stock`, `Static-G`, `Static-GI`, `Static-GIR`, `Threshold-GIR`, `EWMA-GIR`, and `Ridge-GIR`.
+
+The supplemental-material recommendation does not justify deleting reproducibility evidence. Put definitions and results required to validate claims in the main paper within the page limit; host code, configurations, scripts, and traces as a versioned external artifact, without requiring a supplemental PDF to understand the paper.

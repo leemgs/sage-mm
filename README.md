@@ -59,6 +59,8 @@ docs/
 
 The exact implementation boundary, controller equations, coldness score, experimental protocol, ablation schema, related-work comparison, and claim audit requested during review are recorded in [`docs/REVISION_NOTES.md`](docs/REVISION_NOTES.md). Raw measurements must be inserted into its schemas; this repository intentionally does not invent missing results.
 
+Reviewer 4's requested manuscript changes are provided as manuscript-ready replacement sections in [`docs/MANUSCRIPT_REVISION.md`](docs/MANUSCRIPT_REVISION.md), including a narrower title/abstract, novelty positioning, controller failure behavior, expanded multi-platform evaluation, quantitative ablation requirements, canonical baseline names, and limitations.
+
 For the full problem statement, design, and evaluation targets, refer to the SAGE‑MM paper (uploaded with this kit).
 
 ## Porting Notes

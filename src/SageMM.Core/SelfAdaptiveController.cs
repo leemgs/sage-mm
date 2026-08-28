@@ -35,13 +35,15 @@ public class SelfAdaptiveController
             var decision = _engine.Step(_mode, x, TFlush, Tmin, Tmax);
             TFlush = decision.NextFlushSeconds;
 
-            _policy.Apply(decision.DisableCompaction, () =>
-            {
-                int r = FlushPECaches.FlushAll(verbose:false);
-                Console.WriteLine($"[flush] result={r}");
-            });
+            _policy.Apply(decision.DisableCompaction, decision.ShouldReclaim
+                ? () =>
+                {
+                    int r = FlushPECaches.FlushAll(verbose:false);
+                    Console.WriteLine($"[flush] result={r}");
+                }
+                : null);
 
-            Console.WriteLine($"[telemetry] Lgc={x.GcPauseMs:F1}ms Fh={x.FragRatio:P1} Pf/s={x.PageFaultsPerSec:F1} ΔM={x.RssDeltaMB:+0.0;-0.0;0}MB | Tflush={TFlush:F1}s pressure={decision.PredictedPressure:F2} loss={decision.Loss:F3} disable={decision.DisableCompaction}");
+            Console.WriteLine($"[telemetry] Lgc={x.GcPauseMs:F1}ms Fh={x.FragRatio:P1} Pf/s={x.PageFaultsPerSec:F1} ΔM={x.RssDeltaMB:+0.0;-0.0;0}MB | Tflush={TFlush:F1}s pressure={decision.PredictedPressure:F2} loss={decision.Loss:F3} disable={decision.DisableCompaction} reclaim={decision.ShouldReclaim} fallback={decision.FallbackReason}");
 
             // Sleep until next flush window (bounded min)
             int sleepMs = (int)(Math.Max(5.0, TFlush) * 1000);

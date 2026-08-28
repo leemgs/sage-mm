@@ -28,6 +28,10 @@ It chooses `T'=T/clamp(0.5+ŷ,0.5,1.5)`, bounded by `[Tmin,Tmax]`. Reported loss
 
 In adaptive modes, compaction is disabled below fragmentation 0.05 and forcibly re-enabled at 0.12 or after three deferrals. This two-threshold guard prevents starvation. Static mode leaves compaction enabled, so it is a genuine no-controller baseline. There is no unused “GC interval” variable.
 
+### Fallback and failure cases
+
+Every sample is checked before feature processing. NaN/infinite values, negative pauses or fault rates, and fragmentation outside `[0,1]` trigger a fail-closed decision: hold the previous bounded interval, keep compaction enabled, suppress page reclamation, report `InvalidTelemetry`, and do not update model weights. Valid samples resume normal control. The deployment must separately treat native-helper errors, an unavailable `/proc`, an empty candidate set, and reclamation cooldown as no-op actions and expose counters for each case. Model saturation at 0 or 2 is observable through prediction/loss telemetry; persistent saturation is an operator alert and a reason to revert to the predeclared threshold controller, not to retrain on the reporting trace.
+
 ## Coldness and K
 
 For eligible module `a`, idle for at least a configured guard period:

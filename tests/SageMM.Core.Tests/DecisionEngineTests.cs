@@ -38,4 +38,18 @@ public sealed class DecisionEngineTests
         Assert.Equal(first.PredictedPressure, second.PredictedPressure);
         Assert.Equal(first.NextFlushSeconds, second.NextFlushSeconds);
     }
+
+    [Fact]
+    public void InvalidTelemetryFailsClosedWithoutUpdatingPolicy()
+    {
+        var engine = new DecisionEngine();
+
+        var decision = engine.Step(ControlMode.Ml,
+            new TelemetrySample(double.NaN, 0.03, 10, 1), 30, 20, 60);
+
+        Assert.Equal(30, decision.NextFlushSeconds);
+        Assert.False(decision.DisableCompaction);
+        Assert.False(decision.ShouldReclaim);
+        Assert.Equal(ControllerFallbackReason.InvalidTelemetry, decision.FallbackReason);
+    }
 }

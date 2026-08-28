@@ -10,7 +10,7 @@ public class PolicyEnforcer
 
     private bool _compactionDisabled = false;
 
-    public void Apply(bool disableCompaction, Action flushAction)
+    public void Apply(bool disableCompaction, Action? flushAction)
     {
         if (disableCompaction && !_compactionDisabled)
         {
@@ -23,7 +23,7 @@ public class PolicyEnforcer
             OnCompactionEnabled?.Invoke();
         }
 
-        OnFlush = () => flushAction();
+        OnFlush = flushAction;
     }
 
     public void Flush() => OnFlush?.Invoke();
