@@ -3,74 +3,154 @@ using System;
 namespace SageMM.Core;
 
 public enum ControlMode { Static, Ewma, Ml }
+public enum ControllerFallbackReason { None, InvalidTelemetry }
 
-/// <summary>A deterministic, bounded controller. All inputs are dimensionless after Normalize().</summary>
+/// <summary>All controller constants, including feature scales, in one reproducible configuration.</summary>
+public sealed record ControllerOptions(
+    double Beta = 0.85,
+    double TargetGcPauseMs = 30.0,
+    double TargetFaultsPerSecond = 100.0,
+    double TargetRssGrowthMB = 50.0,
+    double LearningRate = 5e-4,
+    double RidgePenalty = 1e-4,
+    double FragmentationLow = 0.05,
+    double FragmentationHigh = 0.12,
+    int MinimumCompactionDeferrals = 3);
+
+public readonly record struct ControlDecision(
+    double NextFlushSeconds,
+    bool DisableCompaction,
+    double PredictedPressure,
+    double Loss,
+    bool ShouldReclaim,
+    ControllerFallbackReason FallbackReason);
+
+/// <summary>
+/// A deterministic, online controller. A sample is used to predict the pressure of the
+/// following interval; callers must split tuning and reporting traces externally.
+/// </summary>
 public sealed class DecisionEngine
 {
-    public double Beta { get; init; } = 0.85;
-    public double LearningRate { get; init; } = 5e-4;
-    public double RidgePenalty { get; init; } = 1e-4;
-    public double PauseTargetMs { get; init; } = 30;
-    public double FaultTargetPerSecond { get; init; } = 100;
-    public double RssGrowthTargetMb { get; init; } = 50;
+    private readonly ControllerOptions _options;
+    private readonly double[] _weights = { 1, 0, 0, 0, 0 }; // neutral bias + four signals
+    private bool _compactionDisabled;
+    private int _deferrals;
 
-    private readonly double[] _weights = new double[5]; // bias + four features
-    private double[]? _previousFeatures;
-    private double _previousPrediction;
-    private double _ewmaPressure = 1;
+    public DecisionEngine(ControllerOptions? options = null) =>
+        _options = options ?? new ControllerOptions();
 
-    public ControlDecision Step(ControlMode mode, TelemetrySample sample, double currentInterval,
-        double minimumInterval, double maximumInterval, double fragmentationThreshold = .07)
+    public ControlDecision Step(
+        ControlMode mode,
+        TelemetrySample sample,
+        double currentFlushSeconds,
+        double minimumFlushSeconds,
+        double maximumFlushSeconds,
+        bool updateModel = true)
     {
-        var features = Normalize(sample);
-        double observedPressure = Pressure(features);
+        if (minimumFlushSeconds <= 0 || maximumFlushSeconds < minimumFlushSeconds)
+            throw new ArgumentOutOfRangeException(nameof(minimumFlushSeconds));
+        if (!IsValid(sample))
+        {
+            // Fail closed: keep the previous bounded interval, do not reclaim pages, and
+            // ensure that compaction remains available until trustworthy telemetry returns.
+            _compactionDisabled = false;
+            _deferrals = 0;
+            return new ControlDecision(
+                Math.Clamp(currentFlushSeconds, minimumFlushSeconds, maximumFlushSeconds),
+                DisableCompaction: false,
+                PredictedPressure: 0,
+                Loss: 0,
+                ShouldReclaim: false,
+                FallbackReason: ControllerFallbackReason.InvalidTelemetry);
+        }
 
-        // At t, train the prediction made at t-1 against pressure observed at t. This avoids
-        // fitting and reporting on the same observation and makes y-hat a one-step prediction.
-        if (mode == ControlMode.Ml && _previousFeatures is not null)
-            Update(_previousFeatures, _previousPrediction, observedPressure);
+        var features = Features(sample);
+        double target = PressureTarget(sample);
+        double prediction = Math.Clamp(Dot(_weights, features), 0.0, 2.0);
+        double loss = 0.5 * Math.Pow(prediction - target, 2);
+        double next = currentFlushSeconds;
 
         if (mode == ControlMode.Ewma)
-            _ewmaPressure = Beta * _ewmaPressure + (1 - Beta) * observedPressure;
-        double predictedPressure = mode switch
         {
-            ControlMode.Static => 1,
-            ControlMode.Ewma => _ewmaPressure,
-            // Ridge learns a correction around neutral pressure (1), avoiding an unsafe
-            // zero-pressure cold start when all coefficients are initialized to zero.
-            _ => Math.Clamp(1 + Dot(features), 0, 2)
-        };
+            // Pressure > 1 shortens the interval; pressure < 1 lengthens it.
+            double desired = currentFlushSeconds / Math.Clamp(target, 0.5, 2.0);
+            next = _options.Beta * currentFlushSeconds + (1 - _options.Beta) * desired;
+        }
+        else if (mode == ControlMode.Ml)
+        {
+            next = currentFlushSeconds / Math.Clamp(0.5 + prediction, 0.5, 1.5);
+            if (updateModel)
+            {
+                double residual = prediction - target;
+                for (int i = 0; i < _weights.Length; i++)
+                    _weights[i] -= _options.LearningRate *
+                        (features[i] * residual + _options.RidgePenalty * _weights[i]);
+            }
+        }
 
-        _previousFeatures = features;
-        _previousPrediction = predictedPressure;
-
-        // Greater pressure reclaims sooner; a 10% dead-band prevents oscillation.
-        double factor = predictedPressure switch { > 1.1 => .8, < .9 => 1.2, _ => 1 };
-        double interval = mode == ControlMode.Static
-            ? currentInterval
-            : Math.Clamp(currentInterval * factor, minimumInterval, maximumInterval);
-        bool disableCompaction = sample.FragRatio < fragmentationThreshold;
-        return new(interval, disableCompaction, predictedPressure, observedPressure);
+        if (mode == ControlMode.Static)
+        {
+            _compactionDisabled = false;
+            _deferrals = 0;
+        }
+        else
+        {
+            UpdateCompactionGate(sample.FragRatio);
+        }
+        return new ControlDecision(
+            Math.Clamp(next, minimumFlushSeconds, maximumFlushSeconds),
+            _compactionDisabled,
+            prediction,
+            loss,
+            ShouldReclaim: true,
+            FallbackReason: ControllerFallbackReason.None);
     }
 
-    private double[] Normalize(TelemetrySample x) => new[] {
-        1d,
-        Math.Clamp(x.GcPauseMs / PauseTargetMs, 0, 2),
-        Math.Clamp(x.FragRatio / .20, 0, 2),
-        Math.Clamp(x.PageFaultsPerSec / FaultTargetPerSecond, 0, 2),
-        Math.Clamp(Math.Max(0, x.RssDeltaMB) / RssGrowthTargetMb, 0, 2)
+    private double[] Features(TelemetrySample x) => new[] {
+        1.0,
+        Math.Clamp(x.GcPauseMs / _options.TargetGcPauseMs, 0, 2),
+        Math.Clamp(x.FragRatio / _options.FragmentationHigh, 0, 2),
+        Math.Clamp(x.PageFaultsPerSec / _options.TargetFaultsPerSecond, 0, 2),
+        Math.Clamp(Math.Max(0, x.RssDeltaMB) / _options.TargetRssGrowthMB, 0, 2)
     };
 
-    // Equal weights are intentional: scaling above makes each term relative to an explicit SLO.
-    private static double Pressure(double[] x) => Math.Clamp((x[1] + x[2] + x[3] + x[4]) / 4, 0, 2);
-    private double Dot(double[] x) { double v = 0; for (int i = 0; i < x.Length; i++) v += _weights[i] * x[i]; return v; }
-    private void Update(double[] x, double prediction, double target)
-    {
-        double error = prediction - target;
-        for (int i = 0; i < x.Length; i++)
-            _weights[i] -= LearningRate * (error * x[i] + RidgePenalty * _weights[i]);
-    }
-}
+    // Dimensionless, equally weighted operational objective. The maximum component
+    // makes any breached service objective visible instead of mixing ms, counts and MB.
+    private double PressureTarget(TelemetrySample x) => Math.Clamp(Math.Max(
+        x.GcPauseMs / _options.TargetGcPauseMs,
+        Math.Max(x.PageFaultsPerSec / _options.TargetFaultsPerSecond,
+                 Math.Max(0, x.RssDeltaMB) / _options.TargetRssGrowthMB)), 0, 2);
 
-public readonly record struct ControlDecision(double FlushIntervalSeconds, bool DisableCompaction,
-    double PredictedPressure, double ObservedPressure);
+    private void UpdateCompactionGate(double fragmentation)
+    {
+        if (_compactionDisabled &&
+            (fragmentation >= _options.FragmentationHigh ||
+             _deferrals >= _options.MinimumCompactionDeferrals))
+        {
+            _compactionDisabled = false;
+            _deferrals = 0;
+        }
+        else if (!_compactionDisabled && fragmentation <= _options.FragmentationLow)
+        {
+            _compactionDisabled = true;
+            _deferrals = 0;
+        }
+        else if (_compactionDisabled)
+        {
+            _deferrals++;
+        }
+    }
+
+    private static double Dot(double[] weights, double[] features)
+    {
+        double result = 0;
+        for (int i = 0; i < weights.Length; i++) result += weights[i] * features[i];
+        return result;
+    }
+
+    private static bool IsValid(TelemetrySample sample) =>
+        double.IsFinite(sample.GcPauseMs) && sample.GcPauseMs >= 0 &&
+        double.IsFinite(sample.FragRatio) && sample.FragRatio is >= 0 and <= 1 &&
+        double.IsFinite(sample.PageFaultsPerSec) && sample.PageFaultsPerSec >= 0 &&
+        double.IsFinite(sample.RssDeltaMB);
+}

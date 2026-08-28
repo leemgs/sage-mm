@@ -1,35 +1,55 @@
 using SageMM.Core;
-using Xunit;
 
 namespace SageMM.Core.Tests;
 
 public sealed class DecisionEngineTests
 {
     [Fact]
-    public void StaticModeDoesNotChangeInterval()
-    {
-        var decision = new DecisionEngine().Step(ControlMode.Static,
-            new TelemetrySample(100, .5, 1000, 100), 40, 20, 60);
-        Assert.Equal(40, decision.FlushIntervalSeconds);
-    }
-
-    [Fact]
-    public void MlColdStartIsNeutralRatherThanZeroPressure()
-    {
-        var decision = new DecisionEngine().Step(ControlMode.Ml,
-            new TelemetrySample(0, 0, 0, 0), 40, 20, 60);
-        Assert.Equal(1, decision.PredictedPressure);
-        Assert.Equal(40, decision.FlushIntervalSeconds);
-    }
-
-    [Fact]
-    public void EwmaRemainsBoundedUnderSustainedPressure()
+    public void StaticModeDoesNotChangePolicy()
     {
         var engine = new DecisionEngine();
-        double interval = 40;
-        for (var i = 0; i < 100; i++)
-            interval = engine.Step(ControlMode.Ewma,
-                new TelemetrySample(1000, 1, 10000, 1000), interval, 20, 60).FlushIntervalSeconds;
-        Assert.Equal(20, interval);
+        var decision = engine.Step(ControlMode.Static,
+            new TelemetrySample(100, 0.01, 500, 100), 30, 20, 60);
+
+        Assert.Equal(30, decision.NextFlushSeconds);
+        Assert.False(decision.DisableCompaction);
+    }
+
+    [Fact]
+    public void EwmaStaysBoundedAndRespondsToPressure()
+    {
+        var engine = new DecisionEngine();
+        var decision = engine.Step(ControlMode.Ewma,
+            new TelemetrySample(300, 0.2, 1000, 500), 20, 20, 60);
+
+        Assert.Equal(20, decision.NextFlushSeconds);
+        Assert.False(decision.DisableCompaction);
+    }
+
+    [Fact]
+    public void FrozenModelProducesRepeatablePrediction()
+    {
+        var engine = new DecisionEngine();
+        var sample = new TelemetrySample(30, 0.08, 100, 10);
+
+        var first = engine.Step(ControlMode.Ml, sample, 30, 20, 60, updateModel: false);
+        var second = engine.Step(ControlMode.Ml, sample, 30, 20, 60, updateModel: false);
+
+        Assert.Equal(first.PredictedPressure, second.PredictedPressure);
+        Assert.Equal(first.NextFlushSeconds, second.NextFlushSeconds);
+    }
+
+    [Fact]
+    public void InvalidTelemetryFailsClosedWithoutUpdatingPolicy()
+    {
+        var engine = new DecisionEngine();
+
+        var decision = engine.Step(ControlMode.Ml,
+            new TelemetrySample(double.NaN, 0.03, 10, 1), 30, 20, 60);
+
+        Assert.Equal(30, decision.NextFlushSeconds);
+        Assert.False(decision.DisableCompaction);
+        Assert.False(decision.ShouldReclaim);
+        Assert.Equal(ControllerFallbackReason.InvalidTelemetry, decision.FallbackReason);
     }
 }

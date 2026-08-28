@@ -13,9 +13,7 @@ public class PolicyEnforcer
     public TimeSpan Cooldown { get; init; } = TimeSpan.FromSeconds(10);
     public double MaximumFaultRate { get; init; } = 500;
 
-    public void RequestFlush() => OnFlush?.Invoke();
-
-    public void Apply(bool disableCompaction, TelemetrySample sample, Action flushAction)
+    public void Apply(bool disableCompaction, Action? flushAction)
     {
         if (disableCompaction && !_compactionDisabled)
         {
@@ -28,13 +26,21 @@ public class PolicyEnforcer
             OnCompactionEnabled?.Invoke();
         }
 
-        OnFlush = () =>
+        OnFlush = flushAction;
+    }
+
+    public void Apply(bool disableCompaction, TelemetrySample sample, Action? flushAction)
+    {
+        Apply(disableCompaction, flushAction is null ? null : () =>
         {
-            // Avoid reclaim/fault thrashing during rapid switching, and rate-limit the syscall.
-            if (sample.PageFaultsPerSec > MaximumFaultRate || DateTime.UtcNow - _lastFlush < Cooldown)
+            if (sample.PageFaultsPerSec > MaximumFaultRate ||
+                DateTime.UtcNow - _lastFlush < Cooldown)
                 return;
             flushAction();
             _lastFlush = DateTime.UtcNow;
-        };
+        });
     }
+
+    public void Flush() => OnFlush?.Invoke();
+    public void RequestFlush() => Flush();
 }
