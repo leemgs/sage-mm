@@ -31,7 +31,7 @@ class Program
         var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_,e)=>{ e.Cancel=true; cts.Cancel(); };
 
-        var ctl = new SelfAdaptiveController(mode){ Tmin=tmin, Tmax=tmax, HysteresisFrag=0.07 };
+        var ctl = new SelfAdaptiveController(mode){ Tmin=tmin, Tmax=tmax };
         ctl.Run(TimeSpan.FromMinutes(minutes), cts.Token);
         Console.WriteLine("Done.");
     }
