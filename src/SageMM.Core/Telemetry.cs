@@ -30,14 +30,18 @@ public class TelemetryCollector
 
         // Fragmentation proxy: LOH size + pinned bytes vs total managed (very rough demo proxy)
         long total = GC.GetTotalMemory(false);
-        long pinned = GC.GetGCMemoryInfo().PinnedObjectCount; // count, not bytes, but OK as trend proxy
+        long pinned = GC.GetGCMemoryInfo().PinnedObjectsCount; // count, not bytes, but OK as trend proxy
         double frag = Math.Min(0.25, (pinned / Math.Max(1.0, (double)(total >> 20)))) + 0.05; // 5% base
 
         // Page faults per second (delta)
         var pfNow = ReadFaults();
         long timestamp = Stopwatch.GetTimestamp();
         double elapsed = Math.Max(.001, (timestamp - _lastReadTimestamp) / (double)Stopwatch.Frequency);
-        double pfps = (double)((pfNow.minflt - _pfLast.minflt) + (pfNow.majflt - _pfLast.majflt)) / elapsed;
+        // proc counters can reset (or a transient read can return zero); saturating deltas
+        // prevent unsigned underflow from looking like an enormous fault storm.
+        ulong minorDelta = pfNow.minflt >= _pfLast.minflt ? pfNow.minflt - _pfLast.minflt : 0;
+        ulong majorDelta = pfNow.majflt >= _pfLast.majflt ? pfNow.majflt - _pfLast.majflt : 0;
+        double pfps = (minorDelta + majorDelta) / elapsed;
         _pfLast = pfNow;
         _lastReadTimestamp = timestamp;
 

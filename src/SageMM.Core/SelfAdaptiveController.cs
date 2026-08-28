@@ -47,7 +47,7 @@ public class SelfAdaptiveController
             // Sleep until next flush window (bounded min)
             int sleepMs = (int)(Math.Max(5.0, TFlush) * 1000);
             Thread.Sleep(sleepMs);
-            _policy.OnFlush?.Invoke();
+            _policy.RequestFlush();
         }
     }
 }

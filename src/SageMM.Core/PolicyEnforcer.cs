@@ -13,6 +13,8 @@ public class PolicyEnforcer
     public TimeSpan Cooldown { get; init; } = TimeSpan.FromSeconds(10);
     public double MaximumFaultRate { get; init; } = 500;
 
+    public void RequestFlush() => OnFlush?.Invoke();
+
     public void Apply(bool disableCompaction, TelemetrySample sample, Action flushAction)
     {
         if (disableCompaction && !_compactionDisabled)

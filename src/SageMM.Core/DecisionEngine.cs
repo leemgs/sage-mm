@@ -36,7 +36,9 @@ public sealed class DecisionEngine
         {
             ControlMode.Static => 1,
             ControlMode.Ewma => _ewmaPressure,
-            _ => Math.Clamp(Dot(features), 0, 2)
+            // Ridge learns a correction around neutral pressure (1), avoiding an unsafe
+            // zero-pressure cold start when all coefficients are initialized to zero.
+            _ => Math.Clamp(1 + Dot(features), 0, 2)
         };
 
         _previousFeatures = features;
