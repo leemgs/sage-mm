@@ -26,7 +26,7 @@ Thus no coefficient silently combines milliseconds, counts, and MiB. The service
 
 It chooses `T'=T/clamp(0.5+ŷ,0.5,1.5)`, bounded by `[Tmin,Tmax]`. Reported loss is `(ŷ-y)²/2`, computed before the update. Training must occur only on a designated tuning trace; passing `updateModel:false` freezes weights for held-out reporting (alternatively reset and report causal prequential loss). The static comparator changes neither interval nor weights.
 
-Compaction is disabled below fragmentation 0.05 and forcibly re-enabled at 0.12 or after three deferrals. This two-threshold guard prevents starvation. There is no unused “GC interval” variable.
+In adaptive modes, compaction is disabled below fragmentation 0.05 and forcibly re-enabled at 0.12 or after three deferrals. This two-threshold guard prevents starvation. Static mode leaves compaction enabled, so it is a genuine no-controller baseline. There is no unused “GC interval” variable.
 
 ## Coldness and K
 

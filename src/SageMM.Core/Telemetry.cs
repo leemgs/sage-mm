@@ -20,16 +20,14 @@ public class TelemetryCollector
     public TelemetrySample Read()
     {
         // Approximate GC pause using forced Gen0 with stopwatch window (demo-friendly).
-        var before = GC.GetTotalMemory(forceFullCollection: false);
         _sw.Restart();
         GC.Collect(0, GCCollectionMode.Forced, blocking: true, compacting: false);
         _sw.Stop();
-        var after = GC.GetTotalMemory(false);
         double gcMs = _sw.Elapsed.TotalMilliseconds;
 
         // Fragmentation proxy: LOH size + pinned bytes vs total managed (very rough demo proxy)
         long total = GC.GetTotalMemory(false);
-        long pinned = GC.GetGCMemoryInfo().PinnedObjectCount; // count, not bytes, but OK as trend proxy
+        long pinned = GC.GetGCMemoryInfo().PinnedObjectsCount; // count, not bytes, but OK as trend proxy
         double frag = Math.Min(0.25, (pinned / Math.Max(1.0, (double)(total >> 20)))) + 0.05; // 5% base
 
         // Page faults per second (delta)
@@ -73,7 +71,7 @@ public class TelemetryCollector
         {
             var parts = File.ReadAllText("/proc/self/statm").Split();
             long rssPages = long.Parse(parts[1]);
-            long pageKB = 4;
+            long pageKB = Environment.SystemPageSize / 1024;
             return rssPages * pageKB;
         }
         catch { return 0; }

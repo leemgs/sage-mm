@@ -71,7 +71,15 @@ public sealed class DecisionEngine
             }
         }
 
-        UpdateCompactionGate(sample.FragRatio);
+        if (mode == ControlMode.Static)
+        {
+            _compactionDisabled = false;
+            _deferrals = 0;
+        }
+        else
+        {
+            UpdateCompactionGate(sample.FragRatio);
+        }
         return new ControlDecision(
             Math.Clamp(next, minimumFlushSeconds, maximumFlushSeconds),
             _compactionDisabled,

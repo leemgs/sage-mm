@@ -25,4 +25,6 @@ public class PolicyEnforcer
 
         OnFlush = () => flushAction();
     }
+
+    public void Flush() => OnFlush?.Invoke();
 }
