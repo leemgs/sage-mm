@@ -1,16 +1,16 @@
 # SAGE-MM Reproducibility Kit
 
-This repository contains a minimal, **production-minded** reference implementation of the components described in the SAGE‑MM paper (Self‑Adaptive Memory Management for Smart TV runtimes). It includes:
+This repository contains a minimal reference implementation of the components described in the SAGE‑MM paper. SAGE-MM is a **coordinated cross-layer system**, not a claim that every component adapts online: the controller alone is adaptive; the heap patch is architecture-specific static configuration; and interop conversion is an opt-in compile-time migration.
 
 - A **Self‑Adaptive Controller** with EWMA and online ridge‑regression schedulers
 - Runtime **telemetry collectors** (GC pause, fragmentation, page‑fault proxy, RSS deltas)
 - **Policy Enforcer** for compaction gating and page‑cache flush scheduling
-- **`FlushPECaches()`** per‑process clean‑page dropping via `madvise(MADV_DONTNEED)` (Linux)
+- **`FlushPECaches()`** conservative file-backed mapping reclamation via `madvise(MADV_DONTNEED)` (Linux)
 - **Value‑type interop** examples and a small **Roslyn analyzer** (DTV0001) to suggest struct conversion
 - A **demo workload** that simulates app switches and allocation bursts
 - Scripts for building native helpers and running the demo
 
-> ⚠️ This kit focuses on reproducibility and clarity, not drop‑in replacement of .NET internals. Hooks are exposed in user space with safe fallbacks so you can validate behaviors on a dev machine before porting deeper into a vendor runtime.
+> ⚠️ This kit focuses on reproducibility and clarity, not a drop‑in replacement of .NET internals. The demo does **not** substantiate the paper's commercial-device measurements. See [the system boundary](docs/SYSTEM_BOUNDARY.md) and [evaluation protocol](docs/EVALUATION.md).
 
 ## Quick Start
 
@@ -52,10 +52,10 @@ docs/
 
 ## How It Maps to the Paper
 - **Self‑Adaptive Controller (EWMA + ML)** controls `T_flush` and compaction gating with bounds and hysteresis. See `SageMM.Core/DecisionEngine.cs` and `SelfAdaptiveController.cs`.
-- **FlushPECaches()** enumerates current mappings and issues `madvise(MADV_DONTNEED)` for *clean, read‑only* candidates through `libpeflush.so`. See `FlushPECaches.cs` and `native/peflush/peflush.c`.
+- **FlushPECaches()** enumerates current mappings and issues `madvise(MADV_DONTNEED)` only for private, file-backed, non-writable candidates through `libpeflush.so`. The demo does not prove page cleanliness. See `FlushPECaches.cs` and `native/peflush/peflush.c`.
 - **Value‑type interop** shows how to convert POD wrappers to `struct` and marshal without heap churn. See `Interop/ValueTypes.cs` and `InteropMarshalling.cs`.
 - **Telemetry** approximates GC pause, fragmentation, page faults, and RSS drift using managed hooks and `/proc`. See `Telemetry.cs`.
-- **Ablations**: Run with `--mode static`, `--mode ewma`, or `--mode ml` to compare behavior.
+- **Controller comparisons**: Run identical traces with `--mode static`, `--mode ewma`, or `--mode ml`. These modes isolate controller policy only; the full factorial protocol is documented separately.
 
 For the full problem statement, design, and evaluation targets, refer to the SAGE‑MM paper (uploaded with this kit).
 

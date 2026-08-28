@@ -1,1 +1,4 @@
-.env
+native/peflush/*.o
+native/peflush/*.so
+**/bin/
+**/obj/

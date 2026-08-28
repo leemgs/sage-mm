@@ -33,16 +33,16 @@ public class SelfAdaptiveController
         while (!ct.IsCancellationRequested && DateTime.UtcNow < end)
         {
             var x = _telemetry.Read();
-            var (next, disable) = _engine.Step(_mode, x, TFlush, Tmin, Tmax, HysteresisFrag);
-            TFlush = next;
+            var decision = _engine.Step(_mode, x, TFlush, Tmin, Tmax, HysteresisFrag);
+            TFlush = decision.FlushIntervalSeconds;
 
-            _policy.Apply(disable, () =>
+            _policy.Apply(decision.DisableCompaction, x, () =>
             {
                 int r = FlushPECaches.FlushAll(verbose:false);
                 Console.WriteLine($"[flush] result={r}");
             });
 
-            Console.WriteLine($"[telemetry] Lgc={x.GcPauseMs:F1}ms Fh={x.FragRatio:P1} Pf/s={x.PageFaultsPerSec:F1} ΔM={x.RssDeltaMB:+0.0;-0.0;0}MB | Tflush={TFlush:F1}s disable={disable}");
+            Console.WriteLine($"[telemetry] Lgc={x.GcPauseMs:F1}ms Fh={x.FragRatio:P1} Pf/s={x.PageFaultsPerSec:F1} ΔM={x.RssDeltaMB:+0.0;-0.0;0}MB | pressure={decision.PredictedPressure:F2} Tflush={TFlush:F1}s disable={decision.DisableCompaction}");
 
             // Sleep until next flush window (bounded min)
             int sleepMs = (int)(Math.Max(5.0, TFlush) * 1000);

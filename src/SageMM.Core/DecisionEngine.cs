@@ -4,57 +4,71 @@ namespace SageMM.Core;
 
 public enum ControlMode { Static, Ewma, Ml }
 
-public class DecisionEngine
+/// <summary>A deterministic, bounded controller. All inputs are dimensionless after Normalize().</summary>
+public sealed class DecisionEngine
 {
-    // EWMA params
-    public double Beta { get; set; } = 0.85;
-    public double LTargetMs { get; set; } = 30.0;
+    public double Beta { get; init; } = 0.85;
+    public double LearningRate { get; init; } = 5e-4;
+    public double RidgePenalty { get; init; } = 1e-4;
+    public double PauseTargetMs { get; init; } = 30;
+    public double FaultTargetPerSecond { get; init; } = 100;
+    public double RssGrowthTargetMb { get; init; } = 50;
 
-    // ML (online ridge with SGD)
-    private double[] w = new double[]{0,0,0,0};
-    public double Eta { get; set; } = 5e-4;
-    public double Lambda { get; set; } = 1e-4;
+    private readonly double[] _weights = new double[5]; // bias + four features
+    private double[]? _previousFeatures;
+    private double _previousPrediction;
+    private double _ewmaPressure = 1;
 
-    public (double nextFlush, bool disableCompaction) Step(ControlMode mode, TelemetrySample x, double tFlush, double tMin, double tMax, double hysteresisFrag=0.07)
+    public ControlDecision Step(ControlMode mode, TelemetrySample sample, double currentInterval,
+        double minimumInterval, double maximumInterval, double fragmentationThreshold = .07)
     {
-        double next = tFlush;
-        bool disable = x.FragRatio < hysteresisFrag;
+        var features = Normalize(sample);
+        double observedPressure = Pressure(features);
 
-        if (mode == ControlMode.Static)
-        {
-            next = tFlush; // unchanged
-        }
-        else if (mode == ControlMode.Ewma)
-        {
-            next = Beta * tFlush + (1 - Beta) * (x.GcPauseMs / Math.Max(1e-3, LTargetMs)) * tFlush;
-        }
-        else // ML
-        {
-            // Feature vector [Lgc, Fh, Pf, ΔM] normalized
-            var fv = new double[]{
-                x.GcPauseMs / Math.Max(1e-3, LTargetMs),
-                x.FragRatio,
-                Math.Tanh(x.PageFaultsPerSec/100.0),
-                Math.Tanh(x.RssDeltaMB/50.0)
-            };
-            // Predict relative pressure yhat in [0, 2] approx
-            double yhat = 0;
-            for(int i=0;i<4;i++) yhat += w[i]*fv[i];
-            // Map to multiplicative factor around 1.0
-            double factor = Math.Clamp(1.0 + yhat, 0.5, 1.5);
-            next = tFlush * factor;
+        // At t, train the prediction made at t-1 against pressure observed at t. This avoids
+        // fitting and reporting on the same observation and makes y-hat a one-step prediction.
+        if (mode == ControlMode.Ml && _previousFeatures is not null)
+            Update(_previousFeatures, _previousPrediction, observedPressure);
 
-            // SGD target: we want low pause, low faults => rough surrogate target
-            double y = Math.Clamp((x.GcPauseMs/LTargetMs) + 0.2*x.FragRatio + 0.01*Math.Log10(1+x.PageFaultsPerSec), 0, 2);
-            // Gradient: x(x^T w - y) + λ w
-            double inner = yhat - y;
-            for(int i=0;i<4;i++)
-            {
-                w[i] -= Eta * (fv[i]*inner + Lambda*w[i]);
-            }
-        }
-        // Bounds + soft inertia
-        next = Math.Clamp(next, tMin, tMax);
-        return (next, disable);
+        if (mode == ControlMode.Ewma)
+            _ewmaPressure = Beta * _ewmaPressure + (1 - Beta) * observedPressure;
+        double predictedPressure = mode switch
+        {
+            ControlMode.Static => 1,
+            ControlMode.Ewma => _ewmaPressure,
+            _ => Math.Clamp(Dot(features), 0, 2)
+        };
+
+        _previousFeatures = features;
+        _previousPrediction = predictedPressure;
+
+        // Greater pressure reclaims sooner; a 10% dead-band prevents oscillation.
+        double factor = predictedPressure switch { > 1.1 => .8, < .9 => 1.2, _ => 1 };
+        double interval = mode == ControlMode.Static
+            ? currentInterval
+            : Math.Clamp(currentInterval * factor, minimumInterval, maximumInterval);
+        bool disableCompaction = sample.FragRatio < fragmentationThreshold;
+        return new(interval, disableCompaction, predictedPressure, observedPressure);
+    }
+
+    private double[] Normalize(TelemetrySample x) => new[] {
+        1d,
+        Math.Clamp(x.GcPauseMs / PauseTargetMs, 0, 2),
+        Math.Clamp(x.FragRatio / .20, 0, 2),
+        Math.Clamp(x.PageFaultsPerSec / FaultTargetPerSecond, 0, 2),
+        Math.Clamp(Math.Max(0, x.RssDeltaMB) / RssGrowthTargetMb, 0, 2)
+    };
+
+    // Equal weights are intentional: scaling above makes each term relative to an explicit SLO.
+    private static double Pressure(double[] x) => Math.Clamp((x[1] + x[2] + x[3] + x[4]) / 4, 0, 2);
+    private double Dot(double[] x) { double v = 0; for (int i = 0; i < x.Length; i++) v += _weights[i] * x[i]; return v; }
+    private void Update(double[] x, double prediction, double target)
+    {
+        double error = prediction - target;
+        for (int i = 0; i < x.Length; i++)
+            _weights[i] -= LearningRate * (error * x[i] + RidgePenalty * _weights[i]);
     }
 }
+
+public readonly record struct ControlDecision(double FlushIntervalSeconds, bool DisableCompaction,
+    double PredictedPressure, double ObservedPressure);

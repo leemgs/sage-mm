@@ -16,6 +16,7 @@ public class TelemetryCollector
     private TimeSpan _lastGc = TimeSpan.Zero;
     private (ulong minflt, ulong majflt) _pfLast = ReadFaults();
     private long _rssLast = ReadRssKB();
+    private long _lastReadTimestamp = Stopwatch.GetTimestamp();
 
     public TelemetrySample Read()
     {
@@ -34,8 +35,11 @@ public class TelemetryCollector
 
         // Page faults per second (delta)
         var pfNow = ReadFaults();
-        double pfps = (double)((pfNow.minflt - _pfLast.minflt) + (pfNow.majflt - _pfLast.majflt)) / 1.0;
+        long timestamp = Stopwatch.GetTimestamp();
+        double elapsed = Math.Max(.001, (timestamp - _lastReadTimestamp) / (double)Stopwatch.Frequency);
+        double pfps = (double)((pfNow.minflt - _pfLast.minflt) + (pfNow.majflt - _pfLast.majflt)) / elapsed;
         _pfLast = pfNow;
+        _lastReadTimestamp = timestamp;
 
         // RSS delta (MB)
         long rssKB = ReadRssKB();
