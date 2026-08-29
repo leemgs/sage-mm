@@ -74,6 +74,10 @@ The following values are preregistered expectations normalized to `Stock=100`; l
 
 The key falsifiable expectation is that uncoordinated reclamation increases refaults (Static-GIR fault index 160), whereas guarded policies reduce that penalty. Ridge is expected to improve only one PSS point and two input-latency points over EWMA; overlapping 95% CIs or CPU above 1.5% means there is no demonstrated ML advantage. The complete 16-cell prospective factorial matrix, expected additional-platform ranges, and preregistered safety thresholds are provided in `EXPECTED_RESULTS.md` and the artifact CSV.
 
+### Simulation-only Results dry run (exclude from submission)
+
+`SIMULATED_RESULTS.md` fills the complete Results layout with fixed-seed synthetic samples centered on the prospective targets. It includes RQ1–RQ3 prose, three visibly watermarked SVG figures, all 16 factorial rows with bootstrap CIs and simulation Pass/Fail, an additional-platform row, adverse workloads, and ten simulated eight-hour runs. This material verifies deterministic analysis and document layout only. Because its samples are generated from the targets, a PASS is tautological and provides no evidence about implementation correctness, performance, safety, generality, or OOM reliability. The submission must delete this subsection and replace the simulation chapter with provenance-backed device runs.
+
 ## Results-writing constraints
 
 Use a single generated results source for the abstract, tables, figures, and conclusion. Every benefit must name baseline, workload aggregation, statistic, denominator, and confidence interval. Do not interchange RSS, PSS, managed heap, or `Private_Clean`. Annotate the ARM32/ARM64 compaction ratio on its figure only if regenerated data support it. Remove `Appendix ??`, duplicate tables, “4 ms squared,” and all inconsistent aliases. Required definitions and quantitative evidence belong in the main paper; the external artifact contains code and traces, not arguments necessary to interpret the paper.
