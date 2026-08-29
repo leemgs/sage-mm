@@ -30,7 +30,11 @@ In adaptive modes, compaction is disabled below fragmentation 0.05 and forcibly 
 
 ### Fallback and failure cases
 
-Every sample is checked before feature processing. NaN/infinite values, negative pauses or fault rates, and fragmentation outside `[0,1]` trigger a fail-closed decision: hold the previous bounded interval, keep compaction enabled, suppress page reclamation, report `InvalidTelemetry`, and do not update model weights. Valid samples resume normal control. The deployment must separately treat native-helper errors, an unavailable `/proc`, an empty candidate set, and reclamation cooldown as no-op actions and expose counters for each case. Model saturation at 0 or 2 is observable through prediction/loss telemetry; persistent saturation is an operator alert and a reason to revert to the predeclared threshold controller, not to retrain on the reporting trace.
+Every sample is checked before feature processing. NaN/infinite values, negative pauses or fault rates, and fragmentation outside `[0,1]` trigger a fail-closed decision: hold the previous bounded interval, keep compaction enabled, suppress page reclamation, report `InvalidTelemetry`, and do not update model weights. Valid samples resume normal control. Persistent prediction clipping at 0 or 2 reports `ModelSaturation`, clears the pending ML update, and uses the predeclared threshold action. `BeginReporting()` clears the training-boundary prediction while retaining learned weights, and reporting calls pass `updateModel:false`. Policy counters expose fault-rate and cooldown suppression and successful flush execution; the controller counts empty candidate sets and native failures. A production deployment must additionally count unavailable `/proc`, hot-reuse exclusion, and detailed native errno classes.
+
+## Reference candidate wiring
+
+The demo records loaded assembly paths once at startup, uses file length as a **size proxy**, excludes them until the minimum-idle guard expires, and calls `FlushModule` for the byte-budget-selected prefix. This validates control flow only: file length is not `Private_Clean`, startup observation is not a production instruction-access stream, and a substring path filter is not a firmware allowlist.
 
 ## Coldness and K
 

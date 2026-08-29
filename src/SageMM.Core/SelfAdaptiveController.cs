@@ -10,10 +10,15 @@ public class SelfAdaptiveController
     private readonly DecisionEngine _engine;
     private readonly PolicyEnforcer _policy;
     private readonly ControlMode _mode;
+    private readonly ReclamationCandidateTracker _candidates = new();
 
     public double Tmin { get; set; } = 20.0; // seconds
     public double Tmax { get; set; } = 60.0; // seconds
     public double TFlush { get; private set; } = 20.0;
+    public long ReclamationByteBudget { get; set; } = 4 * 1024 * 1024;
+    public TimeSpan MinimumModuleIdle { get; set; } = TimeSpan.FromSeconds(10);
+    public long NoCandidateCount { get; private set; }
+    public long NativeFailureCount { get; private set; }
 
     public SelfAdaptiveController(ControlMode mode)
     {
@@ -25,6 +30,9 @@ public class SelfAdaptiveController
         _policy.OnCompactionDisabled += () => Console.WriteLine("[policy] compaction: DISABLED");
         _policy.OnCompactionEnabled  += () => Console.WriteLine("[policy] compaction: ENABLED");
     }
+
+    public void ObserveModuleAccess(string modulePath, long cleanByteEstimate, DateTime? accessUtc = null) =>
+        _candidates.Observe(modulePath, accessUtc ?? DateTime.UtcNow, cleanByteEstimate);
 
     public void Run(TimeSpan duration, CancellationToken ct)
     {
@@ -38,8 +46,19 @@ public class SelfAdaptiveController
             _policy.Apply(decision.DisableCompaction, x, decision.ShouldReclaim
                 ? () =>
                 {
-                    int r = FlushPECaches.FlushAll(verbose:false);
-                    Console.WriteLine($"[flush] result={r}");
+                    var selected = _candidates.Select(DateTime.UtcNow, ReclamationByteBudget, MinimumModuleIdle);
+                    if (selected.Count == 0)
+                    {
+                        NoCandidateCount++;
+                        Console.WriteLine("[flush] no eligible cold module");
+                        return;
+                    }
+                    foreach (var module in selected)
+                    {
+                        int r = FlushPECaches.FlushModule(module, verbose:false);
+                        if (r < 0) NativeFailureCount++;
+                        Console.WriteLine($"[flush] module={module} result={r}");
+                    }
                 }
                 : null);
 

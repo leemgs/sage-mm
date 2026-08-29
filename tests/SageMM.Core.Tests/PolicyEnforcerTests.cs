@@ -14,6 +14,7 @@ public sealed class PolicyEnforcerTests
         policy.Apply(false, new TelemetrySample(0, 0, 501, 0), () => calls++);
         policy.RequestFlush();
         Assert.Equal(0, calls);
+        Assert.Equal(1, policy.FaultRateSuppressions);
     }
 
     [Fact]
@@ -26,5 +27,7 @@ public sealed class PolicyEnforcerTests
         policy.RequestFlush();
         policy.RequestFlush();
         Assert.Equal(1, calls);
+        Assert.Equal(1, policy.FlushExecutions);
+        Assert.Equal(1, policy.CooldownSuppressions);
     }
 }

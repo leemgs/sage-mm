@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using System.IO;
+using System.Linq;
 using SageMM.Core;
 
 class Program
@@ -33,6 +35,9 @@ class Program
         Console.CancelKeyPress += (_,e)=>{ e.Cancel=true; cts.Cancel(); };
 
         var ctl = new SelfAdaptiveController(mode){ Tmin=tmin, Tmax=tmax };
+        foreach (var path in AppDomain.CurrentDomain.GetAssemblies()
+                     .Select(a => a.Location).Where(path => !string.IsNullOrEmpty(path) && File.Exists(path)))
+            ctl.ObserveModuleAccess(path, new FileInfo(path).Length);
         ctl.Run(TimeSpan.FromMinutes(minutes), cts.Token);
         Console.WriteLine("Done.");
     }

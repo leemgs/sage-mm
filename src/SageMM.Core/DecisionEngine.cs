@@ -3,7 +3,7 @@ using System;
 namespace SageMM.Core;
 
 public enum ControlMode { Static, Threshold, Ewma, Ml }
-public enum ControllerFallbackReason { None, InvalidTelemetry, FaultStorm }
+public enum ControllerFallbackReason { None, InvalidTelemetry, FaultStorm, ModelSaturation }
 
 /// <summary>All controller constants, including feature scales, in one reproducible configuration.</summary>
 public sealed record ControllerOptions(
@@ -20,7 +20,8 @@ public sealed record ControllerOptions(
     double PressureLow = 0.9,
     double PressureHigh = 1.1,
     double ThresholdShortenFactor = 0.8,
-    double ThresholdLengthenFactor = 1.2);
+    double ThresholdLengthenFactor = 1.2,
+    int MaximumSaturatedPredictions = 3);
 
 public readonly record struct ControlDecision(
     double NextFlushSeconds,
@@ -43,6 +44,7 @@ public sealed class DecisionEngine
     private double _ewmaPressure = 1.0;
     private bool _compactionDisabled;
     private int _deferrals;
+    private int _saturatedPredictions;
 
     public DecisionEngine(ControllerOptions? options = null) =>
         _options = options ?? new ControllerOptions();
@@ -92,16 +94,11 @@ public sealed class DecisionEngine
         double prediction;
         double next = currentFlushSeconds;
 
+        bool modelSaturated = false;
         if (mode == ControlMode.Threshold)
         {
             prediction = target;
-            double factor = target switch
-            {
-                var pressure when pressure > _options.PressureHigh => _options.ThresholdShortenFactor,
-                var pressure when pressure < _options.PressureLow => _options.ThresholdLengthenFactor,
-                _ => 1.0
-            };
-            next = currentFlushSeconds * factor;
+            next = ThresholdInterval(currentFlushSeconds, target);
         }
         else if (mode == ControlMode.Ewma)
         {
@@ -114,9 +111,21 @@ public sealed class DecisionEngine
         else if (mode == ControlMode.Ml)
         {
             prediction = Math.Clamp(Dot(_weights, features), 0.0, 2.0);
-            next = currentFlushSeconds / Math.Clamp(0.5 + prediction, 0.5, 1.5);
-            _pendingFeatures = features;
-            _pendingPrediction = prediction;
+            _saturatedPredictions = prediction is <= 0.0 or >= 2.0 ? _saturatedPredictions + 1 : 0;
+            modelSaturated = _saturatedPredictions >= _options.MaximumSaturatedPredictions;
+            if (modelSaturated)
+            {
+                // Stop learning/actions from a persistently clipped model and use the
+                // declared non-learning comparator until a non-saturated prediction returns.
+                next = ThresholdInterval(currentFlushSeconds, target);
+                _pendingFeatures = null;
+            }
+            else
+            {
+                next = currentFlushSeconds / Math.Clamp(0.5 + prediction, 0.5, 1.5);
+                _pendingFeatures = features;
+                _pendingPrediction = prediction;
+            }
         }
         else
         {
@@ -134,14 +143,26 @@ public sealed class DecisionEngine
             UpdateCompactionGate(sample.FragRatio);
         }
         bool faultStorm = sample.PageFaultsPerSec > _options.ReclamationFaultCeiling;
+        var fallback = faultStorm ? ControllerFallbackReason.FaultStorm
+            : modelSaturated ? ControllerFallbackReason.ModelSaturation
+            : ControllerFallbackReason.None;
         return new ControlDecision(
             Math.Clamp(next, minimumFlushSeconds, maximumFlushSeconds),
             _compactionDisabled,
             prediction,
             loss,
             ShouldReclaim: !faultStorm,
-            FallbackReason: faultStorm ? ControllerFallbackReason.FaultStorm : ControllerFallbackReason.None);
+            FallbackReason: fallback);
     }
+
+    public void BeginReporting() => _pendingFeatures = null;
+
+    private double ThresholdInterval(double current, double pressure) => current * (pressure switch
+    {
+        var value when value > _options.PressureHigh => _options.ThresholdShortenFactor,
+        var value when value < _options.PressureLow => _options.ThresholdLengthenFactor,
+        _ => 1.0
+    });
 
     private double[] Features(TelemetrySample x) => new[] {
         1.0,

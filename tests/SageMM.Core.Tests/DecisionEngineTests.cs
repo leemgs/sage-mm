@@ -91,4 +91,32 @@ public sealed class DecisionEngineTests
         Assert.False(decision.ShouldReclaim);
         Assert.Equal(ControllerFallbackReason.FaultStorm, decision.FallbackReason);
     }
+
+    [Fact]
+    public void PersistentModelSaturationFallsBackToThresholdController()
+    {
+        var options = new ControllerOptions(LearningRate: 1, MaximumSaturatedPredictions: 2);
+        var engine = new DecisionEngine(options);
+        var pressure = new TelemetrySample(60, 0.12, 200, 100);
+        ControlDecision decision = default;
+
+        for (var i = 0; i < 5; i++)
+            decision = engine.Step(ControlMode.Ml, pressure, 30, 20, 60);
+
+        Assert.Equal(ControllerFallbackReason.ModelSaturation, decision.FallbackReason);
+        Assert.Equal(24, decision.NextFlushSeconds);
+    }
+
+    [Fact]
+    public void BeginReportingClearsTrainingBoundaryLoss()
+    {
+        var engine = new DecisionEngine();
+        var sample = new TelemetrySample(60, 0.12, 200, 100);
+        engine.Step(ControlMode.Ml, sample, 30, 20, 60);
+
+        engine.BeginReporting();
+        var firstHeldOut = engine.Step(ControlMode.Ml, sample, 30, 20, 60, updateModel: false);
+
+        Assert.Equal(0, firstHeldOut.Loss);
+    }
 }
