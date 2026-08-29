@@ -15,6 +15,7 @@ class Program
             if (args[i] == "--mode" && i+1<args.Length)
                 mode = args[++i].ToLower() switch {
                     "static" => ControlMode.Static,
+                    "threshold" => ControlMode.Threshold,
                     "ewma"   => ControlMode.Ewma,
                     _        => ControlMode.Ml
                 };

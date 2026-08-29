@@ -27,6 +27,19 @@ public sealed class DecisionEngineTests
     }
 
     [Fact]
+    public void ThresholdControllerUsesDeclaredDeadBandAndBounds()
+    {
+        var engine = new DecisionEngine();
+        var high = engine.Step(ControlMode.Threshold,
+            new TelemetrySample(60, 0.08, 0, 0), 30, 20, 60);
+        var neutral = engine.Step(ControlMode.Threshold,
+            new TelemetrySample(30, 0.08, 0, 0), 30, 20, 60);
+
+        Assert.Equal(24, high.NextFlushSeconds);
+        Assert.Equal(30, neutral.NextFlushSeconds);
+    }
+
+    [Fact]
     public void FrozenModelProducesRepeatablePrediction()
     {
         var engine = new DecisionEngine();

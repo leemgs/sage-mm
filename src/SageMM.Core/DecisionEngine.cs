@@ -2,7 +2,7 @@ using System;
 
 namespace SageMM.Core;
 
-public enum ControlMode { Static, Ewma, Ml }
+public enum ControlMode { Static, Threshold, Ewma, Ml }
 public enum ControllerFallbackReason { None, InvalidTelemetry, FaultStorm }
 
 /// <summary>All controller constants, including feature scales, in one reproducible configuration.</summary>
@@ -16,7 +16,11 @@ public sealed record ControllerOptions(
     double FragmentationLow = 0.05,
     double FragmentationHigh = 0.12,
     int MinimumCompactionDeferrals = 3,
-    double ReclamationFaultCeiling = 500.0);
+    double ReclamationFaultCeiling = 500.0,
+    double PressureLow = 0.9,
+    double PressureHigh = 1.1,
+    double ThresholdShortenFactor = 0.8,
+    double ThresholdLengthenFactor = 1.2);
 
 public readonly record struct ControlDecision(
     double NextFlushSeconds,
@@ -88,7 +92,18 @@ public sealed class DecisionEngine
         double prediction;
         double next = currentFlushSeconds;
 
-        if (mode == ControlMode.Ewma)
+        if (mode == ControlMode.Threshold)
+        {
+            prediction = target;
+            double factor = target switch
+            {
+                var pressure when pressure > _options.PressureHigh => _options.ThresholdShortenFactor,
+                var pressure when pressure < _options.PressureLow => _options.ThresholdLengthenFactor,
+                _ => 1.0
+            };
+            next = currentFlushSeconds * factor;
+        }
+        else if (mode == ControlMode.Ewma)
         {
             _ewmaPressure = _options.Beta * _ewmaPressure + (1 - _options.Beta) * target;
             prediction = _ewmaPressure;

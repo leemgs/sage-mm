@@ -33,7 +33,7 @@ cd src/SageMM.Demo
 dotnet run -- --mode ml --minutes 2 --flush-min 20 --flush-max 60
 ```
 
-You should see periodic telemetry prints, adaptive intervals, and successful clean‑page drops. Try `--mode ewma` to compare strategies.
+You should see periodic telemetry prints, adaptive intervals, and reclamation attempts. Use `--mode static`, `--mode threshold`, `--mode ewma`, or `--mode ml` to compare the declared controller baselines.
 
 ### Project Layout
 ```
@@ -55,7 +55,7 @@ docs/
 - **FlushPECaches()** enumerates current mappings and issues `madvise(MADV_DONTNEED)` only for private, file-backed, non-writable candidates. The demo does not prove page cleanliness; production ports must validate `Private_Clean`. See `FlushPECaches.cs` and `native/peflush/peflush.c`.
 - **Value‑type interop** shows how to convert POD wrappers to `struct` and marshal without heap churn. See `Interop/ValueTypes.cs` and `InteropMarshalling.cs`.
 - **Telemetry** approximates GC pause, fragmentation, page faults, and RSS drift using managed hooks and `/proc`. See `Telemetry.cs`.
-- **Ablations**: Run with `--mode static`, `--mode ewma`, or `--mode ml` to compare behavior.
+- **Controller comparisons**: Run with `--mode static`, `--mode threshold`, `--mode ewma`, or `--mode ml`. These modes do not substitute for the full component ablation or commercial-device evidence.
 
 The exact implementation boundary, controller equations, coldness score, experimental protocol, ablation schema, related-work comparison, and claim audit requested during review are recorded in [`docs/REVISION_NOTES.md`](docs/REVISION_NOTES.md). Raw measurements must be inserted into its schemas; this repository intentionally does not invent missing results.
 

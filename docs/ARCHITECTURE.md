@@ -20,9 +20,9 @@ All initialization, feature scales, thresholds, and update constants reside in `
 
 `y = clamp(max(Lgc/30 ms, Pf/100 s⁻¹, max(0,ΔM)/50 MiB), 0, 2)`.
 
-Thus no coefficient silently combines milliseconds, counts, and MiB. The service-objective maximum makes a breach in any dimension actionable. EWMA uses `T' = βT + (1-β)T/clamp(y,0.5,2)`, with `β=0.85`. The learner predicts `ŷ=clamp(wᵀx,0,2)` and performs online ridge SGD:
+Thus no coefficient silently combines milliseconds, counts, and MiB. The service-objective maximum makes a breach in any dimension actionable. The non-learning threshold comparator shortens `T` by 20% above `y=1.1`, lengthens it by 20% below `y=0.9`, and otherwise holds it. EWMA uses `T' = βT + (1-β)T/clamp(y,0.5,2)`, with `β=0.85`. The learner predicts the next interval's pressure, `ŷ(t+1)=clamp(w(t)ᵀx(t),0,2)`. When `y(t+1)` arrives it records the causal prequential loss `[ŷ(t+1)-y(t+1)]²/2` and performs online ridge SGD with the pending feature vector:
 
-`wᵢ ← wᵢ - η[xᵢ(ŷ-y)+λwᵢ]`, where the bias starts at 1 and other weights at 0, `η=5×10⁻⁴`, and `λ=10⁻⁴` initially.
+`wᵢ(t+1) ← wᵢ(t) - η[xᵢ(t)(ŷ(t+1)-y(t+1))+λwᵢ(t)]`, where the bias starts at 1 and other weights at 0, `η=5×10⁻⁴`, and `λ=10⁻⁴` initially.
 
 It chooses `T'=T/clamp(0.5+ŷ,0.5,1.5)`, bounded by `[Tmin,Tmax]`. Reported loss is `(ŷ-y)²/2`, computed before the update. Training must occur only on a designated tuning trace; passing `updateModel:false` freezes weights for held-out reporting (alternatively reset and report causal prequential loss). The static comparator changes neither interval nor weights.
 
@@ -36,7 +36,7 @@ Every sample is checked before feature processing. NaN/infinite values, negative
 
 For eligible module `a`, idle for at least a configured guard period:
 
-`Cold(a)=0.6 age(a)/maxAge + 0.3[1-accesses(a)/maxAccesses] + 0.1 cleanBytes(a)/totalCleanBytes`.
+`Cold(a)=0.6 age(a)/maxAge + 0.3[1-accesses(a)/maxAccesses] + 0.1 cleanBytes(a)/maxCleanBytes`.
 
 Candidates are descending by score. K is the smallest prefix whose cumulative clean bytes reaches the configured reclamation byte budget; it is not fixed at five. A recent-access exclusion is the hot-reuse safety guard.
 
