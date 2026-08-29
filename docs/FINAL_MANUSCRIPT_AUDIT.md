@@ -29,6 +29,26 @@ Status meanings: **Closed in text/code**, **Partially closed**, and **Open—evi
 | Appendix/table/baseline/units/figure/organization issues (R1.4, R2.7, R4.5) | Open—actual manuscript required | A consistency checklist and canonical baseline names are supplied. | Inspect and compile the actual source: remove `Appendix ??`, blank appendix and duplicate tables; reconcile all figures/tables/abstract claims; fix `4 ms squared`; annotate 2.6× if supported; apply hierarchical section grouping. |
 | Abstract and numerical claims (R2.7) | **Open—evidence required** | A narrowed abstract template exists. | Replace all placeholders from one versioned result source. Reconcile 19%, 35%, OOM, frame-latency and production claims with baseline, denominator, statistic and CI. |
 
+## Additional implementation-to-manuscript gaps found in this audit
+
+These gaps are easy to miss because the individual classes exist, while the end-to-end behavior claimed by the replacement prose does not yet exist:
+
+1. **Cold-module selection is not connected to reclamation.** `ReclamationCandidateTracker` and `AssemblyColdness` are unit-tested, and `FlushModule` exists, but `SelfAdaptiveController` calls `FlushAll`. There is no production access-event source, minimum-idle configuration, byte budget, candidate loop, or module allowlist wired into the controller. Per-assembly coldness therefore remains a reference algorithm, not an evaluated end-to-end mechanism.
+2. **The documented saturation fallback is not implemented.** Prediction and loss are observable, but the controller does not count persistent predictions at 0/2 or automatically switch from ridge to the threshold policy. The manuscript must either remove “triggers fallback” or the implementation and tests must add an explicit state transition and counter.
+3. **Fallback accounting is incomplete.** Invalid telemetry and fault storms have decision reasons, but native errors, missing `/proc`, no eligible candidate, cooldown suppression, hot-reuse exclusion, and model saturation do not have the per-class counters promised by the replacement prose.
+4. **Threshold tuning and held-out evaluation are absent.** The threshold controller has configurable defaults, but there is no tuning script, trace split manifest, frozen-model export/import, or results pipeline. “Tuned threshold” and “held-out” are experimental requirements, not established properties of this repository.
+5. **The demo telemetry perturbs and approximates the workload.** It forces a Gen-0 collection to estimate pause and estimates fragmentation from pinned-object count. This is acceptable for a demo, but it cannot support production pause, fragmentation, or controller-effect claims; the vendor/EventPipe telemetry and fidelity validation requested by Reviewer 2 are absent.
+6. **`Private_Clean` is not measured by the implementation.** The native helper reads `maps`, not `smaps`, and issues `MADV_DONTNEED` for conservative mapping candidates. It neither proves that selected pages are clean nor reports bytes reclaimed/refaulted. Alignment follows kernel mapping boundaries, but unload serialization and concurrent hot execution remain production-integration requirements.
+7. **The analyzer is advisory only.** The repository contains diagnostic DTV0001 but no CodeFix provider. Any final manuscript statement that a CodeFix automatically converts wrappers must be removed, unless a reviewed transformation and ABI-validation workflow is actually supplied.
+8. **There is no quantitative-results pipeline.** No workload driver, raw/aggregate trace, bootstrap script, canonical results file, figure generator, or table generator is present. The consistency rule that all claims come from one source cannot yet be enforced.
+
+### Closure decision by reviewer
+
+* **Reviewer 1:** algorithm definitions and RQ planning are substantially addressed; empirical SOTA comparison, measured ablation, figure/table fixes in the actual manuscript, and final bibliography remain open.
+* **Reviewer 2:** boundary and controller specification are substantially addressed in reference text/code; exact vendor metadata, end-to-end safe reclamation, stress results, endurance evidence, artifacts, citation audit, and actual manuscript cleanup remain open.
+* **Reviewer 3:** novelty language and a wider evaluation plan are addressed; additional-platform evidence, alternative-controller measurements, and component interaction results remain open.
+* **Reviewer 4:** a threshold comparator and narrowed claims now exist; broader quantitative evidence, full Table V results, saturation/failure behavior, canonical baseline results, and final presentation cleanup remain open.
+
 ## Blocking checklist
 
 A manuscript should not be described as final until all of the following are available and pass review:
@@ -41,6 +61,8 @@ A manuscript should not be described as final until all of the following are ava
 6. Multiple independent endurance runs, OOM/kernel logs, device-hours/session denominators, and censoring rules.
 7. Exact vendor runtime/firmware boundary and releasable reproduction artifacts.
 8. Publisher-verified bibliography and claim-by-claim citation audit.
+9. End-to-end wiring of cold-module selection to safe module reclamation, or removal of that implementation claim.
+10. Resolution of saturation fallback and fallback-counter discrepancies between manuscript prose and code.
 
 ## Audit conclusion
 

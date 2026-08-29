@@ -65,7 +65,7 @@ For the full problem statement, design, and evaluation targets, refer to the SAG
 
 ## Porting Notes
 - The **compaction gating** hook here is a user‑mode analogue. In real firmware, wire it to CoreCLR GC knobs or host APIs.
-- `ReclamationCandidateTracker` defines a reproducible recency/frequency/size coldness score and selects K from a byte budget. The native demo then filters private, file-backed, non-writable mappings. Production firmware must additionally verify `Private_Clean` from `/proc/self/smaps` and apply its executable-module allowlist.
+- `ReclamationCandidateTracker` defines a reproducible recency/frequency/size coldness score and selects K from a byte budget. It is **not wired into the demo controller**: the demo currently calls process-wide `FlushAll`, so per-module selection must not be claimed as an end-to-end result. A production integration must connect tracked candidates to `FlushModule`, verify `Private_Clean` from `/proc/self/smaps`, and apply its executable-module allowlist.
 - Analyzer rules (DTV0001/0002) can be integrated into CI to guide struct migration.
 
 ## License
