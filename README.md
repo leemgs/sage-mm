@@ -1,6 +1,6 @@
 # SAGE-MM Reproducibility Kit
 
-This repository contains a minimal, **production-minded** reference implementation of the components described in the SAGE‑MM paper (Self‑Adaptive Memory Management for Smart TV runtimes). It includes:
+This repository contains a minimal reference implementation of components described in the SAGE‑MM study. **The adaptive part is the controller that coordinates reclamation and compaction policy; heap sizing is a build-time runtime patch, and interop conversion is a source-time optimization.** They are complementary interventions, not three independently adaptive algorithms. It includes:
 
 - A **Self‑Adaptive Controller** with EWMA and online ridge‑regression schedulers
 - Runtime **telemetry collectors** (GC pause, fragmentation, page‑fault proxy, RSS deltas)
@@ -10,7 +10,7 @@ This repository contains a minimal, **production-minded** reference implementati
 - A **demo workload** that simulates app switches and allocation bursts
 - Scripts for building native helpers and running the demo
 
-> ⚠️ This kit focuses on reproducibility and clarity, not drop‑in replacement of .NET internals. Hooks are exposed in user space with safe fallbacks so you can validate behaviors on a dev machine before porting deeper into a vendor runtime.
+> ⚠️ This kit focuses on reproducibility and clarity, not drop‑in replacement of .NET internals. It does not contain the vendor runtime patch or production traces and must not be used as evidence for the paper's reported numbers. Hooks are exposed in user space with safe fallbacks so behaviors can be validated before a vendor-runtime port.
 
 ## Quick Start
 
@@ -57,11 +57,15 @@ docs/
 - **Telemetry** approximates GC pause, fragmentation, page faults, and RSS drift using managed hooks and `/proc`. See `Telemetry.cs`.
 - **Ablations**: Run with `--mode static`, `--mode ewma`, or `--mode ml` to compare behavior.
 
+The exact implementation boundary, controller equations, coldness score, experimental protocol, ablation schema, related-work comparison, and claim audit requested during review are recorded in [`docs/REVISION_NOTES.md`](docs/REVISION_NOTES.md). Raw measurements must be inserted into its schemas; this repository intentionally does not invent missing results.
+
+Reviewer 4's requested manuscript changes are provided as manuscript-ready replacement sections in [`docs/MANUSCRIPT_REVISION.md`](docs/MANUSCRIPT_REVISION.md), including a narrower title/abstract, novelty positioning, controller failure behavior, expanded multi-platform evaluation, quantitative ablation requirements, canonical baseline names, and limitations.
+
 For the full problem statement, design, and evaluation targets, refer to the SAGE‑MM paper (uploaded with this kit).
 
 ## Porting Notes
 - The **compaction gating** hook here is a user‑mode analogue. In real firmware, wire it to CoreCLR GC knobs or host APIs.
-- The **per‑assembly** flush API in the paper can be built by filtering `maps` entries by module and symbol metadata. The demo drops clean read‑only mappings conservatively.
+- `ReclamationCandidateTracker` defines a reproducible recency/frequency/size coldness score and selects K from a byte budget. The native demo then filters private, file-backed, non-writable mappings. Production firmware must additionally verify `Private_Clean` from `/proc/self/smaps` and apply its executable-module allowlist.
 - Analyzer rules (DTV0001/0002) can be integrated into CI to guide struct migration.
 
 ## License
