@@ -2,6 +2,8 @@
 
 This document specifies measurements to collect; it does not invent commercial-device results. All manuscript numbers must be regenerated from one versioned result bundle.
 
+Prospective normalized targets and safety thresholds are recorded separately in `EXPECTED_RESULTS.md`. They are hypotheses for comparison with future measurements, not evidence and not substitutes for the numerical ablation requested by the reviewers.
+
 ## Research-question traceability
 
 | RQ | Claim | Experiment and primary outcomes |

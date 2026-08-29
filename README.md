@@ -46,6 +46,9 @@ native/
 scripts/
   build.sh                # convenience build
   run_demo.sh             # demo runner
+  summarize_results.py    # deterministic run-level bootstrap summaries
+experiments/
+  expected_factorial_targets.csv # prospective targets, never measured results
 docs/
   ARCHITECTURE.md         # component overview, signals, safety notes
 ```
@@ -58,6 +61,8 @@ docs/
 - **Controller comparisons**: Run with `--mode static`, `--mode threshold`, `--mode ewma`, or `--mode ml`. These modes do not substitute for the full component ablation or commercial-device evidence.
 
 The exact implementation boundary, controller equations, coldness score, experimental protocol, ablation schema, related-work comparison, and claim audit requested during review are recorded in [`docs/REVISION_NOTES.md`](docs/REVISION_NOTES.md). Raw measurements must be inserted into its schemas; this repository intentionally does not invent missing results.
+
+Numeric planning targets requested before the additional experiments are in [`docs/EXPECTED_RESULTS.md`](docs/EXPECTED_RESULTS.md). They are explicitly normalized, prospective hypotheses; `scripts/summarize_results.py` must be run on independent observed runs before any number is described as a result.
 
 Reviewer 4's requested manuscript changes are provided as manuscript-ready replacement sections in [`docs/MANUSCRIPT_REVISION.md`](docs/MANUSCRIPT_REVISION.md), including a narrower title/abstract, novelty positioning, controller failure behavior, expanded multi-platform evaluation, quantitative ablation requirements, canonical baseline names, and limitations.
 

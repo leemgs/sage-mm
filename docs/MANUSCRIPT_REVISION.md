@@ -58,6 +58,22 @@ Replace the expected-impact Table V with measured rows for the complete `G × I 
 
 Thirty-minute/five-run results may be retained only as pilot evidence. The main claims require preregistered independent repetitions and multi-hour endurance runs. Bootstrap across independent runs, not telemetry samples from one run. Publish per-run aggregates, OOM/kernel events, censoring, missing-data handling, and both tuning and held-out trace identifiers.
 
+### Prospective targets for the new experiments—not results
+
+The following values are preregistered expectations normalized to `Stock=100`; lower is better. They are included to make the hypotheses and safety trade-offs falsifiable before collecting the requested new data. They are **not measured outcomes** and are never used in the abstract or conclusion. The final paper replaces this planning table with adjacent Expected and Observed/95%-CI columns.
+
+| Baseline | Peak PSS | GC p99 | Fault rate | Input p99 | Controller CPU |
+|---|---:|---:|---:|---:|---:|
+| Stock | 100 | 100 | 100 | 100 | 0.0% |
+| Static-G | 94 | 75 | 100 | 90 | ≤0.1% |
+| Static-GI | 87 | 71 | 100 | 86 | ≤0.2% |
+| Static-GIR | 79 | 71 | 160 | 91 | ≤0.4% |
+| Threshold-GIR | 78 | 66 | 132 | 85 | ≤0.8% |
+| EWMA-GIR | 77 | 64 | 125 | 82 | ≤1.0% |
+| Ridge-GIR | 76 | 62 | 122 | 80 | ≤1.5% |
+
+The key falsifiable expectation is that uncoordinated reclamation increases refaults (Static-GIR fault index 160), whereas guarded policies reduce that penalty. Ridge is expected to improve only one PSS point and two input-latency points over EWMA; overlapping 95% CIs or CPU above 1.5% means there is no demonstrated ML advantage. The complete 16-cell prospective factorial matrix, expected additional-platform ranges, and preregistered safety thresholds are provided in `EXPECTED_RESULTS.md` and the artifact CSV.
+
 ## Results-writing constraints
 
 Use a single generated results source for the abstract, tables, figures, and conclusion. Every benefit must name baseline, workload aggregation, statistic, denominator, and confidence interval. Do not interchange RSS, PSS, managed heap, or `Private_Clean`. Annotate the ARM32/ARM64 compaction ratio on its figure only if regenerated data support it. Remove `Appendix ??`, duplicate tables, “4 ms squared,” and all inconsistent aliases. Required definitions and quantitative evidence belong in the main paper; the external artifact contains code and traces, not arguments necessary to interpret the paper.
