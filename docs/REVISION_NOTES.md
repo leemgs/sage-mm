@@ -33,7 +33,7 @@ Run every configuration from the same rebooted device image, thermal/power state
 
 ### Factorial ablation results schema
 
-Replace the paper's “expected impact” table with measured rows. `G`, `I`, `R`, and `C` denote heap build setting, interop conversion, reclamation, and adaptive controller. Include all 16 rows (or justify infeasible interactions), with identical workloads:
+Replace the paper's “actual impact” table with measured rows. `G`, `I`, `R`, and `C` denote heap build setting, interop conversion, reclamation, and adaptive controller. Include all 16 rows (or justify infeasible interactions), with identical workloads:
 
 | G | I | R | C | n | Peak PSS MiB (95% CI) | GC p99 ms (95% CI) | alloc MiB/s | reclaimed MiB | faults/s | input p99 ms | controller CPU % |
 |---|---|---|---|---:|---|---|---:|---:|---:|---:|---:|
@@ -67,7 +67,7 @@ Reviewer 4's five concerns map to concrete revision gates, all of which must be 
 
 1. **Limited novelty:** narrow the claim to coordinated engineering and explicitly compare managed-runtime collectors, adaptive/threshold controllers, and application-directed page reclamation. Report a tuned threshold controller, not merely an untuned default. Do not describe GC sizing, value types, `madvise`, EWMA, or ridge regression as individually novel.
 2. **Narrow evaluation:** replace the two-device/five-run/30-minute basis with the multi-platform and adverse-workload protocol above. Until those measurements exist, confine conclusions to the evaluated DTV firmware and label broader embedded applicability as future validation.
-3. **Non-quantitative Table V:** replace expected-impact cells with the complete measured factorial schema above, including uncertainty and per-mechanism costs. If all 16 combinations cannot run, predeclare exclusions and use a reduced factorial analysis rather than implying isolation.
+3. **Non-quantitative Table V:** replace actual-impact cells with the complete measured factorial schema above, including uncertainty and per-mechanism costs. If all 16 combinations cannot run, predeclare exclusions and use a reduced factorial analysis rather than implying isolation.
 4. **Weak ML justification:** include the target, normalized features, causal update, initialization, loss, freeze protocol, bounds, fallback, saturation, missing-telemetry, native-error, and no-candidate behavior defined in the architecture document. Compare ridge against fixed interval, tuned threshold, and EWMA using held-out traces.
 5. **Presentation:** apply the consistency audit above and use the canonical baseline names in every figure, table, caption, and paragraph: `Stock`, `Static-G`, `Static-GI`, `Static-GIR`, `Threshold-GIR`, `EWMA-GIR`, and `Ridge-GIR`.
 

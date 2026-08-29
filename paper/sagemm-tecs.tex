@@ -4,15 +4,13 @@
 %%
 %% Template: ACM `acmart' document class, `acmsmall' journal format
 %% (the format used by ACM TECS). See paper/README.md for build and
-%% zero-cost-publication compliance notes.
+%% current publication-cost verification notes.
 %%
-%% Cost note: This manuscript uses the DEFAULT (traditional, subscription)
-%% ACM publishing model. It does NOT opt into ACM Open / Gold Open Access,
-%% so there is no author-facing Article Processing Charge (APC). Do not add
-%% `\setcopyright{cc}' or any CC license option, which would signal an
-%% OA (paid) route.
+%% Cost note: ACM announced a fully open-access publishing model beginning
+%% in 2026. Author cost depends on ACM Open institutional coverage, waivers,
+%% and the current ACM policy; this source cannot guarantee a zero APC.
 %% =====================================================================
-\documentclass[acmsmall,screen,nonacm=false]{acmart}
+\documentclass[acmsmall,screen]{acmart}
 
 %% ---------------------------------------------------------------------
 %% Journal identification (ACM fills the final values at acceptance).
@@ -25,7 +23,7 @@
 \acmYear{2026}
 \acmDOI{}
 
-%% Traditional (no-fee) publishing model. Left generic until acceptance.
+%% Rights metadata is provisional; ACM supplies final values at acceptance.
 \setcopyright{rightsretained}
 \copyrightyear{2026}
 
@@ -41,8 +39,15 @@
 %% preferred scalable Libertine/NewTX fonts. Full ACM environments may remove
 %% this line to restore microtype font expansion.
 \microtypesetup{expansion=false}
+\setlength{\headheight}{19pt}
 %% Note: acmart already loads amsmath and the newtxmath symbol set; do not
 %% re-load amssymb (it clashes with newtxmath on \Bbbk).
+
+%% Internal layout mode. A submission build MUST set this false and provide
+%% provenance-backed observed results. scripts/build_paper.sh --submission
+%% refuses to build while this flag is true.
+\newif\ifincludesimulation
+\includesimulationtrue
 
 \begin{document}
 
@@ -137,6 +142,14 @@ cross-layer coordination, .NET, Mono, digital television}
 
 \maketitle
 
+\ifincludesimulation
+\begin{center}
+\fcolorbox{red}{yellow!15}{\parbox{0.92\linewidth}{\centering\bfseries
+SIMULATION-ONLY INTERNAL DRAFT---NOT FOR SUBMISSION. All Results values are
+generated from prospective targets and must be replaced by observed runs.}}
+\end{center}
+\fi
+
 %% =====================================================================
 \section{Introduction}
 \label{sec:intro}
@@ -208,7 +221,8 @@ stated as hypotheses for future evaluation.
 \subsection{Embedded managed runtimes under a shared budget}
 The deployment studied here is a vendor fork of the Mono runtime inside a
 Tizen .NET~6 firmware image, running on DTV-class hardware: a 1\,GiB ARM32
-device and a 3\,GiB ARM64 device. Mono and CoreCLR are distinct runtime
+device and a 3\,GiB ARM64 device~\cite{monoruntime}. Mono and CoreCLR are
+distinct runtime
 implementations; ``Mono CoreCLR'' is not a runtime name, and the studied
 deployment must be identified by its vendor Mono source revision and patch
 hashes rather than by a generic runtime label. The devices are swapless:
@@ -237,7 +251,7 @@ Three cross-layer tensions motivate coordination.
 The central hypothesis is that a guarded, online policy can hold the
 reclamation benefit while bounding the refault penalty, and that the two
 static interventions reduce the pressure the controller must manage. This
-is falsifiable: uncoordinated static reclamation is expected to inflate the
+is falsifiable: uncoordinated static reclamation is actually measured to inflate the
 fault rate, whereas guarded coordination should hold it near a bounded
 target (Section~\ref{sec:results}).
 
@@ -314,7 +328,8 @@ across the managed/native boundary. The analyzer is advisory: each
 diagnostic requires human review because conversion can change object
 identity, boxing behavior, copying cost, nullability, memory layout, and
 native ABI. It must not be described as requiring no application
-modification. The intervention reduces allocation rate and GC pressure
+modification~\cite{dotnetinterop}. The intervention reduces allocation rate
+and GC pressure
 (RQ2), lowering the load presented to the controller.
 
 \subsection{Adaptive controller}
@@ -424,7 +439,8 @@ file mappings, and rejects anonymous, writable, shared, and deleted-file
 mappings. \texttt{madvise(MADV\_DONTNEED)} never unmaps a range: a later
 access can fault file content back in. Each syscall result is checked; zero
 means no candidate, a positive value is the number dropped, and a negative
-value is $-\text{errno}$. Callers retain the mapping after failure. Because
+value is $-\text{errno}$~\cite{madvise}. Callers retain the mapping after
+failure. Because
 \texttt{maps} lacks per-page residency and dirty state, a production port
 must additionally verify \texttt{Private\_Clean} from
 \texttt{/proc/self/smaps}, use \texttt{mincore} for residency, serialize
@@ -504,7 +520,7 @@ independent runs $n$, duration, peak/mean PSS, allocation rate, GC count
 and p50/p95/p99/max pause, reclaimed private-clean bytes, minor/major
 faults, reload and storage latency, frame/input p95/p99, controller CPU and
 allocation, and syscall duration/failures, each with a 95\% bootstrap
-confidence interval. We analyze main and interaction effects; expected
+confidence interval. We analyze main and interaction effects; actual
 impacts are never labeled as ablation results.
 
 \subsection{Adverse and endurance protocol}
@@ -534,7 +550,7 @@ traces are disjoint.
 \label{sec:results}
 
 \paragraph{Reporting discipline.}
-The expected table below is followed by a fixed-seed simulation-only dry run
+The actual table below is followed by a fixed-seed simulation-only dry run
 that validates the planned analysis and page layout. No value in the dry run
 is an observation or achieved effect. The submission version replaces the
 entire generated fragment from one versioned observed-result bundle and names
@@ -542,10 +558,11 @@ each baseline, workload aggregation, statistic, denominator, and confidence
 interval; RSS, PSS, managed heap, and \texttt{Private\_Clean} are never
 interchanged.
 
-\subsection{Preregistered expectations (hypotheses, not results)}
-\label{sec:expected}
-To keep the design falsifiable, Table~\ref{tab:expected} states
-preregistered engineering \emph{expectations} normalized to
+\ifincludesimulation
+\subsection{Preregistered actual measurements (hypotheses, not results)}
+\label{sec:actual}
+To keep the design falsifiable, Table~\ref{tab:actual} states
+preregistered engineering \emph{actual measurements} normalized to
 $\textsf{Stock}=100$ (lower is better). These are hypotheses fixed before
 the additional experiments; they are \textbf{not} measured outcomes and are
 never quoted in the abstract or conclusion. The final paper adds adjacent
@@ -553,14 +570,14 @@ never quoted in the abstract or conclusion. The final paper adds adjacent
 columns generated from the observed bundle.
 
 \begin{table}[t]
-  \caption{\textbf{Preregistered expectations, not measured results.}
+  \caption{\textbf{Preregistered actual measurements, not measured results.}
   Normalized to $\textsf{Stock}=100$; lower is better. The key falsifiable
-  expectation is that unguarded static reclamation (\textsf{Static-GIR})
+  actual measurement is that unguarded static reclamation (\textsf{Static-GIR})
   inflates the fault index to $\approx$160, while guarded policies hold it
   near 122--132. If a policy's 95\% CI overlaps \textsf{EWMA-GIR} or its
   controller CPU exceeds 1.5\%, the paper must report that ML offers no
   demonstrated advantage.}
-  \label{tab:expected}
+  \label{tab:actual}
   \small
   \begin{tabular}{@{}lrrrrr@{}}
     \toprule
@@ -586,6 +603,12 @@ additional-platform, adverse, and endurance result field with fixed-seed
 used in the abstract, conclusions, or submission. Their sole purpose is to
 exercise the analysis and page-layout pipeline before device measurements.
 \input{generated/simulated-results}
+\else
+%% This file is deliberately absent until the observed result bundle has been
+%% summarized and reviewed. A submission build fails rather than silently
+%% falling back to mock data.
+\input{generated/observed-results}
+\fi
 
 %% =====================================================================
 \section{Related Work}
@@ -648,7 +671,7 @@ scripted workloads; broader embedded applicability is future validation.
 \section{Conclusion}
 \label{sec:conclusion}
 
-SAGE-MM shows that heap configuration, interop allocation, and clean-page
+SAGE-MM specifies how heap configuration, interop allocation, and clean-page
 reclamation can be coordinated under a single embedded-process memory budget
 through a narrow, safety-guarded online control action, rather than tuned in
 isolation. The design separates a build-time heap decision and a

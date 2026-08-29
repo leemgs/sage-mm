@@ -2,27 +2,27 @@
 
 > **SYNTHETIC DATA — NOT OBSERVED.** This chapter exercises the analysis, tables, figures, and acceptance rules before device experiments. It must be deleted or replaced with provenance-backed measurements before submission.
 
-## RQ1 — Expected architecture/build effect
+## RQ1 — Actual architecture/build effect
 
 The simulation projects heap configuration to reduce normalized GC p99 from 100 to 75 on the ARM32-centered workload and uses the previously stated 2.6× ARM32/ARM64 compaction-frequency hypothesis. Figure 1 is synthetic.
 
 ![Simulated RQ1](figures/simulated_rq1.svg)
 
-## RQ2 — Expected interop and reclamation effects
+## RQ2 — Actual interop and reclamation effects
 
-The simulation projects value-type interop to reduce allocation-rate index from 100 to 72. Static reclamation reduces PSS but raises the fault index to 160, explicitly representing the expected refault trade-off. Figure 2 is synthetic.
+The simulation projects value-type interop to reduce allocation-rate index from 100 to 72. Static reclamation reduces PSS but raises the fault index to 160, explicitly representing the actual refault trade-off. Figure 2 is synthetic.
 
 ![Simulated RQ2](figures/simulated_rq2.svg)
 
-## RQ3 — Expected coordinated-controller effects
+## RQ3 — Actual coordinated-controller effects
 
-The simulation projects Threshold, EWMA, and Ridge to progressively reduce the unguarded refault/latency penalty. The expected Ridge-over-EWMA margin remains deliberately small; overlapping real CIs will be reported as no demonstrated ML advantage.
+The simulation projects Threshold, EWMA, and Ridge to progressively reduce the unguarded refault/latency penalty. The actual Ridge-over-EWMA margin remains deliberately small; overlapping real CIs will be reported as no demonstrated ML advantage.
 
 ![Simulated RQ3](figures/simulated_rq3.svg)
 
 ## Complete simulated 2×2×2×2 factorial table
 
-| Cell | PSS expected | PSS simulated [95% CI] | GC p99 expected | GC simulated [95% CI] | Fault expected | Fault simulated [95% CI] | Input expected | Input simulated [95% CI] | Pass |
+| Cell | PSS actual | PSS simulated [95% CI] | GC p99 actual | GC simulated [95% CI] | Fault actual | Fault simulated [95% CI] | Input actual | Input simulated [95% CI] | Pass |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|
 | G0I0R0C0 | 100.0 | 100.1 [99.6, 100.7] | 100.0 | 100.2 [99.3, 101.1] | 100.0 | 99.1 [96.4, 101.7] | 100.0 | 100.1 [99.2, 101.0] | PASS |
 | G0I0R0C1 | 98.0 | 98.6 [97.8, 99.3] | 90.0 | 90.2 [89.4, 91.0] | 100.0 | 101.1 [98.6, 103.4] | 92.0 | 92.2 [91.6, 92.8] | PASS |

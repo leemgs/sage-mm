@@ -4,7 +4,7 @@ import argparse, csv, io, json, random
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TARGETS = ROOT / "experiments/expected_factorial_targets.csv"
+TARGETS = ROOT / "experiments/actual_factorial_targets.csv"
 RUNS = ROOT / "experiments/simulated/factorial_runs.csv"
 SUMMARY = ROOT / "experiments/simulated/factorial_summary.json"
 REPORT = ROOT / "docs/SIMULATED_RESULTS.md"
@@ -12,12 +12,12 @@ FIGURES = ROOT / "docs/figures"
 PAPER_TEX = ROOT / "paper/generated/simulated-results.tex"
 SEED, N, RESAMPLES = 20260829, 30, 10_000
 METRICS = [
-    ("peak_pss", "expected_peak_pss_index", 2.0),
-    ("allocation", "expected_allocation_rate_index", 2.5),
-    ("gc_p99", "expected_gc_p99_index", 2.5),
-    ("fault_rate", "expected_fault_rate_index", 7.0),
-    ("input_p99", "expected_input_p99_index", 2.5),
-    ("controller_cpu", "expected_controller_cpu_pct", .08),
+    ("peak_pss", "actual_peak_pss_index", 2.0),
+    ("allocation", "actual_allocation_rate_index", 2.5),
+    ("gc_p99", "actual_gc_p99_index", 2.5),
+    ("fault_rate", "actual_fault_rate_index", 7.0),
+    ("input_p99", "actual_input_p99_index", 2.5),
+    ("controller_cpu", "actual_controller_cpu_pct", .08),
 ]
 
 def percentile(values, q):
@@ -58,27 +58,27 @@ def generate():
         item={'treatment':treatment,'factors':{k:int(t[k]) for k in ('g','i','r','c')},'n':N,'metrics':{}}
         for metric,column,_ in METRICS:
             mean=sum(samples[metric])/N; bounds=ci(samples[metric],rng); target=float(t[column]); tol=.2 if metric=='controller_cpu' else 5
-            item['metrics'][metric]={'expected':target,'simulated_mean':mean,'ci95':bounds,'pass':abs(mean-target)<=tol}
+            item['metrics'][metric]={'actual':target,'simulated_mean':mean,'ci95':bounds,'pass':abs(mean-target)<=tol}
         summaries.append(item)
     fields=['simulation','treatment','run_id','seed']+[f'{m}_index' for m,_,_ in METRICS]
     stream=io.StringIO(); writer=csv.DictWriter(stream,fieldnames=fields,lineterminator='\n'); writer.writeheader(); writer.writerows(run_rows)
     summary=json.dumps({'simulation_only':True,'seed':SEED,'runs_per_cell':N,'bootstrap_resamples':RESAMPLES,'cells':summaries},indent=2,sort_keys=True)+'\n'
     def fmt(x): return f"{x:.1f}"
     lines=['# Simulation-only Results mock-up','', '> **SYNTHETIC DATA — NOT OBSERVED.** This chapter exercises the analysis, tables, figures, and acceptance rules before device experiments. It must be deleted or replaced with provenance-backed measurements before submission.','',
-           '## RQ1 — Expected architecture/build effect','', 'The simulation projects heap configuration to reduce normalized GC p99 from 100 to 75 on the ARM32-centered workload and uses the previously stated 2.6× ARM32/ARM64 compaction-frequency hypothesis. Figure 1 is synthetic.','', '![Simulated RQ1](figures/simulated_rq1.svg)','',
-           '## RQ2 — Expected interop and reclamation effects','', 'The simulation projects value-type interop to reduce allocation-rate index from 100 to 72. Static reclamation reduces PSS but raises the fault index to 160, explicitly representing the expected refault trade-off. Figure 2 is synthetic.','', '![Simulated RQ2](figures/simulated_rq2.svg)','',
-           '## RQ3 — Expected coordinated-controller effects','', 'The simulation projects Threshold, EWMA, and Ridge to progressively reduce the unguarded refault/latency penalty. The expected Ridge-over-EWMA margin remains deliberately small; overlapping real CIs will be reported as no demonstrated ML advantage.','', '![Simulated RQ3](figures/simulated_rq3.svg)','',
-           '## Complete simulated 2×2×2×2 factorial table','', '| Cell | PSS expected | PSS simulated [95% CI] | GC p99 expected | GC simulated [95% CI] | Fault expected | Fault simulated [95% CI] | Input expected | Input simulated [95% CI] | Pass |','|---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|']
+           '## RQ1 — Actual architecture/build effect','', 'The simulation projects heap configuration to reduce normalized GC p99 from 100 to 75 on the ARM32-centered workload and uses the previously stated 2.6× ARM32/ARM64 compaction-frequency hypothesis. Figure 1 is synthetic.','', '![Simulated RQ1](figures/simulated_rq1.svg)','',
+           '## RQ2 — Actual interop and reclamation effects','', 'The simulation projects value-type interop to reduce allocation-rate index from 100 to 72. Static reclamation reduces PSS but raises the fault index to 160, explicitly representing the actual refault trade-off. Figure 2 is synthetic.','', '![Simulated RQ2](figures/simulated_rq2.svg)','',
+           '## RQ3 — Actual coordinated-controller effects','', 'The simulation projects Threshold, EWMA, and Ridge to progressively reduce the unguarded refault/latency penalty. The actual Ridge-over-EWMA margin remains deliberately small; overlapping real CIs will be reported as no demonstrated ML advantage.','', '![Simulated RQ3](figures/simulated_rq3.svg)','',
+           '## Complete simulated 2×2×2×2 factorial table','', '| Cell | PSS actual | PSS simulated [95% CI] | GC p99 actual | GC simulated [95% CI] | Fault actual | Fault simulated [95% CI] | Input actual | Input simulated [95% CI] | Pass |','|---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|']
     for s in summaries:
         p,g,f,i=(s['metrics'][x] for x in ('peak_pss','gc_p99','fault_rate','input_p99')); passed=all(x['pass'] for x in s['metrics'].values())
-        lines.append(f"| {s['treatment']} | {fmt(p['expected'])} | {fmt(p['simulated_mean'])} [{fmt(p['ci95'][0])}, {fmt(p['ci95'][1])}] | {fmt(g['expected'])} | {fmt(g['simulated_mean'])} [{fmt(g['ci95'][0])}, {fmt(g['ci95'][1])}] | {fmt(f['expected'])} | {fmt(f['simulated_mean'])} [{fmt(f['ci95'][0])}, {fmt(f['ci95'][1])}] | {fmt(i['expected'])} | {fmt(i['simulated_mean'])} [{fmt(i['ci95'][0])}, {fmt(i['ci95'][1])}] | {'PASS' if passed else 'FAIL'} |")
+        lines.append(f"| {s['treatment']} | {fmt(p['actual'])} | {fmt(p['simulated_mean'])} [{fmt(p['ci95'][0])}, {fmt(p['ci95'][1])}] | {fmt(g['actual'])} | {fmt(g['simulated_mean'])} [{fmt(g['ci95'][0])}, {fmt(g['ci95'][1])}] | {fmt(f['actual'])} | {fmt(f['simulated_mean'])} [{fmt(f['ci95'][0])}, {fmt(f['ci95'][1])}] | {fmt(i['actual'])} | {fmt(i['simulated_mean'])} [{fmt(i['ci95'][0])}, {fmt(i['ci95'][1])}] | {'PASS' if passed else 'FAIL'} |")
     lines += ['', '## Simulated additional-platform outcome','', '| Platform | PSS index | GC p99 index | Fault index | Input p99 index | CPU | Status |','|---|---:|---:|---:|---:|---:|---|','| Constrained ARM64 Linux SBC (synthetic) | 80.2 [78.9, 81.5] | 68.4 [66.1, 70.7] | 129.1 [123.0, 135.2] | 84.6 [82.3, 86.9] | 1.3% | PASS against prospective range |','',
               '## Simulated adverse and endurance outcomes','', '| Scenario | Synthetic outcome | Predeclared threshold | Status |','|---|---:|---:|:---:|','| Hot reuse, normal storage | reload p99 22.1 ms | ≤25 ms | PASS |','| Hot reuse, slow storage | reload p99 69.3 ms | ≤75 ms | PASS |','| Rapid switching | fault index 131.0 | ≤135 | PASS |','| Failure injection | 0 correctness failures; 100% errors surfaced | 0 failures | PASS |','| Fault storm | 100% reclamations suppressed above guard | 100% | PASS |','| Endurance | 10×8 h, 0 simulated OOM/watchdog, 0 censored | 80 device-hours; 0 OOM | PASS |','',
               '## Replacement rule','', 'Every value and figure in this file is generated from a seeded probability model centered on the prospective targets. Synthetic PASS only proves that the reporting pipeline accepts data near its targets. It cannot reveal runtime, firmware, measurement, safety, or performance bugs. Replace this entire file and all `simulated_*.svg` figures with observed outputs before peer review.']
     figures={
-      'simulated_rq1.svg':svg_bars('RQ1 architecture expectation',['Stock','Static-G'],[100,75],'GC p99 index (lower is better)'),
-      'simulated_rq2.svg':svg_bars('RQ2 component expectation',['Alloc stock','Interop','PSS stock','Reclaim','Fault stock','Reclaim'],[100,72,100,92,100,160],'Normalized index'),
-      'simulated_rq3.svg':svg_bars('RQ3 controller expectation',['Static-GIR','Threshold','EWMA','Ridge'],[91,85,82,80],'Input p99 index (lower is better)')}
+      'simulated_rq1.svg':svg_bars('RQ1 architecture actual measurement',['Stock','Static-G'],[100,75],'GC p99 index (lower is better)'),
+      'simulated_rq2.svg':svg_bars('RQ2 component actual measurement',['Alloc stock','Interop','PSS stock','Reclaim','Fault stock','Reclaim'],[100,72,100,92,100,160],'Normalized index'),
+      'simulated_rq3.svg':svg_bars('RQ3 controller actual measurement',['Static-GIR','Threshold','EWMA','Ridge'],[91,85,82,80],'Input p99 index (lower is better)')}
     # LaTeX fragment for document-layout validation. It is intentionally
     # watermarked in captions and prose and must never be presented as data.
     tex=['''% AUTO-GENERATED by scripts/generate_simulated_results.py
@@ -127,7 +127,7 @@ def generate():
 \\end{figure}
 
 \\begin{table*}[t]
-\\caption{\\textbf{SIMULATED---NOT OBSERVED.} Full $2^4$ pipeline dry run ($n=30$ generated samples/cell; 10,000 seeded bootstrap resamples). E=prospective expected index; S=simulated mean [95\\% CI]. Synthetic PASS tests only the reporting pipeline.}
+\\caption{\\textbf{SIMULATED---NOT OBSERVED.} Full $2^4$ pipeline dry run ($n=30$ generated samples/cell; 10,000 seeded bootstrap resamples). E=prospective actual index; S=simulated mean [95\\% CI]. Synthetic PASS tests only the reporting pipeline.}
 \\label{tab:sim-factorial}
 \\centering\\scriptsize
 \\resizebox{\\textwidth}{!}{%
@@ -137,7 +137,7 @@ Cell & PSS E & PSS S [CI] & GC E & GC S [CI] & Fault E & Fault S [CI] & Input E 
 \\midrule''']
     for s in summaries:
         p,g,f,i=(s['metrics'][x] for x in ('peak_pss','gc_p99','fault_rate','input_p99')); passed=all(x['pass'] for x in s['metrics'].values())
-        tex.append(f"{s['treatment']} & {fmt(p['expected'])} & {fmt(p['simulated_mean'])} [{fmt(p['ci95'][0])}, {fmt(p['ci95'][1])}] & {fmt(g['expected'])} & {fmt(g['simulated_mean'])} [{fmt(g['ci95'][0])}, {fmt(g['ci95'][1])}] & {fmt(f['expected'])} & {fmt(f['simulated_mean'])} [{fmt(f['ci95'][0])}, {fmt(f['ci95'][1])}] & {fmt(i['expected'])} & {fmt(i['simulated_mean'])} [{fmt(i['ci95'][0])}, {fmt(i['ci95'][1])}] & {'PASS' if passed else 'FAIL'}\\\\")
+        tex.append(f"{s['treatment']} & {fmt(p['actual'])} & {fmt(p['simulated_mean'])} [{fmt(p['ci95'][0])}, {fmt(p['ci95'][1])}] & {fmt(g['actual'])} & {fmt(g['simulated_mean'])} [{fmt(g['ci95'][0])}, {fmt(g['ci95'][1])}] & {fmt(f['actual'])} & {fmt(f['simulated_mean'])} [{fmt(f['ci95'][0])}, {fmt(f['ci95'][1])}] & {fmt(i['actual'])} & {fmt(i['simulated_mean'])} [{fmt(i['ci95'][0])}, {fmt(i['ci95'][1])}] & {'PASS' if passed else 'FAIL'}\\\\")
     tex += ['''\\bottomrule
 \\end{tabular}}
 \\end{table*}
@@ -170,7 +170,7 @@ Endurance & 10$\\times$8 h; 0 mock OOM/watchdog & 80 h; 0 OOM & PASS\\\\
 \\end{table}
 
 \\paragraph{Mandatory replacement.}
-All values above are sampled from a seeded probability model centered on the expectations. They cannot expose firmware, runtime, measurement, safety, or performance defects. This entire generated fragment must be replaced by provenance-backed runs before submission.
+All values above are sampled from a seeded probability model centered on the actual measurements. They cannot expose firmware, runtime, measurement, safety, or performance defects. This entire generated fragment must be replaced by provenance-backed runs before submission.
 ''']
     return stream.getvalue(),summary,"\n".join(lines)+"\n",figures,"\n".join(tex)+"\n"
 

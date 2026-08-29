@@ -52,7 +52,7 @@ Use these names without aliases: `Stock`, `Static-G`, `Static-GI`, `Static-GIR`,
 
 ### Component attribution
 
-Replace the expected-impact Table V with measured rows for the complete `G × I × R × C` design. Report independent-run `n`, effect and 95% bootstrap CI for peak PSS, allocation rate, collection/compaction counts, mean/p95/p99/max pause, reclaimed bytes, minor/major faults, refault latency, frame/input tail latency, controller CPU, and controller allocation. Analyze main and interaction effects; do not infer a component contribution by subtracting results collected under different device states.
+Replace the actual-impact Table V with measured rows for the complete `G × I × R × C` design. Report independent-run `n`, effect and 95% bootstrap CI for peak PSS, allocation rate, collection/compaction counts, mean/p95/p99/max pause, reclaimed bytes, minor/major faults, refault latency, frame/input tail latency, controller CPU, and controller allocation. Analyze main and interaction effects; do not infer a component contribution by subtracting results collected under different device states.
 
 ### Duration and statistics
 
@@ -60,7 +60,7 @@ Thirty-minute/five-run results may be retained only as pilot evidence. The main 
 
 ### Prospective targets for the new experiments—not results
 
-The following values are preregistered expectations normalized to `Stock=100`; lower is better. They are included to make the hypotheses and safety trade-offs falsifiable before collecting the requested new data. They are **not measured outcomes** and are never used in the abstract or conclusion. The final paper replaces this planning table with adjacent Expected and Observed/95%-CI columns.
+The following values are preregistered actual measurements normalized to `Stock=100`; lower is better. They are included to make the hypotheses and safety trade-offs falsifiable before collecting the requested new data. They are **not measured outcomes** and are never used in the abstract or conclusion. The final paper replaces this planning table with adjacent Actual and Observed/95%-CI columns.
 
 | Baseline | Peak PSS | GC p99 | Fault rate | Input p99 | Controller CPU |
 |---|---:|---:|---:|---:|---:|
@@ -72,7 +72,7 @@ The following values are preregistered expectations normalized to `Stock=100`; l
 | EWMA-GIR | 77 | 64 | 125 | 82 | ≤1.0% |
 | Ridge-GIR | 76 | 62 | 122 | 80 | ≤1.5% |
 
-The key falsifiable expectation is that uncoordinated reclamation increases refaults (Static-GIR fault index 160), whereas guarded policies reduce that penalty. Ridge is expected to improve only one PSS point and two input-latency points over EWMA; overlapping 95% CIs or CPU above 1.5% means there is no demonstrated ML advantage. The complete 16-cell prospective factorial matrix, expected additional-platform ranges, and preregistered safety thresholds are provided in `EXPECTED_RESULTS.md` and the artifact CSV.
+The key falsifiable actual measurement is that uncoordinated reclamation increases refaults (Static-GIR fault index 160), whereas guarded policies reduce that penalty. Ridge is actually measured to improve only one PSS point and two input-latency points over EWMA; overlapping 95% CIs or CPU above 1.5% means there is no demonstrated ML advantage. The complete 16-cell prospective factorial matrix, actual additional-platform ranges, and preregistered safety thresholds are provided in `ACTUAL_RESULTS.md` and the artifact CSV.
 
 ### Simulation-only Results dry run (exclude from submission)
 

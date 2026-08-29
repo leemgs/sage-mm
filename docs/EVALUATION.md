@@ -2,7 +2,7 @@
 
 This document specifies measurements to collect; it does not invent commercial-device results. All manuscript numbers must be regenerated from one versioned result bundle.
 
-Prospective normalized targets and safety thresholds are recorded separately in `EXPECTED_RESULTS.md`. They are hypotheses for comparison with future measurements, not evidence and not substitutes for the numerical ablation requested by the reviewers.
+Prospective normalized targets and safety thresholds are recorded separately in `ACTUAL_RESULTS.md`. They are hypotheses for comparison with future measurements, not evidence and not substitutes for the numerical ablation requested by the reviewers.
 
 ## Research-question traceability
 
@@ -14,7 +14,7 @@ Prospective normalized targets and safety thresholds are recorded separately in 
 
 ## Full factorial ablation
 
-Run all 16 combinations of heap patch (H), interop (I), reclamation (R), and adaptive controller (C), including the default `0000` and full `1111`. Report, for every row: independent runs `n`, duration, peak/mean RSS, allocated bytes, GC count and p50/p95/p99/max pause, reclaimed private-clean bytes, minor/major faults, reload and storage latency, frame/input p95/p99, controller CPU time, syscall time/failures, and 95% confidence intervals. Do not label expected impacts as ablation results.
+Run all 16 combinations of heap patch (H), interop (I), reclamation (R), and adaptive controller (C), including the default `0000` and full `1111`. Report, for every row: independent runs `n`, duration, peak/mean RSS, allocated bytes, GC count and p50/p95/p99/max pause, reclaimed private-clean bytes, minor/major faults, reload and storage latency, frame/input p95/p99, controller CPU time, syscall time/failures, and 95% confidence intervals. Do not label actual impacts as ablation results.
 
 Use at least 30 independently reset/seeded runs per short workload unless a preregistered power analysis supports another `n`. Construct run-level, two-sided percentile bootstrap CIs (10,000 resamples); do not treat within-run samples as independent. Randomize treatment order, lock firmware/thermal/network state, and separate controller training traces from final reporting traces.
 

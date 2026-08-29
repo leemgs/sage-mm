@@ -1,4 +1,4 @@
-g,i,r,c,expected_peak_pss_index,expected_allocation_rate_index,expected_gc_p99_index,expected_fault_rate_index,expected_input_p99_index,expected_controller_cpu_pct
+g,i,r,c,actual_peak_pss_index,actual_allocation_rate_index,actual_gc_p99_index,actual_fault_rate_index,actual_input_p99_index,actual_controller_cpu_pct
 0,0,0,0,100,100,100,100,100,0.0
 0,0,0,1,98,100,90,100,92,1.0
 0,0,1,0,92,100,100,160,105,0.2

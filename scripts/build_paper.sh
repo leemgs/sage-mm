@@ -4,6 +4,10 @@ set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 python3 "$root/scripts/generate_simulated_results.py" --check
 
+if [[ "${1:-}" == "--submission" ]]; then
+  python3 "$root/scripts/check_submission_readiness.py"
+fi
+
 if ! command -v pdflatex >/dev/null || ! command -v bibtex >/dev/null; then
   echo "pdflatex and bibtex are required" >&2
   exit 2

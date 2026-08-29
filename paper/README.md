@@ -33,32 +33,24 @@ If `acmart.cls` is not installed, get it from CTAN (<https://ctan.org/pkg/acmart
 or `tlmgr install acmart`. Do **not** vendor a modified `acmart.cls`; ACM
 requires the unmodified current class.
 
-## Zero-cost publication compliance (author fee = $0)
+## Publication-cost warning for 2026
 
-ACM TECS is a **traditional subscription (hybrid)** journal. Publishing is free
-of charge to authors **unless** you opt into ACM Open / Gold Open Access. To
-keep the author-facing Article Processing Charge (APC) at **$0**:
+Do not rely on the earlier assumption that a traditional subscription route
+guarantees a zero author fee. ACM announced a transition to fully open-access
+publication beginning in 2026. Whether the corresponding author pays nothing
+depends on current ACM policy, ACM Open institutional participation, geographic
+or discretionary waivers, and the acceptance year. Confirm coverage in writing
+before submission: <https://libraries.acm.org/subscriptions-access/acmopen> and
+<https://www.acm.org/publications/openaccess>.
 
-1. **Do not** select ACM Open / Gold OA at submission or acceptance. Publish
-   under the default subscription model.
-2. **Do not** use a Creative Commons copyright option in LaTeX
-   (`\setcopyright{cc}` and the `acmcopyright`/CC variants signal the paid OA
-   route). This manuscript uses `\setcopyright{rightsretained}` as a neutral
-   placeholder; ACM supplies the final rights block at acceptance based on the
-   (no-fee) e-rights form.
-3. TECS has **no mandatory page charge** and **no color charge** for the
-   subscription route. There is no per-page fee to stay under.
-4. If your institution has an **ACM Open** agreement, OA is provided at **no
-   cost to you** — but that is an institutional arrangement, not an author
-   payment. Only rely on it if your institution is confirmed to participate.
-
-> Net: with the settings in this repo and the default subscription route,
-> author cost is $0.
+The copyright command in this draft is only a placeholder; ACM supplies the
+accepted-paper rights metadata. It is not a mechanism for avoiding an APC.
 
 ## Length
 
-ACM `acmsmall` (TECS) does **not** impose a hard page cap, and the subscription
-route carries **no per-page charge**, so page count does not affect author cost.
+Verify the current TECS author instructions for page limits, excess-page policy,
+and artifact/supplement rules. This repository makes no zero-fee or unlimited-
+length guarantee.
 
 The manuscript includes a generated simulation-only Results dry run containing
 RQ1--RQ3 mock prose, three in-document figures, the complete 16-row factorial
@@ -70,8 +62,16 @@ evidence rather than padding toward 18--25 pages.
 
 ## Results discipline
 
-Per `docs/REVISION_NOTES.md` and `docs/EXPECTED_RESULTS.md`, normalized targets
+Per `docs/REVISION_NOTES.md` and `docs/ACTUAL_RESULTS.md`, normalized targets
 are labeled preregistered hypotheses and generated mock values are visibly
 marked **SIMULATED---NOT OBSERVED**. Fill the same schemas from one versioned
 observed-result bundle, remove the generated fragment, and never quote a mock
 value as an achieved improvement.
+
+## Submission gate
+
+Normal `bash ../scripts/build_paper.sh` builds the visibly watermarked internal
+simulation draft. `bash ../scripts/build_paper.sh --submission` first runs a
+hard gate and currently fails by design: simulation mode, author-affiliation
+placeholders, unverified bibliography records, and the absent observed-results
+fragment are blockers. See `SUBMISSION_READINESS.md`.

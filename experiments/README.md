@@ -1,6 +1,6 @@
 # Experiment data contract
 
-`expected_factorial_targets.csv` contains **prospective engineering targets**, not measurements. Every index is normalized to prospective `Stock=100`; lower is better. The values are hypotheses used for power analysis, regression detection, and predeclared success criteria. They must never populate a Results section or abstract as observed effects.
+`actual_factorial_targets.csv` contains **prospective engineering targets**, not measurements. Every index is normalized to prospective `Stock=100`; lower is better. The values are hypotheses used for power analysis, regression detection, and predeclared success criteria. They must never populate a Results section or abstract as observed effects.
 
 Actual run-level data belong in a separate CSV (not committed if restricted) with columns:
 

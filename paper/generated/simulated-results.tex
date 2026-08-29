@@ -44,7 +44,7 @@
 \end{figure}
 
 \begin{table*}[t]
-\caption{\textbf{SIMULATED---NOT OBSERVED.} Full $2^4$ pipeline dry run ($n=30$ generated samples/cell; 10,000 seeded bootstrap resamples). E=prospective expected index; S=simulated mean [95\% CI]. Synthetic PASS tests only the reporting pipeline.}
+\caption{\textbf{SIMULATED---NOT OBSERVED.} Full $2^4$ pipeline dry run ($n=30$ generated samples/cell; 10,000 seeded bootstrap resamples). E=prospective actual index; S=simulated mean [95\% CI]. Synthetic PASS tests only the reporting pipeline.}
 \label{tab:sim-factorial}
 \centering\scriptsize
 \resizebox{\textwidth}{!}{%
@@ -100,5 +100,5 @@ Endurance & 10$\times$8 h; 0 mock OOM/watchdog & 80 h; 0 OOM & PASS\\
 \end{table}
 
 \paragraph{Mandatory replacement.}
-All values above are sampled from a seeded probability model centered on the expectations. They cannot expose firmware, runtime, measurement, safety, or performance defects. This entire generated fragment must be replaced by provenance-backed runs before submission.
+All values above are sampled from a seeded probability model centered on the actual measurements. They cannot expose firmware, runtime, measurement, safety, or performance defects. This entire generated fragment must be replaced by provenance-backed runs before submission.
 

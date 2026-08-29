@@ -49,7 +49,7 @@ scripts/
   summarize_results.py    # deterministic run-level bootstrap summaries
   generate_simulated_results.py # synthetic pipeline/layout dry run
 experiments/
-  expected_factorial_targets.csv # prospective targets, never measured results
+  actual_factorial_targets.csv # prospective targets, never measured results
 docs/
   ARCHITECTURE.md         # component overview, signals, safety notes
 ```
@@ -63,7 +63,7 @@ docs/
 
 The exact implementation boundary, controller equations, coldness score, experimental protocol, ablation schema, related-work comparison, and claim audit requested during review are recorded in [`docs/REVISION_NOTES.md`](docs/REVISION_NOTES.md). Raw measurements must be inserted into its schemas; this repository intentionally does not invent missing results.
 
-Numeric planning targets requested before the additional experiments are in [`docs/EXPECTED_RESULTS.md`](docs/EXPECTED_RESULTS.md). They are explicitly normalized, prospective hypotheses; `scripts/summarize_results.py` must be run on independent observed runs before any number is described as a result.
+Numeric planning targets requested before the additional experiments are in [`docs/ACTUAL_RESULTS.md`](docs/ACTUAL_RESULTS.md). They are explicitly normalized, prospective hypotheses; `scripts/summarize_results.py` must be run on independent observed runs before any number is described as a result.
 
 [`docs/SIMULATED_RESULTS.md`](docs/SIMULATED_RESULTS.md) exercises the planned RQ1–RQ3 narrative, three SVG figures, all 16 factorial rows with synthetic CIs, an additional-platform row, and adverse/endurance tables. Every generated artifact is watermarked simulation-only. It is a pipeline/layout test and cannot detect firmware bugs or be submitted as empirical evidence.
 

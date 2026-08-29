@@ -10,56 +10,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             99.50037816994042,
             100.99330170955746
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.24545754946195
         },
         "controller_cpu": {
+          "actual": 0.0,
           "ci95": [
             0.008908264399236069,
             0.04499769675767287
           ],
-          "expected": 0.0,
           "pass": true,
           "simulated_mean": 0.024943221403689157
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             96.41584801893961,
             101.72763392268666
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 99.09412776294424
         },
         "gc_p99": {
+          "actual": 100.0,
           "ci95": [
             99.28600018586519,
             101.05629344455903
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.17018200541848
         },
         "input_p99": {
+          "actual": 100.0,
           "ci95": [
             99.19777626486126,
             100.97879061761543
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.07850695842254
         },
         "peak_pss": {
+          "actual": 100.0,
           "ci95": [
             99.55838862560611,
             100.68745248592838
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.13553165188405
         }
@@ -76,56 +76,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             99.17163905119725,
             101.01413823754541
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.10723849913009
         },
         "controller_cpu": {
+          "actual": 1.0,
           "ci95": [
             0.9699257100445653,
             1.0192359847009416
           ],
-          "expected": 1.0,
           "pass": true,
           "simulated_mean": 0.9951037526586667
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             98.58301854062779,
             103.43986373507049
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 101.0663097255761
         },
         "gc_p99": {
+          "actual": 90.0,
           "ci95": [
             89.35080816383548,
             91.01914505552857
           ],
-          "expected": 90.0,
           "pass": true,
           "simulated_mean": 90.16460175144805
         },
         "input_p99": {
+          "actual": 92.0,
           "ci95": [
             91.55047425189117,
             92.81447258270654
           ],
-          "expected": 92.0,
           "pass": true,
           "simulated_mean": 92.17121263675037
         },
         "peak_pss": {
+          "actual": 98.0,
           "ci95": [
             97.82220870523778,
             99.31368652847793
           ],
-          "expected": 98.0,
           "pass": true,
           "simulated_mean": 98.59279774068469
         }
@@ -142,56 +142,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             99.47421800348765,
             101.14445087828425
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.29243165890044
         },
         "controller_cpu": {
+          "actual": 0.2,
           "ci95": [
             0.18987345603556502,
             0.23623598189305986
           ],
-          "expected": 0.2,
           "pass": true,
           "simulated_mean": 0.21346099216626574
         },
         "fault_rate": {
+          "actual": 160.0,
           "ci95": [
             157.77078161453707,
             161.74379413634531
           ],
-          "expected": 160.0,
           "pass": true,
           "simulated_mean": 159.70595233569117
         },
         "gc_p99": {
+          "actual": 100.0,
           "ci95": [
             99.45120515543677,
             101.50068478132239
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.4607148088453
         },
         "input_p99": {
+          "actual": 105.0,
           "ci95": [
             104.25205752888479,
             106.04061384320146
           ],
-          "expected": 105.0,
           "pass": true,
           "simulated_mean": 105.166780236026
         },
         "peak_pss": {
+          "actual": 92.0,
           "ci95": [
             90.7978409233915,
             92.15929409562355
           ],
-          "expected": 92.0,
           "pass": true,
           "simulated_mean": 91.46059561923607
         }
@@ -208,56 +208,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             99.23105664224241,
             100.90969811375928
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.06938232736483
         },
         "controller_cpu": {
+          "actual": 1.2,
           "ci95": [
             1.1755648150412152,
             1.2281352215534787
           ],
-          "expected": 1.2,
           "pass": true,
           "simulated_mean": 1.2014939187455416
         },
         "fault_rate": {
+          "actual": 125.0,
           "ci95": [
             122.7431142976579,
             127.92312991557729
           ],
-          "expected": 125.0,
           "pass": true,
           "simulated_mean": 125.29055911094727
         },
         "gc_p99": {
+          "actual": 90.0,
           "ci95": [
             89.4351530084736,
             91.33845886614347
           ],
-          "expected": 90.0,
           "pass": true,
           "simulated_mean": 90.3631147973833
         },
         "input_p99": {
+          "actual": 96.0,
           "ci95": [
             95.76833231303652,
             97.51357259138705
           ],
-          "expected": 96.0,
           "pass": true,
           "simulated_mean": 96.62919148932812
         },
         "peak_pss": {
+          "actual": 90.0,
           "ci95": [
             88.91106921461771,
             90.26119148040793
           ],
-          "expected": 90.0,
           "pass": true,
           "simulated_mean": 89.59662091742548
         }
@@ -274,56 +274,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             71.42076157187716,
             73.22142800778097
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 72.29499507265281
         },
         "controller_cpu": {
+          "actual": 0.1,
           "ci95": [
             0.08640481006086248,
             0.14517626964344607
           ],
-          "expected": 0.1,
           "pass": true,
           "simulated_mean": 0.11522586909689488
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             97.90524328825188,
             102.29987612750215
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.05049157924215
         },
         "gc_p99": {
+          "actual": 95.0,
           "ci95": [
             93.98056603351746,
             95.64639433647203
           ],
-          "expected": 95.0,
           "pass": true,
           "simulated_mean": 94.80446071361025
         },
         "input_p99": {
+          "actual": 96.0,
           "ci95": [
             95.53627119155401,
             97.28230202283218
           ],
-          "expected": 96.0,
           "pass": true,
           "simulated_mean": 96.41190756011991
         },
         "peak_pss": {
+          "actual": 93.0,
           "ci95": [
             91.74312407404476,
             93.16780593571413
           ],
-          "expected": 93.0,
           "pass": true,
           "simulated_mean": 92.43094945187069
         }
@@ -340,56 +340,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             71.40092249263228,
             73.08641288708525
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 72.24173060079657
         },
         "controller_cpu": {
+          "actual": 1.1,
           "ci95": [
             1.0688496108130077,
             1.1265332113179742
           ],
-          "expected": 1.1,
           "pass": true,
           "simulated_mean": 1.097637147404189
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             97.85017701424442,
             101.99932364532222
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 99.99086643928254
         },
         "gc_p99": {
+          "actual": 86.0,
           "ci95": [
             85.47627908063836,
             87.16623871351732
           ],
-          "expected": 86.0,
           "pass": true,
           "simulated_mean": 86.32839444515929
         },
         "input_p99": {
+          "actual": 89.0,
           "ci95": [
             87.7186144969831,
             89.45836697777646
           ],
-          "expected": 89.0,
           "pass": true,
           "simulated_mean": 88.579750814211
         },
         "peak_pss": {
+          "actual": 91.0,
           "ci95": [
             90.10336488277731,
             91.19433546953313
           ],
-          "expected": 91.0,
           "pass": true,
           "simulated_mean": 90.64808377587838
         }
@@ -406,56 +406,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             70.55001786044234,
             72.66413050567158
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 71.59939932449451
         },
         "controller_cpu": {
+          "actual": 0.3,
           "ci95": [
             0.2684860267279011,
             0.3244460953168889
           ],
-          "expected": 0.3,
           "pass": true,
           "simulated_mean": 0.2973007720251589
         },
         "fault_rate": {
+          "actual": 160.0,
           "ci95": [
             156.4906266766813,
             160.64003618906102
           ],
-          "expected": 160.0,
           "pass": true,
           "simulated_mean": 158.50927777944523
         },
         "gc_p99": {
+          "actual": 95.0,
           "ci95": [
             94.98487803089313,
             96.51161407968365
           ],
-          "expected": 95.0,
           "pass": true,
           "simulated_mean": 95.75340645380149
         },
         "input_p99": {
+          "actual": 101.0,
           "ci95": [
             100.56776907795721,
             102.06489432687107
           ],
-          "expected": 101.0,
           "pass": true,
           "simulated_mean": 101.29296365093133
         },
         "peak_pss": {
+          "actual": 85.0,
           "ci95": [
             84.12126108199692,
             85.87594716841852
           ],
-          "expected": 85.0,
           "pass": true,
           "simulated_mean": 85.01655421392225
         }
@@ -472,56 +472,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             71.45519221498967,
             73.07300969213892
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 72.24422767800755
         },
         "controller_cpu": {
+          "actual": 1.3,
           "ci95": [
             1.268022131165226,
             1.3142159253413987
           ],
-          "expected": 1.3,
           "pass": true,
           "simulated_mean": 1.291006584215016
         },
         "fault_rate": {
+          "actual": 125.0,
           "ci95": [
             123.70616015996742,
             128.774933112878
           ],
-          "expected": 125.0,
           "pass": true,
           "simulated_mean": 126.2271120065388
         },
         "gc_p99": {
+          "actual": 86.0,
           "ci95": [
             84.71666106078342,
             86.56697018679955
           ],
-          "expected": 86.0,
           "pass": true,
           "simulated_mean": 85.65389778519518
         },
         "input_p99": {
+          "actual": 92.0,
           "ci95": [
             90.89191737578473,
             92.3197590424285
           ],
-          "expected": 92.0,
           "pass": true,
           "simulated_mean": 91.59682201361653
         },
         "peak_pss": {
+          "actual": 83.0,
           "ci95": [
             82.39999360099743,
             83.46208223129601
           ],
-          "expected": 83.0,
           "pass": true,
           "simulated_mean": 82.94776890099622
         }
@@ -538,56 +538,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             98.96062407317609,
             100.60448847267665
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 99.7968283882663
         },
         "controller_cpu": {
+          "actual": 0.1,
           "ci95": [
             0.06834071331463176,
             0.11661403304954586
           ],
-          "expected": 0.1,
           "pass": true,
           "simulated_mean": 0.09155243758414051
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             101.23130344042521,
             105.92884485356434
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 103.6142733354061
         },
         "gc_p99": {
+          "actual": 75.0,
           "ci95": [
             73.73286943005746,
             75.25834455798571
           ],
-          "expected": 75.0,
           "pass": true,
           "simulated_mean": 74.52084698281092
         },
         "input_p99": {
+          "actual": 90.0,
           "ci95": [
             89.29005793767286,
             91.11390868705222
           ],
-          "expected": 90.0,
           "pass": true,
           "simulated_mean": 90.17055729279397
         },
         "peak_pss": {
+          "actual": 94.0,
           "ci95": [
             93.72004556875243,
             95.32938959250872
           ],
-          "expected": 94.0,
           "pass": true,
           "simulated_mean": 94.53508644966436
         }
@@ -604,56 +604,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             98.96692753330433,
             100.87862347592564
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 99.95154461635924
         },
         "controller_cpu": {
+          "actual": 1.1,
           "ci95": [
             1.0682201521157286,
             1.1273089753296495
           ],
-          "expected": 1.1,
           "pass": true,
           "simulated_mean": 1.0971372408844902
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             94.75261304411386,
             100.06705657883901
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 97.44712488778973
         },
         "gc_p99": {
+          "actual": 68.0,
           "ci95": [
             66.94620831857989,
             68.74910887968778
           ],
-          "expected": 68.0,
           "pass": true,
           "simulated_mean": 67.84606285929384
         },
         "input_p99": {
+          "actual": 83.0,
           "ci95": [
             82.0656385399817,
             83.46003653536269
           ],
-          "expected": 83.0,
           "pass": true,
           "simulated_mean": 82.75992690447062
         },
         "peak_pss": {
+          "actual": 92.0,
           "ci95": [
             90.86854353265178,
             92.56969120663268
           ],
-          "expected": 92.0,
           "pass": true,
           "simulated_mean": 91.74561315673593
         }
@@ -670,56 +670,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             99.30940221449801,
             100.98349422708087
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.12987207326869
         },
         "controller_cpu": {
+          "actual": 0.3,
           "ci95": [
             0.28004578705064226,
             0.3358103156846391
           ],
-          "expected": 0.3,
           "pass": true,
           "simulated_mean": 0.3074913411057631
         },
         "fault_rate": {
+          "actual": 160.0,
           "ci95": [
             159.9535185796469,
             164.7065173547834
           ],
-          "expected": 160.0,
           "pass": true,
           "simulated_mean": 162.33614217614135
         },
         "gc_p99": {
+          "actual": 75.0,
           "ci95": [
             73.46883261806599,
             75.52133927963634
           ],
-          "expected": 75.0,
           "pass": true,
           "simulated_mean": 74.49045508842677
         },
         "input_p99": {
+          "actual": 95.0,
           "ci95": [
             92.82402542071647,
             94.7091232804929
           ],
-          "expected": 95.0,
           "pass": true,
           "simulated_mean": 93.76308518915624
         },
         "peak_pss": {
+          "actual": 86.0,
           "ci95": [
             85.06778714963475,
             86.62099760519266
           ],
-          "expected": 86.0,
           "pass": true,
           "simulated_mean": 85.86002716806748
         }
@@ -736,56 +736,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 100.0,
           "ci95": [
             99.51276598616882,
             101.18650036495522
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.33413977573147
         },
         "controller_cpu": {
+          "actual": 1.3,
           "ci95": [
             1.2771344847346555,
             1.3143441156595697
           ],
-          "expected": 1.3,
           "pass": true,
           "simulated_mean": 1.295043108467083
         },
         "fault_rate": {
+          "actual": 125.0,
           "ci95": [
             124.43641668012904,
             129.31637309485964
           ],
-          "expected": 125.0,
           "pass": true,
           "simulated_mean": 126.87532701574507
         },
         "gc_p99": {
+          "actual": 68.0,
           "ci95": [
             67.63983126677236,
             69.3028610262885
           ],
-          "expected": 68.0,
           "pass": true,
           "simulated_mean": 68.44689227115448
         },
         "input_p99": {
+          "actual": 86.0,
           "ci95": [
             85.01549294126959,
             86.74609384990585
           ],
-          "expected": 86.0,
           "pass": true,
           "simulated_mean": 85.86207726752431
         },
         "peak_pss": {
+          "actual": 84.0,
           "ci95": [
             83.41936310076586,
             85.0383528921277
           ],
-          "expected": 84.0,
           "pass": true,
           "simulated_mean": 84.22238856147133
         }
@@ -802,56 +802,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             71.24697396696081,
             73.33165978074928
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 72.28442807636884
         },
         "controller_cpu": {
+          "actual": 0.2,
           "ci95": [
             0.17203628111913433,
             0.23676618210313838
           ],
-          "expected": 0.2,
           "pass": true,
           "simulated_mean": 0.20435552793929132
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             97.01230285997728,
             101.6097840929321
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 99.31125350552237
         },
         "gc_p99": {
+          "actual": 71.0,
           "ci95": [
             70.33388194408035,
             72.01314077213857
           ],
-          "expected": 71.0,
           "pass": true,
           "simulated_mean": 71.179033214668
         },
         "input_p99": {
+          "actual": 86.0,
           "ci95": [
             86.02789237942984,
             87.53967664712049
           ],
-          "expected": 86.0,
           "pass": true,
           "simulated_mean": 86.78677730804178
         },
         "peak_pss": {
+          "actual": 87.0,
           "ci95": [
             85.86488833065252,
             87.16461337067769
           ],
-          "expected": 87.0,
           "pass": true,
           "simulated_mean": 86.51467810334822
         }
@@ -868,56 +868,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             71.5247682654752,
             72.92235845764662
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 72.22250008730039
         },
         "controller_cpu": {
+          "actual": 1.2,
           "ci95": [
             1.1658245430266188,
             1.236450110953807
           ],
-          "expected": 1.2,
           "pass": true,
           "simulated_mean": 1.2024879456848148
         },
         "fault_rate": {
+          "actual": 100.0,
           "ci95": [
             97.94227020578481,
             102.7989473714062
           ],
-          "expected": 100.0,
           "pass": true,
           "simulated_mean": 100.35159921671426
         },
         "gc_p99": {
+          "actual": 64.0,
           "ci95": [
             63.02267836045464,
             64.94233966129424
           ],
-          "expected": 64.0,
           "pass": true,
           "simulated_mean": 63.974214635890945
         },
         "input_p99": {
+          "actual": 79.0,
           "ci95": [
             79.24549507592356,
             80.63690848375892
           ],
-          "expected": 79.0,
           "pass": true,
           "simulated_mean": 79.9391945418601
         },
         "peak_pss": {
+          "actual": 85.0,
           "ci95": [
             83.84325090315187,
             85.4791229406411
           ],
-          "expected": 85.0,
           "pass": true,
           "simulated_mean": 84.64184216865422
         }
@@ -934,56 +934,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             70.24750123807056,
             72.1313344712615
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 71.21630978581432
         },
         "controller_cpu": {
+          "actual": 0.4,
           "ci95": [
             0.3755535168824364,
             0.42294035999631463
           ],
-          "expected": 0.4,
           "pass": true,
           "simulated_mean": 0.3992577646462811
         },
         "fault_rate": {
+          "actual": 160.0,
           "ci95": [
             157.86816341027838,
             162.5822598129577
           ],
-          "expected": 160.0,
           "pass": true,
           "simulated_mean": 160.25880583865234
         },
         "gc_p99": {
+          "actual": 71.0,
           "ci95": [
             70.46585833733356,
             71.73288953213465
           ],
-          "expected": 71.0,
           "pass": true,
           "simulated_mean": 71.12572595351774
         },
         "input_p99": {
+          "actual": 91.0,
           "ci95": [
             89.98787879273995,
             91.57387456744839
           ],
-          "expected": 91.0,
           "pass": true,
           "simulated_mean": 90.79403501871909
         },
         "peak_pss": {
+          "actual": 79.0,
           "ci95": [
             78.56740774654001,
             80.0711664121863
           ],
-          "expected": 79.0,
           "pass": true,
           "simulated_mean": 79.34007581339365
         }
@@ -1000,56 +1000,56 @@
       },
       "metrics": {
         "allocation": {
+          "actual": 72.0,
           "ci95": [
             71.11411502175939,
             73.21843380439529
           ],
-          "expected": 72.0,
           "pass": true,
           "simulated_mean": 72.16376743283642
         },
         "controller_cpu": {
+          "actual": 1.4,
           "ci95": [
             1.3783957270041278,
             1.4273607327944218
           ],
-          "expected": 1.4,
           "pass": true,
           "simulated_mean": 1.4018395372326735
         },
         "fault_rate": {
+          "actual": 125.0,
           "ci95": [
             123.98547900464597,
             128.60378574241466
           ],
-          "expected": 125.0,
           "pass": true,
           "simulated_mean": 126.26262678965925
         },
         "gc_p99": {
+          "actual": 64.0,
           "ci95": [
             63.13849093056782,
             64.9568381030075
           ],
-          "expected": 64.0,
           "pass": true,
           "simulated_mean": 64.02400429527475
         },
         "input_p99": {
+          "actual": 82.0,
           "ci95": [
             80.62566133228513,
             82.22878975751522
           ],
-          "expected": 82.0,
           "pass": true,
           "simulated_mean": 81.42112342529357
         },
         "peak_pss": {
+          "actual": 77.0,
           "ci95": [
             76.08364450041363,
             77.61453974880995
           ],
-          "expected": 77.0,
           "pass": true,
           "simulated_mean": 76.84460769025827
         }
