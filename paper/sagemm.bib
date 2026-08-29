@@ -1,0 +1,82 @@
+%% =====================================================================
+%% SAGE-MM bibliography.
+%%
+%% NOTE (citation audit, per docs/LITERATURE_AUDIT.md): the reviewer-
+%% supplied DOIs for AGC and DumpKV both repeated arXiv 2406.01250, which
+%% is incorrect. Verify every record below against the publisher of record
+%% before submission; replace preprint DOIs with the final published DOIs.
+%% Do NOT claim empirical superiority over an unported collector.
+%% =====================================================================
+
+@inproceedings{lxr2022,
+  author    = {Zhao, Wenyu and Blackburn, Stephen M. and McKinley, Kathryn S.},
+  title     = {Low-Latency, High-Throughput Garbage Collection},
+  booktitle = {Proceedings of the 43rd ACM SIGPLAN International Conference
+               on Programming Language Design and Implementation (PLDI)},
+  year      = {2022},
+  pages     = {76--91},
+  doi       = {10.1145/3519939.3523440},
+  publisher = {ACM}
+}
+
+@inproceedings{platinum2020,
+  author    = {Wu, Mingyu and Yang, Ziming and Chen, Haibo and others},
+  title     = {Platinum: A {CPU}-Efficient Concurrent Garbage Collector for
+               Tail-Reduction of Interactive Services},
+  booktitle = {Proceedings of the 2020 USENIX Annual Technical Conference
+               (USENIX ATC)},
+  year      = {2020},
+  pages     = {159--172},
+  note      = {Verify venue identifiers in the final bibliography; the ACM
+               index identifier 10.5555/3489146.3489157 is not an
+               author-assigned DOI},
+  publisher = {USENIX Association}
+}
+
+@article{agc2025,
+  author  = {Sun, Hui and others},
+  title   = {{AGC}: An Adaptive Workload Burst-Aware Garbage Collection
+             Mechanism for High-Performance {SSDs}},
+  journal = {IEEE Transactions on Computers},
+  year    = {2025},
+  note    = {Storage GC; conceptual precedent, not a managed-runtime
+             baseline. Verify and add the final IEEE DOI before submission
+             (reviewer-supplied preprint DOI 10.48550/arXiv.2406.01250 must
+             be checked)}
+}
+
+@article{dumpkv2024,
+  author  = {Zhuang, Zhutao and Zeng, Xiaoge and Chen, Zhen},
+  title   = {{DumpKV}: Learning Based Lifetime Aware Garbage Collection for
+             Key Value Separation in {LSM}-Tree},
+  journal = {Proceedings of the VLDB Endowment (PVLDB)},
+  volume  = {18},
+  number  = {4},
+  year    = {2024},
+  pages   = {1223--1236},
+  note    = {Storage GC; motivates lightweight learning comparison only.
+             Verify the publisher DOI; do not copy the repeated arXiv DOI}
+}
+
+@manual{madvise,
+  title        = {madvise(2) --- Linux Programmer's Manual},
+  author       = {{Linux man-pages project}},
+  note         = {MADV\_DONTNEED semantics for file-backed private mappings},
+  year         = {2024}
+}
+
+@manual{monoruntime,
+  title        = {Mono Runtime Documentation},
+  author       = {{Mono Project}},
+  note         = {Cite the exact vendor Mono source commit and patch hash
+                  used in the evaluated firmware},
+  year         = {2024}
+}
+
+@manual{dotnetinterop,
+  title        = {.NET Interoperability and Garbage Collection Documentation},
+  author       = {{Microsoft}},
+  note         = {Authoritative reference for managed/native interop and
+                  collector behavior},
+  year         = {2024}
+}
