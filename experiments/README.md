@@ -1,0 +1,11 @@
+# Experiment data contract
+
+`expected_factorial_targets.csv` contains **prospective engineering targets**, not measurements. Every index is normalized to prospective `Stock=100`; lower is better. The values are hypotheses used for power analysis, regression detection, and predeclared success criteria. They must never populate a Results section or abstract as observed effects.
+
+Actual run-level data belong in a separate CSV (not committed if restricted) with columns:
+
+```text
+treatment,platform,workload,run_id,peak_pss_mb,allocation_rate_mb_s,gc_p99_ms,fault_rate_s,input_p99_ms,controller_cpu_pct
+```
+
+Treatment names are `Stock`, `Static-G`, `Static-GI`, `Static-GIR`, `Threshold-GIR`, `EWMA-GIR`, and `Ridge-GIR`. Each row is an independently reset run, not an interval sample. Run `python3 scripts/summarize_results.py actual.csv --output results.json` to create deterministic run-level bootstrap summaries. Commit the generated result only after provenance review.

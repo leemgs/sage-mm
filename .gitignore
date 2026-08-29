@@ -1,1 +1,8 @@
 .env
+**/bin/
+**/obj/
+native/peflush/*.o
+native/peflush/*.so
+
+**/__pycache__/
+*.pyc
