@@ -14,7 +14,7 @@ public static class AssemblyColdness
     public static IReadOnlyList<AssemblyActivity> Select(IEnumerable<AssemblyActivity> input,
         DateTime nowUtc, long byteBudget)
     {
-        var items = input.Where(x => x.CleanBytes > 0).ToArray();
+        var items = input.Where(x => x.CleanBytes > 0 && x.AccessCount >= 0 && x.LastAccessUtc <= nowUtc).ToArray();
         if (items.Length == 0 || byteBudget <= 0) return Array.Empty<AssemblyActivity>();
         double maxAge = Math.Max(1, items.Max(x => (nowUtc - x.LastAccessUtc).TotalSeconds));
         double maxCount = Math.Max(1, items.Max(x => x.AccessCount));

@@ -25,4 +25,12 @@ public sealed class AssemblyColdnessTests
         var item = new AssemblyActivity("a", DateTime.UnixEpoch, 0, 1);
         Assert.Empty(AssemblyColdness.Select(new[] { item }, DateTime.UtcNow, budget));
     }
+
+    [Fact]
+    public void FutureObservationsAreNotReclamationCandidates()
+    {
+        var now = new DateTime(2026, 8, 29, 0, 0, 0, DateTimeKind.Utc);
+        var future = new AssemblyActivity("future", now.AddMinutes(1), 1, 1024);
+        Assert.Empty(AssemblyColdness.Select(new[] { future }, now, 1024));
+    }
 }

@@ -52,4 +52,30 @@ public sealed class DecisionEngineTests
         Assert.False(decision.ShouldReclaim);
         Assert.Equal(ControllerFallbackReason.InvalidTelemetry, decision.FallbackReason);
     }
+
+    [Fact]
+    public void RidgeLossUsesPreviousPredictionAndThenImproves()
+    {
+        var engine = new DecisionEngine(new ControllerOptions(LearningRate: 0.01));
+        var highPressure = new TelemetrySample(60, 0.12, 200, 100);
+
+        var warmup = engine.Step(ControlMode.Ml, highPressure, 30, 20, 60);
+        var firstScored = engine.Step(ControlMode.Ml, highPressure, 30, 20, 60);
+        var secondScored = engine.Step(ControlMode.Ml, highPressure, 30, 20, 60);
+
+        Assert.Equal(0, warmup.Loss);
+        Assert.True(firstScored.Loss > 0);
+        Assert.True(secondScored.Loss < firstScored.Loss);
+    }
+
+    [Fact]
+    public void FaultStormSuppressesReclamationAtDecisionBoundary()
+    {
+        var engine = new DecisionEngine(new ControllerOptions(ReclamationFaultCeiling: 500));
+        var decision = engine.Step(ControlMode.Ewma,
+            new TelemetrySample(10, 0.08, 501, 0), 30, 20, 60);
+
+        Assert.False(decision.ShouldReclaim);
+        Assert.Equal(ControllerFallbackReason.FaultStorm, decision.FallbackReason);
+    }
 }

@@ -5,7 +5,7 @@ This repository contains a minimal reference implementation of components descri
 - A **Self‑Adaptive Controller** with EWMA and online ridge‑regression schedulers
 - Runtime **telemetry collectors** (GC pause, fragmentation, page‑fault proxy, RSS deltas)
 - **Policy Enforcer** for compaction gating and page‑cache flush scheduling
-- **`FlushPECaches()`** per‑process clean‑page dropping via `madvise(MADV_DONTNEED)` (Linux)
+- **`FlushPECaches()`** conservative file-backed mapping reclamation via `madvise(MADV_DONTNEED)` (Linux)
 - **Value‑type interop** examples and a small **Roslyn analyzer** (DTV0001) to suggest struct conversion
 - A **demo workload** that simulates app switches and allocation bursts
 - Scripts for building native helpers and running the demo
@@ -52,7 +52,7 @@ docs/
 
 ## How It Maps to the Paper
 - **Self‑Adaptive Controller (EWMA + ML)** controls `T_flush` and compaction gating with bounds and hysteresis. See `SageMM.Core/DecisionEngine.cs` and `SelfAdaptiveController.cs`.
-- **FlushPECaches()** enumerates current mappings and issues `madvise(MADV_DONTNEED)` for *clean, read‑only* candidates through `libpeflush.so`. See `FlushPECaches.cs` and `native/peflush/peflush.c`.
+- **FlushPECaches()** enumerates current mappings and issues `madvise(MADV_DONTNEED)` only for private, file-backed, non-writable candidates. The demo does not prove page cleanliness; production ports must validate `Private_Clean`. See `FlushPECaches.cs` and `native/peflush/peflush.c`.
 - **Value‑type interop** shows how to convert POD wrappers to `struct` and marshal without heap churn. See `Interop/ValueTypes.cs` and `InteropMarshalling.cs`.
 - **Telemetry** approximates GC pause, fragmentation, page faults, and RSS drift using managed hooks and `/proc`. See `Telemetry.cs`.
 - **Ablations**: Run with `--mode static`, `--mode ewma`, or `--mode ml` to compare behavior.

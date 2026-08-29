@@ -3,7 +3,7 @@ using System;
 namespace SageMM.Core;
 
 public enum ControlMode { Static, Ewma, Ml }
-public enum ControllerFallbackReason { None, InvalidTelemetry }
+public enum ControllerFallbackReason { None, InvalidTelemetry, FaultStorm }
 
 /// <summary>All controller constants, including feature scales, in one reproducible configuration.</summary>
 public sealed record ControllerOptions(
@@ -15,7 +15,8 @@ public sealed record ControllerOptions(
     double RidgePenalty = 1e-4,
     double FragmentationLow = 0.05,
     double FragmentationHigh = 0.12,
-    int MinimumCompactionDeferrals = 3);
+    int MinimumCompactionDeferrals = 3,
+    double ReclamationFaultCeiling = 500.0);
 
 public readonly record struct ControlDecision(
     double NextFlushSeconds,
@@ -33,6 +34,9 @@ public sealed class DecisionEngine
 {
     private readonly ControllerOptions _options;
     private readonly double[] _weights = { 1, 0, 0, 0, 0 }; // neutral bias + four signals
+    private double[]? _pendingFeatures;
+    private double _pendingPrediction;
+    private double _ewmaPressure = 1.0;
     private bool _compactionDisabled;
     private int _deferrals;
 
@@ -64,28 +68,45 @@ public sealed class DecisionEngine
                 FallbackReason: ControllerFallbackReason.InvalidTelemetry);
         }
 
-        var features = Features(sample);
         double target = PressureTarget(sample);
-        double prediction = Math.Clamp(Dot(_weights, features), 0.0, 2.0);
-        double loss = 0.5 * Math.Pow(prediction - target, 2);
+        double loss = 0;
+        if (mode == ControlMode.Ml && _pendingFeatures is not null)
+        {
+            // Score the prediction issued at t-1 against pressure observed at t, then
+            // update with x(t-1). The current observation is never its own prediction.
+            double residual = _pendingPrediction - target;
+            loss = 0.5 * residual * residual;
+            if (updateModel)
+            {
+                for (int i = 0; i < _weights.Length; i++)
+                    _weights[i] -= _options.LearningRate *
+                        (_pendingFeatures[i] * residual + _options.RidgePenalty * _weights[i]);
+            }
+        }
+
+        var features = Features(sample);
+        double prediction;
         double next = currentFlushSeconds;
 
         if (mode == ControlMode.Ewma)
         {
+            _ewmaPressure = _options.Beta * _ewmaPressure + (1 - _options.Beta) * target;
+            prediction = _ewmaPressure;
             // Pressure > 1 shortens the interval; pressure < 1 lengthens it.
-            double desired = currentFlushSeconds / Math.Clamp(target, 0.5, 2.0);
+            double desired = currentFlushSeconds / Math.Clamp(prediction, 0.5, 2.0);
             next = _options.Beta * currentFlushSeconds + (1 - _options.Beta) * desired;
         }
         else if (mode == ControlMode.Ml)
         {
+            prediction = Math.Clamp(Dot(_weights, features), 0.0, 2.0);
             next = currentFlushSeconds / Math.Clamp(0.5 + prediction, 0.5, 1.5);
-            if (updateModel)
-            {
-                double residual = prediction - target;
-                for (int i = 0; i < _weights.Length; i++)
-                    _weights[i] -= _options.LearningRate *
-                        (features[i] * residual + _options.RidgePenalty * _weights[i]);
-            }
+            _pendingFeatures = features;
+            _pendingPrediction = prediction;
+        }
+        else
+        {
+            prediction = 1.0;
+            _pendingFeatures = null;
         }
 
         if (mode == ControlMode.Static)
@@ -97,13 +118,14 @@ public sealed class DecisionEngine
         {
             UpdateCompactionGate(sample.FragRatio);
         }
+        bool faultStorm = sample.PageFaultsPerSec > _options.ReclamationFaultCeiling;
         return new ControlDecision(
             Math.Clamp(next, minimumFlushSeconds, maximumFlushSeconds),
             _compactionDisabled,
             prediction,
             loss,
-            ShouldReclaim: true,
-            FallbackReason: ControllerFallbackReason.None);
+            ShouldReclaim: !faultStorm,
+            FallbackReason: faultStorm ? ControllerFallbackReason.FaultStorm : ControllerFallbackReason.None);
     }
 
     private double[] Features(TelemetrySample x) => new[] {
