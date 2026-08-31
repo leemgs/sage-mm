@@ -312,7 +312,28 @@ exhaustively.
 We present the design in three parts, matching the action boundary:
 static interventions (\S\ref{sec:static}), the adaptive controller
 (\S\ref{sec:controller}), and the reclamation implementation
-(\S\ref{sec:reclaim}).
+(\S\ref{sec:reclaim}). Figure~\ref{fig:arch} shows how the three layers
+compose at runtime.
+
+\begin{figure}[t]
+  \centering
+  \setlength{\fboxsep}{7pt}%
+  \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering\small
+  \textbf{[Figure placeholder --- redraw as a labeled block diagram]}\\[5pt]
+  System overview. Per-interval telemetry
+  ($L_{\mathrm{gc}}$, $F_h$, $P_f$, $\Delta M$) is normalized
+  (Eq.~\ref{eq:pressure}) and consumed by the online controller, which
+  emits two bounded actions: the reclamation interval $T$ and the compaction
+  gate. The reclamation path ranks cold, private, file-backed code mappings
+  and issues \texttt{madvise(MADV\_DONTNEED)} through the conservative native
+  helper, gated by the hot-reuse and cooldown guards. Static interventions
+  (heap build $G$, interop $I$) sit upstream and reduce the pressure
+  presented to the controller; they do not adapt online.}}
+  \caption{SAGE-MM runtime composition and the narrow online action space
+  (reclamation interval $T$ and compaction gate). Only the control path
+  adapts; heap build and interop conversion are fixed before deployment.}
+  \label{fig:arch}
+\end{figure}
 
 \subsection{Static interventions}
 \label{sec:static}
@@ -728,6 +749,43 @@ optimization, and state layout, identity, and recompilation requirements
 explicitly.
 
 %% =====================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+
+\paragraph{Construct validity.}
+Telemetry signals are proxies for the quantities of interest. The public
+kit's forced Gen-0 pause, fragmentation estimate, and file-length size proxy
+are analogues, not the production GC pause, live fragmentation, or
+\texttt{Private\_Clean} byte count; production evidence uses EventPipe or
+vendor GC telemetry and \texttt{smaps}-verified clean bytes. We keep RSS,
+PSS, managed heap, and \texttt{Private\_Clean} distinct throughout and report
+the numerator, denominator, statistic, and CI for every effect.
+
+\paragraph{Internal validity.}
+Confounding across device state is the main risk. Every configuration runs
+from the same rebooted image, locked thermal/power/network state, and seeded
+workload script, with randomized treatment order and disjoint training and
+reporting traces, so learned-policy results are never reported on their own
+tuning data. No mechanism's contribution is computed by subtracting runs
+collected under different states; all attributions come from the single
+factorial design.
+
+\paragraph{Conclusion validity.}
+Bootstrap CIs are constructed across independent runs, never across
+within-run telemetry samples, which would understate variance. We use at
+least the preregistered $n$ per condition and report per-run aggregates,
+OOM/kernel events, censoring, and missing-data handling, so a null or
+negative result (for example, ridge not beating EWMA) is reported rather
+than hidden.
+
+\paragraph{External validity.}
+Results are specific to the evaluated runtime commits, devices, memory
+limits, storage configurations, and scripted workloads. The additional
+independently assembled platform probes generality but does not establish it
+for all embedded managed runtimes; broader applicability is stated as future
+validation, not claimed.
+
+%% =====================================================================
 \section{Limitations}
 \label{sec:limitations}
 
@@ -785,5 +843,53 @@ scope, boundary, and evaluation protocol of this work.
 %% =====================================================================
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{sagemm}
+
+%% =====================================================================
+\appendix
+
+\section{Reproducibility and Artifact Manifest}
+\label{app:artifact}
+
+To support an ACM artifact evaluation, the released bundle records, where
+licensing permits: the vendor Mono runtime name and source revision; the
+minimal runtime patch and per-architecture build flags and
+\texttt{INITIAL\_ALLOC} values; the exposed host interfaces; the native
+reclamation helper; the analyzer rules and accepted diagnostics; the
+controller configuration; the workload driver and state-machine transition
+seeds; the build, measurement, and bootstrap scripts; the device reset
+script; raw per-run telemetry with OOM/kernel logs; and anonymized aggregate
+production traces. Each result bundle carries a machine-readable manifest with
+the Git revision, device-ID pseudonym, start/end UTC, treatment, seed, and
+checksum, so that every number in the paper traces to one versioned source.
+
+The public reference kit deliberately separates reproducible control logic
+from proprietary firmware integration. Its user-space compaction event and GC
+telemetry are analogues clearly marked as such; they validate control flow,
+safety guards, and the statistical pipeline, but are not evidence for the
+memory, latency, or reliability claims, which require the production artifact
+above.
+
+\section{Notation}
+\label{app:notation}
+
+\begin{table}[h]
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Symbol} & \textbf{Meaning} \\
+    \midrule
+    $L_{\mathrm{gc}}$ & GC pause over the preceding interval (ms) \\
+    $F_h$ & managed-heap fragmentation ratio \\
+    $P_f$ & page-fault rate (minor+major per measured second) \\
+    $\Delta M$ & positive resident-memory growth (MiB) \\
+    $\mathbf{x}$ & clamped dimensionless feature vector \\
+    $y$ & observed normalized pressure (Eq.~\ref{eq:pressure}) \\
+    $\hat{y}$ & predicted next-interval pressure (ridge) \\
+    $T$ & reclamation interval, bounded to $[T_{\min},T_{\max}]$ \\
+    $\eta,\lambda$ & ridge learning rate and regularization \\
+    $G,I,R,C$ & heap build, interop, reclamation, controller factors \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \end{document}
