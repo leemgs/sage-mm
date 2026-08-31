@@ -35,6 +35,11 @@
 %% ---------------------------------------------------------------------
 \usepackage{booktabs}
 \usepackage{array}
+%% Pseudocode for the controller decision procedure (Algorithm 1). These are
+%% part of a standard ACM/texlive install; a minimal TeX environment that lacks
+%% algorithmicx can comment them out together with the algorithm float below.
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 %% Keep builds deterministic on minimal TeX installations that lack ACM's
 %% preferred scalable Libertine/NewTX fonts. Full ACM environments may remove
 %% this line to restore microtype font expansion.
@@ -339,7 +344,8 @@ The controller runs at a fixed decision cadence and, at each interval,
 chooses the next reclamation interval $T$ and the compaction gate. All
 initialization values, feature scales, thresholds, and update constants are
 externalized in a single options block so that no magic constant is buried
-in code.
+in code. Algorithm~\ref{alg:controller} states the complete per-interval
+procedure; the paragraphs below define each step.
 
 \paragraph{Telemetry and normalization.}
 Each decision uses the preceding interval's GC pause
@@ -416,6 +422,46 @@ set, active cooldown, and hot-reuse exclusion are each counted no-ops. The
 evaluation reports the frequency, duration, and outcome of every fallback
 class.
 
+\begin{algorithm}[t]
+\caption{SAGE-MM controller decision for one interval. Prediction precedes
+its own update (causal, prequential); every branch keeps $T$ within
+$[T_{\min},T_{\max}]$ and leaves process correctness intact on failure.}
+\label{alg:controller}
+\small
+\begin{algorithmic}[1]
+\Require raw sample $s=(L_{\mathrm{gc}},F_h,P_f,\Delta M,\mathrm{dt})$; state
+$(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
+\Ensure next reclamation interval $T$ and compaction gate
+\If{$\neg\textsc{Valid}(s)$}\Comment{non-finite, negative rate/pause, or $F_h\notin[0,1]$}
+  \State record \textsf{InvalidTelemetry}; enable compaction; suppress reclamation
+  \State \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$ \Comment{fail-closed: hold, no model update}
+\EndIf
+\State $\mathbf{x}\gets\textsc{Normalize}(s)$; \quad $y\gets\textsc{Pressure}(s)$ \Comment{Eq.~(1),~(2)}
+\If{$\textit{mode}=\textsf{Ridge}$}
+  \State $\hat{y}\gets\mathrm{clamp}(\mathbf{w}^{\!\top}\mathbf{x},0,2)$
+  \If{$\hat{y}$ persistently clipped at $0$ or $2$}
+    \State record \textsf{ModelSaturation}; clear pending update; apply \textsf{Threshold} action
+  \Else
+    \State $T\gets T/\mathrm{clamp}(0.5+\hat{y},0.5,1.5)$
+  \EndIf
+\ElsIf{$\textit{mode}=\textsf{EWMA}$}
+  \State $T\gets \beta T+(1-\beta)\,T/\mathrm{clamp}(y,0.5,2)$
+\ElsIf{$\textit{mode}=\textsf{Threshold}$}
+  \State $T\gets T\cdot(1-0.2)$ if $y>1.1$; $\;T\cdot(1+0.2)$ if $y<0.9$; else hold
+\EndIf
+\State $T\gets\mathrm{clamp}(T,T_{\min},T_{\max})$
+\State \textsc{UpdateGate}$(F_h)$ \Comment{off below $0.05$; force on at $0.12$ or after 3 deferrals}
+\If{$\neg\textsc{InCooldown}$ \textbf{and} reclamation enabled}
+  \State rank modules by $\mathrm{Cold}(\cdot)$; take smallest prefix $K$ meeting the byte budget
+  \State \textsc{FlushModules}$(K)$ excluding recently accessed (hot-reuse guard)
+\EndIf
+\If{$\textit{mode}=\textsf{Ridge}$ \textbf{and} a pending prediction exists \textbf{and} on tuning trace}
+  \State record prequential loss $[\hat{y}-y]^2/2$; take one ridge SGD step \Comment{Eq.~(4)}
+\EndIf
+\State \Return $T$
+\end{algorithmic}
+\end{algorithm}
+
 \subsection{Reclamation implementation}
 \label{sec:reclaim}
 
@@ -485,6 +531,36 @@ by subtracting results collected under different device states.
   tail latency) relative to fixed, threshold, and EWMA policies on held-out
   traces?
 \end{description}
+Table~\ref{tab:rqmap} binds each research question to the experiment that
+answers it and to the primary outcomes reported for it, so that every result
+subsection traces back to a stated question and no reported number is
+orphaned from a hypothesis.
+
+\begin{table}[t]
+  \caption{Research-question traceability. Each RQ maps to a specific
+  experiment and a fixed set of primary outcomes; Section~\ref{sec:results}
+  reports results under the same grouping.}
+  \label{tab:rqmap}
+  \small
+  \begin{tabular}{@{}p{0.9cm}p{4.0cm}p{5.6cm}@{}}
+    \toprule
+    \textbf{RQ} & \textbf{Experiment} & \textbf{Primary outcomes} \\
+    \midrule
+    RQ1 & ARM32/ARM64 heap-configuration sweep &
+    Peak/mean PSS, collection count, p50/p95/p99/max GC pause, compaction
+    work, per architecture. \\
+    RQ2 & Identical interop micro/macro traces with and without value-type
+    conversion &
+    Allocated bytes, allocation rate, PSS, throughput, native ABI
+    correctness checks. \\
+    RQ3 & Full-factorial ablation plus hot-reuse, rapid-switch, and
+    slow-storage stress on held-out traces &
+    Reclaimed \texttt{Private\_Clean} bytes, minor/major faults, reload and
+    storage latency, frame/input p95/p99, controller CPU, with run-level
+    95\% CIs. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \subsection{Platforms and workloads}
 The main evaluation uses the 1\,GiB ARM32 and 3\,GiB ARM64 DTV-class
