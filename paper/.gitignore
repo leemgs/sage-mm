@@ -12,3 +12,4 @@
 build*.log
 bibtex.log
 *.cut
+*.spl

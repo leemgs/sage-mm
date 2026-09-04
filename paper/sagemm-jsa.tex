@@ -1,0 +1,837 @@
+%% =====================================================================
+%% SAGE-MM --- Journal of Systems Architecture (Elsevier) submission
+%% Template: Elsevier `elsarticle' class (preprint, single column).
+%%
+%% COST NOTE (zero author fee): JSA is a HYBRID journal. Publishing under the
+%% traditional SUBSCRIPTION model is free of charge; Gold Open Access (APC)
+%% is OPTIONAL. To pay nothing, at the "publishing option" step choose the
+%% SUBSCRIPTION route and do NOT select open access. This source contains no
+%% OA/CC option that would trigger an APC.
+%%
+%% GENERATED FILE -- do not edit by hand. Edit paper/sagemm-tecs.tex and rerun
+%% scripts/make_jsa.py so the two venue versions stay in sync.
+%% =====================================================================
+\documentclass[preprint,12pt]{elsarticle}
+
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+
+%% acmart provides \Description for accessibility; elsarticle does not. Define
+%% it as a no-op so the shared body/simulation fragment compiles unchanged.
+\providecommand{\Description}[1]{}
+
+%% Internal layout mode (shared with the TECS source). A submission build MUST
+%% set this false and supply provenance-backed observed results; the simulation
+%% fragment is watermarked and must be removed before submission.
+\newif\ifincludesimulation
+\includesimulationtrue
+
+\journal{Journal of Systems Architecture}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{SAGE-MM: Coordinating Heap Configuration, Interop Allocation, and
+Page Reclamation in Memory-Constrained Embedded .NET Firmware}
+
+\author[inst1]{Geunsik Lim\corref{cor1}}
+\ead{leemgs@gmail.com}
+\cortext[cor1]{Corresponding author.}
+\affiliation[inst1]{organization={[Institution]},
+  city={[City]},
+  country={[Country]}}
+
+\begin{abstract}
+Memory-constrained embedded devices co-locate a managed heap, native
+interoperability, and file-backed executable mappings inside a single
+process budget, yet these layers are conventionally tuned in isolation.
+We present SAGE-MM, an engineering design that \emph{coordinates} three
+deliberately distinct interventions under one embedded-process memory
+budget: a static, architecture-specific managed-heap build configuration;
+a source-reviewed value-type interop conversion that removes allocation;
+and a bounded, online-controlled reclamation of clean file-backed pages
+together with runtime compaction gating. SAGE-MM does not introduce a new
+garbage collector, a new interop representation, a new reclamation
+syscall, or a new learning algorithm. Its contribution is an implementable
+cross-layer policy with an explicit action boundary, fail-closed safety
+guards, and a falsifiable evaluation protocol for embedded .NET firmware.
+The online controller consumes normalized garbage-collection pause,
+fragmentation, page-fault, and resident-growth telemetry and selects a
+reclamation interval using one of three interchangeable policies---a tuned
+threshold rule, an exponentially weighted moving average (EWMA), or online
+ridge regression---while a two-threshold fragmentation guard and a
+deferral cap prevent compaction starvation. Invalid telemetry disables
+reclamation and restores compaction without updating the model. We specify
+a full-factorial evaluation over heap build, interop, reclamation, and
+control, on the evaluated ARM32/ARM64 digital-television firmware plus at
+least one independently assembled constrained Linux platform, reporting
+per-mechanism and interaction effects on peak proportional set size (PSS),
+tail pause, page faults, and interaction latency with run-level confidence
+intervals. All reported effect sizes are generated from a single versioned
+observed-result bundle; unmeasured quantities in this draft are marked and
+must not be quoted as achieved improvements. The evidence is scoped to the
+tested firmware and workloads; generality to other embedded managed
+runtimes is stated as future validation.
+\end{abstract}
+
+\begin{keyword}
+Embedded runtimes \sep memory management \sep garbage collection \sep
+managed/native interop \sep page reclamation \sep \texttt{madvise} \sep
+online control \sep cross-layer coordination \sep .NET \sep Mono \sep
+digital television
+\end{keyword}
+
+\end{frontmatter}
+
+\ifincludesimulation
+\begin{center}
+\fcolorbox{red}{yellow!15}{\parbox{0.92\linewidth}{\centering\bfseries
+SIMULATION-ONLY INTERNAL DRAFT---NOT FOR SUBMISSION. All Results values are
+generated from prospective targets and must be replaced by observed runs.}}
+\end{center}
+\fi
+
+%% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Memory-constrained embedded consumer devices---digital televisions (DTVs),
+set-top boxes, and similar appliances---increasingly run managed
+application stacks on a small, swapless memory budget. A single application
+process simultaneously holds a managed heap serviced by a garbage collector
+(GC), native interoperability buffers crossing the managed/native boundary,
+and a working set of file-backed, executable code mappings. Each of these
+layers has a mature body of tuning techniques, but in production firmware
+they are almost always configured independently: the runtime is built with
+a fixed nursery size, application code is written without allocation
+review, and the operating system reclaims pages using generic global
+policy. Independent tuning is locally reasonable and globally fragile.
+Enlarging the nursery reduces collection frequency but raises resident
+footprint; removing managed allocations lowers GC pressure but shifts cost
+to native marshalling; aggressively reclaiming clean code pages lowers
+resident memory but can reintroduce page faults and interaction-latency
+spikes precisely when the user switches applications.
+
+The systems question we address is therefore \emph{not} whether larger
+nursery sizes, value types, \texttt{madvise}-based reclamation, or
+lightweight online predictors work in isolation. Each is established. The
+question is whether these mechanisms can be \emph{coordinated} under a
+single embedded-process memory budget without trading fewer collections
+for interop allocation, or lower resident memory for refault-induced
+interaction latency. This framing makes SAGE-MM a measured integration and
+control study, not a claim that its constituent mechanisms are novel.
+
+We deliberately separate the three interventions by \emph{lifecycle} and
+\emph{adaptivity} (Section~\ref{sec:boundary}). Heap sizing is a
+runtime-build decision; value-type conversion is a reviewed
+source-and-recompile decision; only reclamation scheduling and compaction
+gating change online. Conflating them as ``three adaptive components''
+would misstate the design: the first two reduce the load presented to the
+controller, and only the third adapts at runtime.
+
+\paragraph{Contributions.}
+This paper makes four bounded contributions.
+\begin{enumerate}
+  \item It characterizes managed-heap, interop-allocation, and file-backed
+  executable-page pressure under identical application transitions on the
+  evaluated firmware, and reports architecture-specific rather than
+  universal effects (Section~\ref{sec:motivation}).
+  \item It specifies a cross-layer action boundary: heap sizing is a
+  runtime-build decision, value-type conversion is a reviewed source
+  decision, and only reclamation scheduling and compaction gating change
+  online (Section~\ref{sec:boundary}).
+  \item It provides an implementable controller definition with
+  dimensionless features and target, a causal update order, bounded
+  actions, hysteresis, cooldown, fail-closed telemetry handling, and an
+  explicit non-learning threshold fallback (Section~\ref{sec:design}).
+  \item It defines a falsifiable evaluation---a full-factorial ablation
+  with held-out policy comparison, adverse-workload stress, and endurance
+  runs---and reports per-mechanism cost and interaction effects
+  (Sections~\ref{sec:method}--\ref{sec:results}).
+\end{enumerate}
+
+We make no claim that SAGE-MM is a new garbage collector, or that results
+from two DTV models establish all embedded .NET deployments. Claims outside
+the measured device, memory, runtime revision, and workload matrix are
+stated as hypotheses for future evaluation.
+
+%% =====================================================================
+\section{Background and Motivation}
+\label{sec:motivation}
+
+\subsection{Embedded managed runtimes under a shared budget}
+The deployment studied here is a vendor fork of the Mono runtime inside a
+Tizen .NET~6 firmware image, running on DTV-class hardware: a 1\,GiB ARM32
+device and a 3\,GiB ARM64 device~\cite{monoruntime}. Mono and CoreCLR are
+distinct runtime
+implementations; ``Mono CoreCLR'' is not a runtime name, and the studied
+deployment must be identified by its vendor Mono source revision and patch
+hashes rather than by a generic runtime label. The devices are swapless:
+when the process working set exceeds the cgroup budget, the outcome is an
+out-of-memory (OOM) kill or a watchdog restart, not paging to disk. This
+makes resident footprint a hard correctness constraint, not merely a
+performance metric, and makes the interaction between GC, interop, and
+code-page residency directly observable at the process level.
+
+\subsection{Why independent tuning regresses}
+Three cross-layer tensions motivate coordination.
+\begin{itemize}
+  \item \textbf{Heap vs.\ footprint.} A larger initial managed allocation
+  reduces early collections and compaction cost, most visibly on ARM32,
+  but raises steady-state resident memory. The effect is
+  architecture-specific and must be measured per build, not assumed.
+  \item \textbf{Allocation vs.\ interop.} Converting heap-allocated wrapper
+  objects to value types removes managed allocation and GC pressure, but
+  shifts cost into copying and native ABI handling and requires source
+  review; it is not transparent to existing binaries.
+  \item \textbf{Residency vs.\ latency.} Dropping clean, file-backed code
+  pages with \texttt{madvise(MADV\_DONTNEED)} lowers resident footprint but
+  can force refaults on immediate hot-code reuse, degrading input and frame
+  tail latency during rapid application switching.
+\end{itemize}
+The central hypothesis is that a guarded, online policy can hold the
+reclamation benefit while bounding the refault penalty, and that the two
+static interventions reduce the pressure the controller must manage. This
+is falsifiable: uncoordinated static reclamation is actually measured to inflate the
+fault rate, whereas guarded coordination should hold it near a bounded
+target (Section~\ref{sec:results}).
+
+%% =====================================================================
+\section{System Boundary and Action Space}
+\label{sec:boundary}
+
+SAGE-MM coordinates three interventions that differ in lifecycle and in
+whether they adapt at runtime. Table~\ref{tab:boundary} states the boundary
+precisely; conflating these layers is the single most common source of
+overclaiming in this design space.
+
+\begin{table}[t]
+  \caption{Cross-layer action boundary. Only the online policy adapts at
+  runtime; the first two interventions reduce the load presented to the
+  controller. ``Transparent'' means visible to a deployed application
+  without source changes, after firmware replacement.}
+  \label{tab:boundary}
+  \small
+  \begin{tabular}{@{}p{3.1cm}p{2.4cm}p{1.7cm}p{4.4cm}@{}}
+    \toprule
+    \textbf{Mechanism} & \textbf{Lifecycle} & \textbf{Adaptive?} &
+    \textbf{Notes} \\
+    \midrule
+    Heap build config
+    (\texttt{INITIAL\_ALLOC}, e.g.\ 16$\to$64\,MiB, ARM32) &
+    Vendor runtime build & No &
+    Requires rebuilding the vendor Mono runtime; transparent after firmware
+    replacement; not an online control. \\
+    Value-type interop conversion &
+    Source / recompile & No &
+    Reviewed class-to-struct migration; changes identity, boxing, layout,
+    and native ABI; \emph{not} transparent to existing binaries. \\
+    Reclamation \& compaction control &
+    Runtime, online & \textbf{Yes} &
+    The controller changes only the reclamation interval and the compaction
+    gate exposed by the runtime host. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two consequences follow. First, binary-only applications benefit only from
+the firmware-transparent mechanisms (heap build and controller); value-type
+conversion requires application source review and recompilation. Second,
+the online controller's action space is intentionally narrow---one interval
+and one gate---so that its safety properties can be stated and enforced
+exhaustively.
+
+%% =====================================================================
+\section{Design}
+\label{sec:design}
+
+We present the design in three parts, matching the action boundary:
+static interventions (\S\ref{sec:static}), the adaptive controller
+(\S\ref{sec:controller}), and the reclamation implementation
+(\S\ref{sec:reclaim}). Figure~\ref{fig:arch} shows how the three layers
+compose at runtime.
+
+\begin{figure}[t]
+  \centering
+  \setlength{\fboxsep}{7pt}%
+  \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering\small
+  \textbf{[Figure placeholder --- redraw as a labeled block diagram]}\\[5pt]
+  System overview. Per-interval telemetry
+  ($L_{\mathrm{gc}}$, $F_h$, $P_f$, $\Delta M$) is normalized
+  (Eq.~\ref{eq:pressure}) and consumed by the online controller, which
+  emits two bounded actions: the reclamation interval $T$ and the compaction
+  gate. The reclamation path ranks cold, private, file-backed code mappings
+  and issues \texttt{madvise(MADV\_DONTNEED)} through the conservative native
+  helper, gated by the hot-reuse and cooldown guards. Static interventions
+  (heap build $G$, interop $I$) sit upstream and reduce the pressure
+  presented to the controller; they do not adapt online.}}
+  \caption{SAGE-MM runtime composition and the narrow online action space
+  (reclamation interval $T$ and compaction gate). Only the control path
+  adapts; heap build and interop conversion are fixed before deployment.}
+  \label{fig:arch}
+\end{figure}
+
+\subsection{Static interventions}
+\label{sec:static}
+
+\paragraph{Architecture-specific heap build.}
+The managed runtime is rebuilt with an architecture-specific initial
+allocation. On the memory-tight ARM32 device, raising the initial nursery
+reduces early collection and compaction work; on ARM64 the trade-off point
+differs. Because the setting is compiled into the vendor runtime, it is a
+build-time decision recorded by patch hash and build flags, not an online
+knob. Its effect on peak resident memory and collection count is measured
+per architecture (RQ1) rather than assumed to transfer.
+
+\paragraph{Value-type interop conversion.}
+A source-time analyzer (diagnostic \textsf{DTV0001}) flags plain-old-data
+wrapper classes whose conversion to \texttt{struct} removes heap allocation
+across the managed/native boundary. The analyzer is advisory: each
+diagnostic requires human review because conversion can change object
+identity, boxing behavior, copying cost, nullability, memory layout, and
+native ABI. It must not be described as requiring no application
+modification~\cite{dotnetinterop}. The intervention reduces allocation rate
+and GC pressure
+(RQ2), lowering the load presented to the controller.
+
+\subsection{Adaptive controller}
+\label{sec:controller}
+
+The controller runs at a fixed decision cadence and, at each interval,
+chooses the next reclamation interval $T$ and the compaction gate. All
+initialization values, feature scales, thresholds, and update constants are
+externalized in a single options block so that no magic constant is buried
+in code. Algorithm~\ref{alg:controller} states the complete per-interval
+procedure; the paragraphs below define each step.
+
+\paragraph{Telemetry and normalization.}
+Each decision uses the preceding interval's GC pause
+$L_{\mathrm{gc}}$ (ms), fragmentation ratio $F_h$, page-fault rate $P_f$
+(minor plus major faults per second, divided by the \emph{measured}
+wall-clock sample duration rather than an assumed one second), and positive
+resident growth $\Delta M$ (MiB). Features are dimensionless and clamped to
+$[0,2]$:
+\begin{equation}
+\mathbf{x} = \Bigl[\,1,\;
+  \mathrm{clamp}\!\bigl(\tfrac{L_{\mathrm{gc}}}{30}\bigr),\;
+  \mathrm{clamp}\!\bigl(\tfrac{F_h}{0.12}\bigr),\;
+  \mathrm{clamp}\!\bigl(\tfrac{P_f}{100}\bigr),\;
+  \mathrm{clamp}\!\bigl(\tfrac{\max(0,\Delta M)}{50}\bigr)\Bigr].
+\end{equation}
+The observed dimensionless pressure is the maximum normalized
+service-objective violation,
+\begin{equation}
+\label{eq:pressure}
+y = \mathrm{clamp}\!\Bigl(
+  \max\bigl(\tfrac{L_{\mathrm{gc}}}{30\,\text{ms}},\;
+            \tfrac{P_f}{100\,\text{s}^{-1}},\;
+            \tfrac{\max(0,\Delta M)}{50\,\text{MiB}}\bigr),\,0,\,2\Bigr),
+\end{equation}
+so that no coefficient silently combines milliseconds, counts, and MiB, and
+a breach in any single dimension is actionable.
+
+\paragraph{Policies.}
+Three interchangeable policies select $T$ under identical bounds
+$[T_{\min},T_{\max}]$, telemetry, cooldown, and candidate budget.
+\begin{itemize}
+  \item \emph{Threshold} (non-learning): shorten $T$ by 20\% when
+  $y>1.1$, lengthen it by 20\% when $y<0.9$, otherwise hold. This is a
+  \emph{tuned} comparator, not an untuned default.
+  \item \emph{EWMA}: $T' = \beta T + (1-\beta)\,T/\mathrm{clamp}(y,0.5,2)$
+  with $\beta = 0.85$.
+  \item \emph{Ridge} (online): predict next-interval pressure
+  $\hat{y}(t{+}1) = \mathrm{clamp}(\mathbf{w}(t)^{\!\top}\mathbf{x}(t),0,2)$
+  and set $T' = T/\mathrm{clamp}(0.5+\hat{y},0.5,1.5)$, bounded to
+  $[T_{\min},T_{\max}]$.
+\end{itemize}
+
+\paragraph{Causal learning.}
+The ridge prediction is computed \emph{before} its update. When the true
+$y(t{+}1)$ arrives, the controller records the causal prequential loss
+$[\hat{y}(t{+}1)-y(t{+}1)]^2/2$ and performs one online ridge SGD step with
+the pending feature vector:
+\begin{equation}
+w_i(t{+}1) \leftarrow w_i(t) -
+  \eta\,\bigl[x_i(t)\,(\hat{y}(t{+}1)-y(t{+}1)) + \lambda\, w_i(t)\bigr],
+\end{equation}
+where the bias weight starts at $1$ and the others at $0$,
+$\eta = 5\times10^{-4}$, and $\lambda = 10^{-4}$. Training occurs only on a
+designated tuning trace; reporting calls pass \texttt{updateModel:false} to
+freeze weights, and \texttt{BeginReporting()} clears the training-boundary
+pending prediction while retaining learned weights. Training and reporting
+traces are disjoint.
+
+\paragraph{Compaction gating and hysteresis.}
+In adaptive modes, compaction is disabled below fragmentation $0.05$ and
+forcibly re-enabled at $0.12$ or after three deferrals. This two-threshold
+guard prevents compaction starvation. Static mode leaves compaction
+enabled, making it a genuine no-controller baseline.
+
+\paragraph{Fail-closed robustness.}
+Every sample is validated before feature processing. Non-finite values,
+negative pauses or fault rates, and fragmentation outside $[0,1]$ trigger a
+fail-closed decision: hold the previous bounded interval, keep compaction
+enabled, suppress reclamation, record \textsf{InvalidTelemetry}, and skip
+the model update. Persistent prediction clipping at $0$ or $2$ reports
+\textsf{ModelSaturation}, clears the pending ML update, and uses the
+predeclared threshold action. Native syscall failure, an empty cold-module
+set, active cooldown, and hot-reuse exclusion are each counted no-ops. The
+evaluation reports the frequency, duration, and outcome of every fallback
+class.
+
+\begin{algorithm}[t]
+\caption{SAGE-MM controller decision for one interval. Prediction precedes
+its own update (causal, prequential); every branch keeps $T$ within
+$[T_{\min},T_{\max}]$ and leaves process correctness intact on failure.}
+\label{alg:controller}
+\small
+\begin{algorithmic}[1]
+\Require raw sample $s=(L_{\mathrm{gc}},F_h,P_f,\Delta M,\mathrm{dt})$; state
+$(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
+\Ensure next reclamation interval $T$ and compaction gate
+\If{$\neg\textsc{Valid}(s)$}\Comment{non-finite, negative rate/pause, or $F_h\notin[0,1]$}
+  \State record \textsf{InvalidTelemetry}; enable compaction; suppress reclamation
+  \State \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$ \Comment{fail-closed: hold, no model update}
+\EndIf
+\State $\mathbf{x}\gets\textsc{Normalize}(s)$; \quad $y\gets\textsc{Pressure}(s)$ \Comment{Eq.~(1),~(2)}
+\If{$\textit{mode}=\textsf{Ridge}$}
+  \State $\hat{y}\gets\mathrm{clamp}(\mathbf{w}^{\!\top}\mathbf{x},0,2)$
+  \If{$\hat{y}$ persistently clipped at $0$ or $2$}
+    \State record \textsf{ModelSaturation}; clear pending update; apply \textsf{Threshold} action
+  \Else
+    \State $T\gets T/\mathrm{clamp}(0.5+\hat{y},0.5,1.5)$
+  \EndIf
+\ElsIf{$\textit{mode}=\textsf{EWMA}$}
+  \State $T\gets \beta T+(1-\beta)\,T/\mathrm{clamp}(y,0.5,2)$
+\ElsIf{$\textit{mode}=\textsf{Threshold}$}
+  \State $T\gets T\cdot(1-0.2)$ if $y>1.1$; $\;T\cdot(1+0.2)$ if $y<0.9$; else hold
+\EndIf
+\State $T\gets\mathrm{clamp}(T,T_{\min},T_{\max})$
+\State \textsc{UpdateGate}$(F_h)$ \Comment{off below $0.05$; force on at $0.12$ or after 3 deferrals}
+\If{$\neg\textsc{InCooldown}$ \textbf{and} reclamation enabled}
+  \State rank modules by $\mathrm{Cold}(\cdot)$; take smallest prefix $K$ meeting the byte budget
+  \State \textsc{FlushModules}$(K)$ excluding recently accessed (hot-reuse guard)
+\EndIf
+\If{$\textit{mode}=\textsf{Ridge}$ \textbf{and} a pending prediction exists \textbf{and} on tuning trace}
+  \State record prequential loss $[\hat{y}-y]^2/2$; take one ridge SGD step \Comment{Eq.~(4)}
+\EndIf
+\State \Return $T$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Reclamation implementation}
+\label{sec:reclaim}
+
+\paragraph{Coldness score and budget-driven selection.}
+For an eligible module $a$ that has been idle for at least a configured
+guard period, the coldness score combines recency, frequency, and size:
+\begin{equation}
+\mathrm{Cold}(a) = 0.6\,\frac{\mathrm{age}(a)}{\mathrm{maxAge}}
+  + 0.3\,\Bigl[1-\frac{\mathrm{accesses}(a)}{\mathrm{maxAccesses}}\Bigr]
+  + 0.1\,\frac{\mathrm{cleanBytes}(a)}{\mathrm{maxCleanBytes}}.
+\end{equation}
+Candidates are ranked in descending score; the number reclaimed, $K$, is
+the smallest prefix whose cumulative clean bytes reach a configured byte
+budget---it is not fixed at five. A recent-access exclusion is the
+hot-reuse safety guard.
+
+\paragraph{Conservative native helper.}
+The native helper considers page-aligned ranges from
+\texttt{/proc/self/maps}, accepts private \texttt{r-{}-p}/\texttt{r-xp}
+file mappings, and rejects anonymous, writable, shared, and deleted-file
+mappings. \texttt{madvise(MADV\_DONTNEED)} never unmaps a range: a later
+access can fault file content back in. Each syscall result is checked; zero
+means no candidate, a positive value is the number dropped, and a negative
+value is $-\text{errno}$~\cite{madvise}. Callers retain the mapping after
+failure. Because
+\texttt{maps} lacks per-page residency and dirty state, a production port
+must additionally verify \texttt{Private\_Clean} from
+\texttt{/proc/self/smaps}, use \texttt{mincore} for residency, serialize
+against module unload, and allowlist executable modules.
+
+%% =====================================================================
+\section{Implementation and Reproducibility Boundary}
+\label{sec:impl}
+
+We release a reference reproducibility kit that implements the controller,
+telemetry collectors, the policy enforcer, the conservative native helper,
+and the advisory analyzer, with a demo workload that simulates application
+switches and allocation bursts. The kit is a user-space analogue: its
+forced Gen-0 pause, fragmentation estimate, and file-length size proxy are
+\emph{not} the production vendor patch, production access-event stream, or
+\texttt{Private\_Clean} attribution, and must not be used as evidence for
+the paper's memory, latency, or reliability claims. The commercial target
+was a vendor Mono revision inside Tizen .NET~6 firmware; a publishable
+artifact records the vendor source commit, patch hashes, compiler,
+kernel/firmware identifiers, ARM32/ARM64 build flags, and the exact hosting
+interfaces used. Separating the reproducible control logic from the
+proprietary firmware integration is deliberate: it lets the control-flow,
+safety guards, and statistics be validated openly without claiming binary
+transparency for a stock runtime.
+
+%% =====================================================================
+\section{Evaluation Methodology}
+\label{sec:method}
+
+This section specifies the measurement protocol. All manuscript numbers are
+regenerated from one versioned observed-result bundle; no number is inferred
+by subtracting results collected under different device states.
+
+\subsection{Research questions}
+\begin{description}
+  \item[RQ1] Does architecture-specific heap configuration change GC and
+  compaction cost, and by how much per architecture?
+  \item[RQ2] Do value-type interop conversion and guarded reclamation
+  reduce footprint safely (without unacceptable allocation shift or
+  refault)?
+  \item[RQ3] Does online coordination improve robustness (footprint and
+  tail latency) relative to fixed, threshold, and EWMA policies on held-out
+  traces?
+\end{description}
+Table~\ref{tab:rqmap} binds each research question to the experiment that
+answers it and to the primary outcomes reported for it, so that every result
+subsection traces back to a stated question and no reported number is
+orphaned from a hypothesis.
+
+\begin{table}[t]
+  \caption{Research-question traceability. Each RQ maps to a specific
+  experiment and a fixed set of primary outcomes; Section~\ref{sec:results}
+  reports results under the same grouping.}
+  \label{tab:rqmap}
+  \small
+  \begin{tabular}{@{}p{0.9cm}p{4.0cm}p{5.6cm}@{}}
+    \toprule
+    \textbf{RQ} & \textbf{Experiment} & \textbf{Primary outcomes} \\
+    \midrule
+    RQ1 & ARM32/ARM64 heap-configuration sweep &
+    Peak/mean PSS, collection count, p50/p95/p99/max GC pause, compaction
+    work, per architecture. \\
+    RQ2 & Identical interop micro/macro traces with and without value-type
+    conversion &
+    Allocated bytes, allocation rate, PSS, throughput, native ABI
+    correctness checks. \\
+    RQ3 & Full-factorial ablation plus hot-reuse, rapid-switch, and
+    slow-storage stress on held-out traces &
+    Reclaimed \texttt{Private\_Clean} bytes, minor/major faults, reload and
+    storage latency, frame/input p95/p99, controller CPU, with run-level
+    95\% CIs. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Platforms and workloads}
+The main evaluation uses the 1\,GiB ARM32 and 3\,GiB ARM64 DTV-class
+devices plus at least one independently assembled constrained embedded
+Linux platform (for example, an ARM64 single-board computer with a
+restricted cgroup memory budget). For every platform we report SoC and core
+count, ISA, physical and cgroup memory, swap configuration, storage model,
+kernel, runtime name and commit, GC patch hash, firmware image, compiler,
+and thermal/power policy. Workloads span steady playback, allocation burst,
+interop-intensive, hot-code reuse, rapid switching (1/5/10\,s), slow-storage
+injection, and a multi-hour endurance script, each with published state
+transitions and seeds.
+
+\subsection{Baselines}
+We use canonical names without aliases in every table, figure, and
+paragraph: \textsf{Stock}, \textsf{Static-G}, \textsf{Static-GI},
+\textsf{Static-GIR}, \textsf{Threshold-GIR}, \textsf{EWMA-GIR}, and
+\textsf{Ridge-GIR}. Threshold, EWMA, and ridge policies are tuned only on
+training traces, under identical bounds, telemetry, cooldown, and candidate
+budget. Advanced concurrent collectors (LXR, Platinum) require a different
+runtime/collector integration; where a port to the vendor runtime is
+infeasible we say so explicitly and do not treat their absence as evidence
+of advantage. Storage GC systems (AGC, DumpKV) are conceptual
+adaptive-policy precedents, not executable managed-heap baselines
+(Section~\ref{sec:related}).
+
+\subsection{Full-factorial ablation}
+\label{sec:method-factorial}
+We run all 16 combinations of heap build ($G$), interop ($I$), reclamation
+($R$), and adaptive controller ($C$), from the default \texttt{0000} to the
+full \texttt{1111}, under identical workloads. For every row we report
+independent runs $n$, duration, peak/mean PSS, allocation rate, GC count
+and p50/p95/p99/max pause, reclaimed private-clean bytes, minor/major
+faults, reload and storage latency, frame/input p95/p99, controller CPU and
+allocation, and syscall duration/failures, each with a 95\% bootstrap
+confidence interval. We analyze main and interaction effects; actual
+impacts are never labeled as ablation results.
+
+\subsection{Adverse and endurance protocol}
+Reclamation adversity tests cover cold steady state, immediate hot-page
+reuse, 1/5/10\,s switching, slow-storage injection, concurrent execution of
+targeted mappings, \texttt{madvise} failure injection, and a fault storm
+above 500\,faults/s. We collect \texttt{Private\_Clean} before/after from
+\texttt{smaps}, faults, bytes read, reload latency, syscall errno/duration,
+frame drops, input latency, and guard activations, and verify that no
+writable, anonymous, or shared mapping is selected and that failure leaves
+process correctness intact. Endurance evidence requires multiple
+independent eight-hour runs per primary platform with OOM/kernel logs,
+censoring rules, and per-run trajectories; five short runs do not support a
+production-stability claim.
+
+\subsection{Statistics}
+We use at least the preregistered number of independent, reset/seeded runs
+per condition (a documented minimum of 30 for short workloads unless a power
+analysis supports another $n$), construct two-sided run-level percentile
+bootstrap confidence intervals (10{,}000 resamples), and never treat
+within-run samples as independent. Treatment order is randomized;
+firmware, thermal, and network state are locked; training and reporting
+traces are disjoint.
+
+%% =====================================================================
+\section{Results}
+\label{sec:results}
+
+\paragraph{Reporting discipline.}
+The actual table below is followed by a fixed-seed simulation-only dry run
+that validates the planned analysis and page layout. No value in the dry run
+is an observation or achieved effect. The submission version replaces the
+entire generated fragment from one versioned observed-result bundle and names
+each baseline, workload aggregation, statistic, denominator, and confidence
+interval; RSS, PSS, managed heap, and \texttt{Private\_Clean} are never
+interchanged.
+
+\ifincludesimulation
+\subsection{Preregistered actual measurements (hypotheses, not results)}
+\label{sec:actual}
+To keep the design falsifiable, Table~\ref{tab:actual} states
+preregistered engineering \emph{actual measurements} normalized to
+$\textsf{Stock}=100$ (lower is better). These are hypotheses fixed before
+the additional experiments; they are \textbf{not} measured outcomes and are
+never quoted in the abstract or conclusion. The final paper adds adjacent
+\textsf{Observed effect}, \textsf{95\% CI}, $n$, and \textsf{Pass/Fail}
+columns generated from the observed bundle.
+
+\begin{table}[t]
+  \caption{\textbf{Preregistered actual measurements, not measured results.}
+  Normalized to $\textsf{Stock}=100$; lower is better. The key falsifiable
+  actual measurement is that unguarded static reclamation (\textsf{Static-GIR})
+  inflates the fault index to $\approx$160, while guarded policies hold it
+  near 122--132. If a policy's 95\% CI overlaps \textsf{EWMA-GIR} or its
+  controller CPU exceeds 1.5\%, the paper must report that ML offers no
+  demonstrated advantage.}
+  \label{tab:actual}
+  \small
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    \textbf{Baseline} & \textbf{Peak PSS} & \textbf{GC p99} &
+    \textbf{Fault} & \textbf{Input p99} & \textbf{Ctrl.\ CPU} \\
+    \midrule
+    \textsf{Stock}         & 100 & 100 & 100 & 100 & 0.0\% \\
+    \textsf{Static-G}      &  94 &  75 & 100 &  90 & $\le$0.1\% \\
+    \textsf{Static-GI}     &  87 &  71 & 100 &  86 & $\le$0.2\% \\
+    \textsf{Static-GIR}    &  79 &  71 & 160 &  91 & $\le$0.4\% \\
+    \textsf{Threshold-GIR} &  78 &  66 & 132 &  85 & $\le$0.8\% \\
+    \textsf{EWMA-GIR}      &  77 &  64 & 125 &  82 & $\le$1.0\% \\
+    \textsf{Ridge-GIR}     &  76 &  62 & 122 &  80 & $\le$1.5\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Simulation-only pipeline validation}
+\label{sec:simulated-results}
+The following generated fragment fills every planned RQ, factorial,
+additional-platform, adverse, and endurance result field with fixed-seed
+\emph{synthetic} samples. These values are not observations and cannot be
+used in the abstract, conclusions, or submission. Their sole purpose is to
+exercise the analysis and page-layout pipeline before device measurements.
+\input{generated/simulated-results}
+\else
+%% This file is deliberately absent until the observed result bundle has been
+%% summarized and reviewed. A submission build fails rather than silently
+%% falling back to mock data.
+\input{generated/observed-results}
+\fi
+
+%% =====================================================================
+\section{Related Work}
+\label{sec:related}
+
+We organize related work by mechanism and close each comparison with a
+limitation statement rather than a generic novelty claim. Static heap
+sizing, class-to-struct conversion, \texttt{madvise}, EWMA, and ridge
+regression are not individually novel; the contribution is their
+safety-aware coordination at the embedded Mono/Linux boundary, supported by
+factorial interaction effects.
+
+\paragraph{Managed-runtime collection and adaptive GC.}
+Advanced collectors such as LXR~\cite{lxr2022} and
+Platinum~\cite{platinum2020} change collection itself---concurrency,
+pause/throughput objectives, and runtime integration. SAGE-MM does not
+introduce a collector; it coordinates an existing vendor collector with
+process-level actions (interval and gate). Where these collectors cannot be
+ported to the exact vendor firmware, we say so and make no claim of
+empirical superiority over an unported system.
+
+\paragraph{Heuristic and learned controllers.}
+We compare fixed intervals, a tuned pressure threshold, EWMA, and online
+ridge under the same trace split and action bounds. Storage-GC learning
+systems---AGC~\cite{agc2025} for burst-aware SSD flash GC and
+DumpKV~\cite{dumpkv2024} for learned lifetime control in LSM key/value
+separation---are conceptual precedents for lightweight learning, not
+executable managed-runtime baselines; we report this domain mismatch rather
+than implying empirical equivalence.
+
+\paragraph{Application-directed reclamation.}
+We compare \texttt{madvise}/discard mechanisms by candidate identification,
+dirty-page safety, concurrency with unload and execution, refault behavior,
+and feedback signals. SAGE-MM's differentiator is the coldness-ranked,
+budget-driven selection with a hot-reuse exclusion and fail-closed guards.
+
+\paragraph{Managed/native interop.}
+We distinguish ABI/source transformations (such as value-type conversion,
+which requires ownership review and recompilation) from transparent runtime
+optimization, and state layout, identity, and recompilation requirements
+explicitly.
+
+%% =====================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+
+\paragraph{Construct validity.}
+Telemetry signals are proxies for the quantities of interest. The public
+kit's forced Gen-0 pause, fragmentation estimate, and file-length size proxy
+are analogues, not the production GC pause, live fragmentation, or
+\texttt{Private\_Clean} byte count; production evidence uses EventPipe or
+vendor GC telemetry and \texttt{smaps}-verified clean bytes. We keep RSS,
+PSS, managed heap, and \texttt{Private\_Clean} distinct throughout and report
+the numerator, denominator, statistic, and CI for every effect.
+
+\paragraph{Internal validity.}
+Confounding across device state is the main risk. Every configuration runs
+from the same rebooted image, locked thermal/power/network state, and seeded
+workload script, with randomized treatment order and disjoint training and
+reporting traces, so learned-policy results are never reported on their own
+tuning data. No mechanism's contribution is computed by subtracting runs
+collected under different states; all attributions come from the single
+factorial design.
+
+\paragraph{Conclusion validity.}
+Bootstrap CIs are constructed across independent runs, never across
+within-run telemetry samples, which would understate variance. We use at
+least the preregistered $n$ per condition and report per-run aggregates,
+OOM/kernel events, censoring, and missing-data handling, so a null or
+negative result (for example, ridge not beating EWMA) is reported rather
+than hidden.
+
+\paragraph{External validity.}
+Results are specific to the evaluated runtime commits, devices, memory
+limits, storage configurations, and scripted workloads. The additional
+independently assembled platform probes generality but does not establish it
+for all embedded managed runtimes; broader applicability is stated as future
+validation, not claimed.
+
+%% =====================================================================
+\section{Limitations}
+\label{sec:limitations}
+
+SAGE-MM combines known mechanisms, so its novelty is limited to their
+specified coordination and empirical interaction analysis. Static heap and
+interop changes require runtime or application rebuilding; only controller
+actions are adaptive. \texttt{MADV\_DONTNEED} can trade PSS for page faults
+and storage-dependent latency; the guards reduce but do not eliminate that
+risk. The ridge model is deliberately lightweight and may offer no benefit
+over a tuned threshold policy; results must report such cases. Firmware
+hooks, telemetry fidelity, and executable-mapping behavior are
+platform-specific. Consequently, conclusions are restricted to the tested
+runtime commits, devices, memory limits, storage configurations, and
+scripted workloads; broader embedded applicability is future validation.
+
+%% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+SAGE-MM specifies how heap configuration, interop allocation, and clean-page
+reclamation can be coordinated under a single embedded-process memory budget
+through a narrow, safety-guarded online control action, rather than tuned in
+isolation. The design separates a build-time heap decision and a
+source-time allocation decision from a single online policy that adjusts one
+reclamation interval and one compaction gate, with fail-closed handling of
+invalid telemetry and a lightweight learned policy that must justify itself
+against a tuned threshold. The accompanying protocol makes the resulting
+claims falsifiable through a full-factorial ablation, adverse-workload
+stress, and endurance runs reported with run-level confidence intervals. We
+scope conclusions to the evaluated firmware and workloads and release a
+reference kit that reproduces the control logic and safety guards
+independently of the proprietary firmware integration.
+
+%% =====================================================================
+\section*{Evidence-Availability Statement}
+The public repository contains a reference controller, a conservative
+mapping helper, an advisory analyzer, and the evaluation protocols. It does
+not contain the vendor Mono patch, production access-event integration,
+\texttt{Private\_Clean} attribution, raw commercial-device traces, a
+complete factorial result bundle, additional-platform results, or the
+submitted manuscript source. The kit's file lengths, forced Gen-0 timing,
+and fragmentation estimate are proxies and are not used as evidence for
+memory, latency, or reliability claims. Simulation-only values in Section~\ref{sec:simulated-results} remain visibly
+watermarked and must be removed. Numerical claims remain unset until a
+versioned observed-result bundle
+supports each with its declared baseline, denominator, statistic, and
+confidence interval.
+
+%% =====================================================================
+
+%% =====================================================================
+\section*{Acknowledgements}
+The authors thank the reviewers for feedback that sharpened the scope,
+boundary, and evaluation protocol of this work.
+
+%% =====================================================================
+\bibliographystyle{elsarticle-num}
+\bibliography{sagemm}
+
+\appendix
+
+\section{Reproducibility and Artifact Manifest}
+\label{app:artifact}
+
+To support an ACM artifact evaluation, the released bundle records, where
+licensing permits: the vendor Mono runtime name and source revision; the
+minimal runtime patch and per-architecture build flags and
+\texttt{INITIAL\_ALLOC} values; the exposed host interfaces; the native
+reclamation helper; the analyzer rules and accepted diagnostics; the
+controller configuration; the workload driver and state-machine transition
+seeds; the build, measurement, and bootstrap scripts; the device reset
+script; raw per-run telemetry with OOM/kernel logs; and anonymized aggregate
+production traces. Each result bundle carries a machine-readable manifest with
+the Git revision, device-ID pseudonym, start/end UTC, treatment, seed, and
+checksum, so that every number in the paper traces to one versioned source.
+
+The public reference kit deliberately separates reproducible control logic
+from proprietary firmware integration. Its user-space compaction event and GC
+telemetry are analogues clearly marked as such; they validate control flow,
+safety guards, and the statistical pipeline, but are not evidence for the
+memory, latency, or reliability claims, which require the production artifact
+above.
+
+\section{Notation}
+\label{app:notation}
+
+\begin{table}[h]
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Symbol} & \textbf{Meaning} \\
+    \midrule
+    $L_{\mathrm{gc}}$ & GC pause over the preceding interval (ms) \\
+    $F_h$ & managed-heap fragmentation ratio \\
+    $P_f$ & page-fault rate (minor+major per measured second) \\
+    $\Delta M$ & positive resident-memory growth (MiB) \\
+    $\mathbf{x}$ & clamped dimensionless feature vector \\
+    $y$ & observed normalized pressure (Eq.~\ref{eq:pressure}) \\
+    $\hat{y}$ & predicted next-interval pressure (ridge) \\
+    $T$ & reclamation interval, bounded to $[T_{\min},T_{\max}]$ \\
+    $\eta,\lambda$ & ridge learning rate and regularization \\
+    $G,I,R,C$ & heap build, interop, reclamation, controller factors \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\end{document}
