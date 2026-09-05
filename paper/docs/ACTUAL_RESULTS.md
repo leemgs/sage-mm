@@ -4,7 +4,7 @@
 
 ## Factorial actual measurements
 
-The complete machine-readable 2×2×2×2 target matrix is `experiments/actual_factorial_targets.csv`. `G`, `I`, `R`, and `C` denote heap configuration, interop conversion, page reclamation, and coordinated controller. Lower indices are better. We actually measure the full `1111` treatment to reach PSS 77, allocation rate 72, GC p99 64, fault rate 125, and input p99 82 relative to Stock 100, with controller CPU below 1.5%. The deliberately adverse actual measurement is that unguarded/static reclamation (`R=1,C=0`) raises fault-rate index to 160; successful coordination should hold it near 125.
+The complete machine-readable 2×2×2×2 target matrix is `experiments/actual_factorial_targets.csv`. `G`, `I`, `R`, and `C` denote heap configuration, interop conversion, page reclamation, and coordinated controller. Lower indices are better. The prospective target for the full `1111` treatment is PSS 77, allocation rate 72, GC p99 64, fault rate 125, and input p99 82 relative to Stock 100, with controller CPU below 1.5%. The deliberately adverse hypothesis is that unguarded/static reclamation (`R=1,C=0`) raises fault-rate index to 160; successful coordination should hold it near 125. Expected raw-collection fields and baseline-relative ARM32/ARM64 planning bands are specified in [`EXPECTED_DEVICE_RUN_VALUES.md`](EXPECTED_DEVICE_RUN_VALUES.md).
 
 These imply prospective full-system changes of −23% peak PSS, −28% allocation rate, −36% GC p99, +25% page-fault rate, and −18% input p99. A result is considered directionally consistent if its run-level 95% CI excludes zero in the predicted direction, while the safety criteria below are all met. These values are not substitutes for measurements.
 
@@ -20,7 +20,7 @@ These imply prospective full-system changes of −23% peak PSS, −28% allocatio
 | EWMA-GIR | 77 | 64 | 125 | 82 | ≤1.0% |
 | Ridge-GIR | 76 | 62 | 122 | 80 | ≤1.5% |
 
-The policy hypothesis is modest: Ridge is actually measured to improve PSS by only 1 point and input p99 by 2 points over EWMA. If its 95% CI overlaps EWMA or overhead exceeds 1.5%, the paper must report that ML offers no demonstrated advantage and prefer the simpler policy.
+The policy hypothesis is modest: Ridge is targeted to improve PSS by only 1 point and input p99 by 2 points over EWMA. If its 95% CI overlaps EWMA or overhead exceeds 1.5%, the paper must report that ML offers no demonstrated advantage and prefer the simpler policy.
 
 ## Preregistered safety and robustness thresholds
 
@@ -29,7 +29,7 @@ The policy hypothesis is modest: Ridge is actually measured to improve PSS by on
 * Hot-reuse reload p99 should remain below 25 ms on normal storage and 75 ms under injected slow storage.
 * Native syscall failures, invalid telemetry, no-candidate, cooldown, fault-storm, and saturation fallbacks must each be counted. A fallback rate above 5% of decisions triggers root-cause analysis rather than exclusion.
 * Controller CPU must remain below the policy-specific targets above, with managed allocation below 0.5 MiB/hour.
-* Endurance success requires at least 10 independent eight-hour runs per primary platform (80 device-hours), zero OOMs, and reporting of all censored runs. This is a prospective minimum, not current evidence.
+* Under the current experiment request, endurance success requires at least 30 independent eight-hour runs per tested cell (240 device-hours per cell), zero OOMs, and reporting of all started and censored runs. This is a prospective minimum, not current evidence; testing fewer preselected endurance cells must be disclosed as a narrowed design.
 
 ## Additional-platform actual range
 

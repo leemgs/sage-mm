@@ -65,6 +65,13 @@ The exact implementation boundary, controller equations, coldness score, experim
 
 Numeric planning targets requested before the additional experiments are in [`docs/ACTUAL_RESULTS.md`](docs/ACTUAL_RESULTS.md). They are explicitly normalized, prospective hypotheses; `scripts/summarize_results.py` must be run on independent observed runs before any number is described as a result.
 
+Device-run planning ranges for real ARM32/ARM64 Mono/Tizen (or a real .NET
+runtime), including EventPipe/vendor-GC fields, `smaps` `Private_Clean`
+accounting, 30-minute runs, and eight-hour endurance, are in
+[`paper/docs/EXPECTED_DEVICE_RUN_VALUES.md`](paper/docs/EXPECTED_DEVICE_RUN_VALUES.md).
+They are baseline-relative preregistration ranges—not observed measurements or
+device-independent absolute predictions.
+
 [`docs/SIMULATED_RESULTS.md`](docs/SIMULATED_RESULTS.md) exercises the planned RQ1–RQ3 narrative, three SVG figures, all 16 factorial rows with synthetic CIs, an additional-platform row, and adverse/endurance tables. Every generated artifact is watermarked simulation-only. It is a pipeline/layout test and cannot detect firmware bugs or be submitted as empirical evidence.
 
 Reviewer 4's requested manuscript changes are provided as manuscript-ready replacement sections in [`docs/MANUSCRIPT_REVISION.md`](docs/MANUSCRIPT_REVISION.md), including a narrower title/abstract, novelty positioning, controller failure behavior, expanded multi-platform evaluation, quantitative ablation requirements, canonical baseline names, and limitations.
