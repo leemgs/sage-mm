@@ -1,10 +1,18 @@
 %% =====================================================================
 %% SAGE-MM bibliography.
 %%
-%% NOTE (citation audit, per docs/LITERATURE_AUDIT.md): the reviewer-
-%% supplied DOIs for AGC and DumpKV both repeated arXiv 2406.01250, which
-%% is incorrect. Verify every record below against the publisher of record
-%% before submission; replace preprint DOIs with the final published DOIs.
+%% CITATION AUDIT (per docs/LITERATURE_AUDIT.md) --- resolved. The earlier
+%% reviewer-supplied DOIs for AGC and DumpKV both pointed at arXiv 2406.01250,
+%% which is the DumpKV preprint only. Corrected records below:
+%%   * DumpKV  -> publisher DOI 10.14778/3717755.3717778 (PVLDB 18(4), 2024),
+%%               confirmed via the ACM Digital Library and vldb.org records;
+%%               its co-author names have also been corrected.
+%%   * AGC     -> a DISTINCT paper in IEEE Transactions on Computers, cited by
+%%               its stable IEEE Xplore record (article 11298441). Its IEEE DOI
+%%               could not be confirmed from a primary source at edit time, so
+%%               no DOI is asserted; take it from the linked Xplore page.
+%%   * Platinum-> USENIX ATC papers carry no publisher DOI; cited by the stable
+%%               USENIX presentation URL instead.
 %% Do NOT claim empirical superiority over an unported collector.
 %% =====================================================================
 
@@ -20,33 +28,35 @@
 }
 
 @inproceedings{platinum2020,
-  author    = {Wu, Mingyu and Yang, Ziming and Chen, Haibo and others},
+  author    = {Wu, Mingyu and Zhao, Ziming and Yang, Yanfei and Li, Haoyu and
+               Chen, Haibo and Zang, Binyu and Guan, Haibing and Li, Sanhong and
+               Lu, Chuansheng and Zhang, Tongbao},
   title     = {Platinum: A {CPU}-Efficient Concurrent Garbage Collector for
                Tail-Reduction of Interactive Services},
   booktitle = {Proceedings of the 2020 USENIX Annual Technical Conference
                (USENIX ATC)},
   year      = {2020},
   pages     = {159--172},
-  note      = {Verify venue identifiers in the final bibliography; the ACM
-               index identifier 10.5555/3489146.3489157 is not an
-               author-assigned DOI},
+  url       = {https://www.usenix.org/conference/atc20/presentation/wu-mingyu},
+  note      = {USENIX ATC papers carry no publisher DOI},
   publisher = {USENIX Association}
 }
 
 @article{agc2025,
-  author  = {Sun, Hui and others},
+  author  = {Sun, Hui and Ding, Hao and Tong, Han and Cheng, Xiao and
+             Chai, Hua and Qin, Xiao},
   title   = {{AGC}: An Adaptive Workload Burst-Aware Garbage Collection
              Mechanism for High-Performance {SSDs}},
   journal = {IEEE Transactions on Computers},
-  year    = {2025},
-  note    = {Storage GC; conceptual precedent, not a managed-runtime
-             baseline. Verify and add the final IEEE DOI before submission
-             (reviewer-supplied preprint DOI 10.48550/arXiv.2406.01250 must
-             be checked)}
+  year    = {2026},
+  url     = {https://ieeexplore.ieee.org/document/11298441},
+  note    = {Storage GC; conceptual precedent, not a managed-runtime baseline.
+             Final volume, issue, pages, and IEEE DOI as listed on the linked
+             IEEE Xplore record}
 }
 
 @article{dumpkv2024,
-  author  = {Zhuang, Zhutao and Zeng, Xiaoge and Chen, Zhen},
+  author  = {Zhuang, Zhutao and Zeng, Xinqi and Chen, Zhiguang},
   title   = {{DumpKV}: Learning Based Lifetime Aware Garbage Collection for
              Key Value Separation in {LSM}-Tree},
   journal = {Proceedings of the VLDB Endowment (PVLDB)},
@@ -54,8 +64,9 @@
   number  = {4},
   year    = {2024},
   pages   = {1223--1236},
-  note    = {Storage GC; motivates lightweight learning comparison only.
-             Verify the publisher DOI; do not copy the repeated arXiv DOI}
+  doi     = {10.14778/3717755.3717778},
+  url     = {https://www.vldb.org/pvldb/vol18/p1223-zhuang.pdf},
+  note    = {Storage GC; motivates lightweight learning comparison only}
 }
 
 @manual{madvise,

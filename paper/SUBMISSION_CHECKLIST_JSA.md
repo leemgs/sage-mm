@@ -38,6 +38,9 @@ so the PDF and the EM form fields agree.
 - [x] Cover letter updated to single author with no competing interests / no funding.
 - [x] Author affiliation filled: Geunsik Lim, Sungkyunkwan University, Suwon,
       Republic of Korea (front matter + cover letter).
+- [x] Bibliography DOIs audited against the publisher of record (see §3.3 and
+      `docs/LITERATURE_AUDIT.md`); the readiness gate's bibliography blocker is
+      cleared. **Only blocker #1 (real firmware Results) now gates submission.**
 - [x] Observed proxy-harness bundle integrated with honest provenance and CIs.
 - [x] JSA build script (`scripts/build_jsa.sh`) and fail-closed readiness gate
       (`scripts/check_jsa_readiness.py`) added.
@@ -59,11 +62,14 @@ These are reported live by `python3 scripts/check_jsa_readiness.py`:
    firmware evidence.
 2. ~~**Author affiliation.**~~ Done: Geunsik Lim, Sungkyunkwan University,
    Suwon, Republic of Korea (in `scripts/make_jsa.py` preamble and cover letter).
-3. **Bibliography verification.** `paper/sagemm.bib` still carries "verify"
-   notes and provisional identifiers (AGC/DumpKV preprint-DOI collision, the
-   Platinum ACM index id, `others` author lists, vendor-Mono/.NET manuals).
-   Replace each with the publisher-of-record record and final DOI, expand the
-   related-work set, and remove the notes.
+3. ~~**Bibliography verification.**~~ Done: DOIs audited against the publisher
+   of record. DumpKV corrected to DOI `10.14778/3717755.3717778` with the right
+   co-authors; LXR DOI confirmed; Platinum given the full author list and its
+   USENIX URL (no DOI exists); AGC cited by its IEEE Xplore record (article
+   11298441) — its IEEE DOI could not be confirmed from a primary source in
+   this environment, so take the final volume/issue/pages/DOI from that Xplore
+   page before submission. Optionally still expand the related-work set beyond
+   these five references.
 
 ## 4. Recommended before submission (not gated)
 
