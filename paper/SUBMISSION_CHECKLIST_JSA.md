@@ -36,6 +36,8 @@ so the PDF and the EM form fields agree.
       Data availability statements in both the manuscript and `DECLARATIONS_JSA.md`.
 - [x] Highlights written and verified ≤ 85 characters each (5 items).
 - [x] Cover letter updated to single author with no competing interests / no funding.
+- [x] Author affiliation filled: Geunsik Lim, Sungkyunkwan University, Suwon,
+      Republic of Korea (front matter + cover letter).
 - [x] Observed proxy-harness bundle integrated with honest provenance and CIs.
 - [x] JSA build script (`scripts/build_jsa.sh`) and fail-closed readiness gate
       (`scripts/check_jsa_readiness.py`) added.
@@ -55,8 +57,8 @@ These are reported live by `python3 scripts/check_jsa_readiness.py`:
    rerun `scripts/make_jsa.py`. The current `observed-results.tex` is the ARM64
    Linux **proxy harness** (n=3, Python collector) and is explicitly *not*
    firmware evidence.
-2. **Author affiliation.** Replace `[Institution]`, `[City]`, `[Country]` in the
-   `PREAMBLE` of `scripts/make_jsa.py` (single source), then regenerate.
+2. ~~**Author affiliation.**~~ Done: Geunsik Lim, Sungkyunkwan University,
+   Suwon, Republic of Korea (in `scripts/make_jsa.py` preamble and cover letter).
 3. **Bibliography verification.** `paper/sagemm.bib` still carries "verify"
    notes and provisional identifiers (AGC/DumpKV preprint-DOI collision, the
    Platinum ACM index id, `others` author lists, vendor-Mono/.NET manuals).

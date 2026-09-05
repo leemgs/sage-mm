@@ -104,5 +104,5 @@ feedback.
 Sincerely,
 
 Geunsik Lim (corresponding author)
-[Institution], [City], [Country]
+Sungkyunkwan University, Suwon, Republic of Korea
 leemgs@gmail.com
