@@ -21,7 +21,7 @@ To the Editors-in-Chief
 
 Dear Editors,
 
-Please consider our manuscript, **"SAGE-MM: Coordinating Heap Configuration,
+Please consider my manuscript, **"SAGE-MM: Coordinating Heap Configuration,
 Interop Allocation, and Page Reclamation in Memory-Constrained Embedded .NET
 Firmware,"** for publication in the *Journal of Systems Architecture* as a
 regular research paper.
@@ -87,18 +87,18 @@ where a lightweight learned policy shows no advantage over a tuned threshold, we
 report that rather than hiding it. A reference kit reproduces the control logic
 and safety guards independently of the proprietary firmware integration.
 
-We confirm that this manuscript is original, has not been published previously,
-and is not under consideration by any other journal. All authors have approved
-the submission and agree to its content. [*We declare no competing financial or
-personal interests.* / *We declare the following competing interests: [...]*]
+I confirm that this manuscript is original, has not been published previously,
+and is not under consideration by any other journal. I declare no competing
+financial or personal interests, and this research received no specific grant
+from any funding agency in the public, commercial, or not-for-profit sectors.
 [*Optional: A preprint of this work is available at [arXiv/repository URL].*]
 
-We suggest the following qualified reviewers who are not close collaborators and
+I suggest the following qualified reviewers who are not close collaborators and
 have no conflict of interest: [Name, affiliation, email]; [Name, affiliation,
-email]; [Name, affiliation, email]. We request that the following be excluded,
+email]; [Name, affiliation, email]. I request that the following be excluded,
 if any: [none / Name].
 
-Thank you for considering our submission. We look forward to the reviewers'
+Thank you for considering my submission. I look forward to the reviewers'
 feedback.
 
 Sincerely,
@@ -106,4 +106,3 @@ Sincerely,
 Geunsik Lim (corresponding author)
 [Institution], [City], [Country]
 leemgs@gmail.com
-[On behalf of all co-authors: [names]]

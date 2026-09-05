@@ -114,8 +114,35 @@ digital television
 
 BACKMATTER = r"""
 %% =====================================================================
+%% Elsevier-required author statements. Single author; no competing
+%% interests; no specific funding. Edit these here (the generator), never in
+%% the generated sagemm-jsa.tex. The same text is mirrored, human-readable, in
+%% paper/DECLARATIONS_JSA.md for pasting into the submission system.
+\section*{CRediT authorship contribution statement}
+\textbf{Geunsik Lim:} Conceptualization, Methodology, Software, Validation,
+Formal analysis, Investigation, Data curation, Writing --- original draft,
+Writing --- review \& editing, Visualization.
+
+\section*{Declaration of competing interest}
+The author declares that he has no known competing financial interests or
+personal relationships that could have appeared to influence the work
+reported in this paper.
+
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the
+public, commercial, or not-for-profit sectors.
+
+\section*{Data availability}
+The reference controller, safety guards, analyzer, evaluation protocol, and
+the observed proxy-harness bundle are openly available in the SAGE-MM
+repository. The proprietary vendor firmware patch and raw commercial-device
+traces are withheld for confidentiality; the versioned observed-result bundle
+underlying any reported device measurement will be released with the final
+paper. No measured firmware result is reported until that bundle exists.
+
+%% =====================================================================
 \section*{Acknowledgements}
-The authors thank the reviewers for feedback that sharpened the scope,
+The author thanks the reviewers for feedback that sharpened the scope,
 boundary, and evaluation protocol of this work.
 
 %% =====================================================================
