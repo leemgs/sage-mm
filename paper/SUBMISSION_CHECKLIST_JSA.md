@@ -73,8 +73,11 @@ These are reported live by `python3 scripts/check_jsa_readiness.py`:
 
 ## 4. Recommended before submission (not gated)
 
-- Convert the three placeholder SVG figures and the architecture figure to
-  vector PDF/EPS; confirm they are legible in single-column width.
+- Figures: the manuscript currently embeds **no** external image files — every
+  figure is inline LaTeX (tabular bars, algorithm blocks), so there is nothing
+  to convert. The three `paper/docs/figures/simulated_rq*.svg` files are
+  simulation-only artifacts used by `docs/SIMULATED_RESULTS.md`, not by the
+  paper. If you later add real vector figures, provide them as PDF/EPS.
 - Fill the "Use of generative AI" disclosure in `DECLARATIONS_JSA.md` to match
   the actual process, or delete it.
 - Add 3 suggested reviewers (no conflict of interest) in the cover letter / EM.

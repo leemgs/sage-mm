@@ -3,13 +3,18 @@
 import argparse, csv, io, json, random
 from pathlib import Path
 
+# Since commit 4b6ef73 the tree is split: code/ holds the implementation and
+# experiment data, while paper/ (manuscript, docs, generated fragments) lives at
+# the repository root. ROOT is the code/ tree (experiments/*); REPO_ROOT is the
+# repository root (paper/*). Resolving both keeps --check honest in this layout.
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 TARGETS = ROOT / "experiments/actual_factorial_targets.csv"
 RUNS = ROOT / "experiments/simulated/factorial_runs.csv"
 SUMMARY = ROOT / "experiments/simulated/factorial_summary.json"
-REPORT = ROOT / "docs/SIMULATED_RESULTS.md"
-FIGURES = ROOT / "docs/figures"
-PAPER_TEX = ROOT / "paper/generated/simulated-results.tex"
+REPORT = REPO_ROOT / "paper/docs/SIMULATED_RESULTS.md"
+FIGURES = REPO_ROOT / "paper/docs/figures"
+PAPER_TEX = REPO_ROOT / "paper/generated/simulated-results.tex"
 SEED, N, RESAMPLES = 20260829, 30, 10_000
 METRICS = [
     ("peak_pss", "actual_peak_pss_index", 2.0),
@@ -62,7 +67,17 @@ def generate():
         summaries.append(item)
     fields=['simulation','treatment','run_id','seed']+[f'{m}_index' for m,_,_ in METRICS]
     stream=io.StringIO(); writer=csv.DictWriter(stream,fieldnames=fields,lineterminator='\n'); writer.writeheader(); writer.writerows(run_rows)
-    summary=json.dumps({'simulation_only':True,'seed':SEED,'runs_per_cell':N,'bootstrap_resamples':RESAMPLES,'cells':summaries},indent=2,sort_keys=True)+'\n'
+    # Quantize summary floats to 10 significant figures so the serialized JSON is
+    # byte-identical across Python versions/platforms (full-precision repr can
+    # differ by 1 ULP, which made --check spuriously report staleness). This does
+    # not touch the markdown/LaTeX fragments, which already format to fixed .1f.
+    def _stable(obj):
+        if isinstance(obj,bool): return obj
+        if isinstance(obj,float): return float(f"{obj:.10g}")
+        if isinstance(obj,dict): return {k:_stable(v) for k,v in obj.items()}
+        if isinstance(obj,list): return [_stable(v) for v in obj]
+        return obj
+    summary=json.dumps(_stable({'simulation_only':True,'seed':SEED,'runs_per_cell':N,'bootstrap_resamples':RESAMPLES,'cells':summaries}),indent=2,sort_keys=True)+'\n'
     def fmt(x): return f"{x:.1f}"
     lines=['# Simulation-only Results mock-up','', '> **SYNTHETIC DATA — NOT OBSERVED.** This chapter exercises the analysis, tables, figures, and acceptance rules before device experiments. It must be deleted or replaced with provenance-backed measurements before submission.','',
            '## RQ1 — Actual architecture/build effect','', 'The simulation projects heap configuration to reduce normalized GC p99 from 100 to 75 on the ARM32-centered workload and uses the previously stated 2.6× ARM32/ARM64 compaction-frequency hypothesis. Figure 1 is synthetic.','', '![Simulated RQ1](figures/simulated_rq1.svg)','',
@@ -177,8 +192,11 @@ All values above are sampled from a seeded probability model centered on the act
 def main():
     p=argparse.ArgumentParser(); p.add_argument('--check',action='store_true'); args=p.parse_args(); runs,summary,report,figures,paper_tex=generate()
     outputs={RUNS:runs,SUMMARY:summary,REPORT:report,PAPER_TEX:paper_tex,**{FIGURES/k:v for k,v in figures.items()}}
+    def rel(path):
+        try: return str(path.relative_to(REPO_ROOT))
+        except ValueError: return str(path)
     if args.check:
-        bad=[str(path.relative_to(ROOT)) for path,data in outputs.items() if not path.exists() or path.read_text(encoding='utf-8')!=data]
+        bad=[rel(path) for path,data in outputs.items() if not path.exists() or path.read_text(encoding='utf-8')!=data]
         if bad: raise SystemExit('stale simulated artifacts: '+', '.join(bad))
         print('validated deterministic simulated artifacts (not observations)'); return
     RUNS.parent.mkdir(parents=True,exist_ok=True); FIGURES.mkdir(parents=True,exist_ok=True); PAPER_TEX.parent.mkdir(parents=True,exist_ok=True)
