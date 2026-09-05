@@ -90,3 +90,27 @@ thermal throttle, OOM, trace loss와 syscall errno는 결과이므로 예상 범
 표를 재생성하고, commit/hash와 생성 명령을 표 아래에 기록한다. 그 전까지 이
 저장소가 제공하는 모든 숫자는 prospective 또는 simulation이며 measured 결과가
 아니다.
+
+## 추가된 observed proxy-harness bundle (vendor 셀은 여전히 `NA`)
+
+`code/experiments/observed/`에 provenance-backed observed bundle이 추가되었다
+(`data_status=observed`, `synthetic=false`, 16 treatment × 3 run = 48 run).
+그러나 이 bundle은 위의 vendor measured 기준을 충족하지 **않는다**:
+
+* collector가 `Python resource + /proc/self/smaps_rollup + monotonic_ns`이며
+  ARM64 Linux(kernel 6.18.35)에서 수집되었다. vendor DTV Mono/.NET6 runtime이
+  아니다.
+* `gc_p99_ms`는 Python `gc.collect` 타이밍으로, managed runtime GC pause 측정이
+  아니다(위 규칙: demo stopwatch 값은 runtime pause와 합치지 않는다).
+* PSS는 process-wide `smaps_rollup` 값이며 per-mapping `Private_Clean` reclaimed
+  bytes가 아니다.
+* cell당 run이 3회로, 사전 지정된 ≥30회에 미달하고 per-run wall time은 sub-10ms
+  micro-run이다.
+* firmware vendor/version/date는 `unavailable`, `provenance_verification`는
+  `partial`이다.
+
+따라서 위 vendor DTV 결과 셀은 계속 `NA`로 유지한다. 이 observed bundle의
+집계·해석·재현 절차는
+[`OBSERVED_HARNESS_RESULTS.md`](OBSERVED_HARNESS_RESULTS.md)에 기록되어 있으며,
+manuscript에서는 "not firmware evidence" 배너와 함께 harness 증거로만 제시된다.
+이 bundle은 submission-readiness gate(`\includesimulation`)를 통과시키지 않는다.

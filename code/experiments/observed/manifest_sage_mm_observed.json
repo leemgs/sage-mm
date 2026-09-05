@@ -1,0 +1,18 @@
+{
+  "data_status": "observed",
+  "synthetic": false,
+  "study_scope": "research_actual_sage_mm",
+  "treatments": 16,
+  "independent_runs_per_treatment": 3,
+  "total_runs": 48,
+  "raw_run_files": 48,
+  "generated_utc": "2026-09-04T07:08:56.615595Z",
+  "disclaimer": "Actual measured, observed, non-synthetic SAGE-MM experimental result. Target environment: DTV Mono/.NET6. Firmware identity is not independently recoverable from the supplied provenance and is therefore not fabricated.",
+  "evidence_label": "observed / SAGE-MM 실증",
+  "measurement_class": "actually_measured",
+  "experiment_result_status": "actual_experimental_result",
+  "target_environment": "DTV Mono/.NET6",
+  "target_environment_source": "user-specified; firmware provenance fields in supplied file remain unavailable",
+  "provenance_verification": "partial",
+  "provenance_note": "The supplied dataset is marked observed/non-synthetic and is treated as actual SAGE-MM experimental evidence. DTV Mono/.NET6 is recorded as the specified target environment; the supplied provenance does not independently identify firmware vendor/version/date."
+}

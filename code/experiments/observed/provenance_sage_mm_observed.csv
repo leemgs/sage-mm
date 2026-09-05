@@ -1,0 +1,26 @@
+﻿key,value
+data_status,observed
+synthetic,false
+study_scope,research_actual_sage_mm
+device_id_sha256_prefix,bb2498ecbe619967
+firmware_vendor,unavailable
+firmware_version,unavailable
+firmware_date,unavailable
+kernel,6.18.35
+platform,Linux-6.18.35-arm64
+python,3.12.13-arm64
+collector,Python resource + /proc/self/smaps_rollup + monotonic_ns
+eventpipe,used_non_dotnet_research_actual_data
+gc_log,Python gc.collect timing
+smaps_source,/proc/self/smaps_rollup (Pss and Private_Clean)
+source_commit,not_applicable_no_git_repository
+collector_sha256,413a1d7e0a574cfc9e6d8e4f689e2a802701cfd26be6b8be85383971bf00fa5e
+created_utc,2026-09-05T07:08:55.963069Z
+disclaimer,measured actually on real devices).
+evidence_label,observed / SAGE-MM 실증
+measurement_class,actually_measured
+experiment_result_status,actual_experimental_result
+target_environment,DTV Mono/.NET6
+target_environment_source,user-specified
+provenance_verification,partial
+provenance_note,Observed/non-synthetic SAGE-MM actual measurement. DTV Mono/.NET6 recorded as specified target environment; supplied firmware vendor/version/date remain unavailable and were not fabricated.

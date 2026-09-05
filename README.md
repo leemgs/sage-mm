@@ -72,6 +72,18 @@ accounting, 30-minute runs, and eight-hour endurance, is in
 Its result cells remain `NA` until a provenance-backed raw bundle is added;
 prospective targets and simulation outputs are not measured evidence.
 
+An **observed, non-synthetic proxy-harness bundle** is provided in
+[`code/experiments/observed/`](code/experiments/observed/) (16 treatments × 3
+runs, deterministically summarized into `paper/generated/observed-results.tex`).
+It is genuine measured data, but from an ARM64 Linux Python `/proc` collector —
+**not** vendor DTV Mono/.NET6 firmware — so it validates the analysis pipeline
+on real data without meeting the vendor measured bar; the DTV result cells stay
+`NA`. Provenance, reproduction commands, and an honest reading are in
+[`paper/docs/OBSERVED_HARNESS_RESULTS.md`](paper/docs/OBSERVED_HARNESS_RESULTS.md).
+Regenerate with `python3 code/scripts/convert_observed_bundle.py`,
+`python3 code/scripts/summarize_results.py …`, and
+`python3 code/scripts/make_observed_results_tex.py`.
+
 [`docs/SIMULATED_RESULTS.md`](docs/SIMULATED_RESULTS.md) exercises the planned RQ1–RQ3 narrative, three SVG figures, all 16 factorial rows with synthetic CIs, an additional-platform row, and adverse/endurance tables. Every generated artifact is watermarked simulation-only. It is a pipeline/layout test and cannot detect firmware bugs or be submitted as empirical evidence.
 
 Reviewer 4's requested manuscript changes are provided as manuscript-ready replacement sections in [`docs/MANUSCRIPT_REVISION.md`](docs/MANUSCRIPT_REVISION.md), including a narrower title/abstract, novelty positioning, controller failure behavior, expanded multi-platform evaluation, quantitative ablation requirements, canonical baseline names, and limitations.
