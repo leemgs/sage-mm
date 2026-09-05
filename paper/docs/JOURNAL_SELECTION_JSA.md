@@ -49,26 +49,34 @@
 이번에 제공된 3개 파일(`manifest.json`, `provenance.csv`, `per_run_measurements.csv`)은
 **전요인 2×2×2×2(G·I·R·C) × 3런 = 48런의 진짜 측정값**이다. 구조적으로는
 원고의 사전등록 요인 설계와 일치하여 **방법론 리허설/레퍼런스 킷 검증**으로는
-유용하다. 그러나 원고 본문 Results 근거로는 **부적합**하다. 이유:
+유용하다. 원본 3개 파일은 `code/experiments/reference-kit-arm64/`에 정직한
+스코프 README와 함께 보존 이관했다. 그러나 원고 본문 Results 근거로는 여전히
+**부적합**하다. 이유:
 
-1. **플랫폼 불일치.** provenance상 수집 환경은 `Linux-x86_64`(kernel 6.18.35,
-   glibc2.39)이다. 원고는 **ARM32(1 GiB)/ARM64(3 GiB) DTV급 하드웨어**를 주
-   평가 대상으로 명시한다(`sagemm-jsa.tex` §Setup).
-2. **런타임 불일치.** 수집기는 `Python resource + /proc/self/smaps_rollup +
-   monotonic_ns`, `python 3.12.13`. 원고의 대상 런타임은 **Tizen .NET 6 이미지
-   내 벤더 Mono 포크**다. 즉 측정된 프로세스가 논문이 주장하는 런타임이 아니다.
-3. **데이터 자체의 자기 부인(disclaimer).**
-   - `provenance.csv`: *"Not SAGE-MM hardware/software evidence; measured
-     research only (as actual evaluation experiment)."*
-   - `manifest.json`: *"...as a proof-of-concept (POC) SAGE-MM manuscript evidence."*
-   데이터 생산자가 스스로 "SAGE-MM HW/SW 증거가 아님"을 표기했으므로, 이를
-   Results로 승격하면 정직성 원칙과 `ACTUAL_RESULTS.md`의 보고 규칙("목표값을
-   result/improvement/evidence로 라벨하지 말 것")에 정면으로 위배된다.
+1. **런타임 불일치(결정적).** 수집기는 `Python resource + /proc/self/smaps_rollup +
+   monotonic_ns`, `python 3.12.13-arm64`, 그리고 `eventpipe =
+   used_non_dotnet_research_actual_data`로, 측정 대상이 **명시적으로 비(非).NET
+   Python 프로세스**다. 원고의 대상 런타임은 **Tizen .NET 6 이미지 내 벤더 Mono
+   포크**다. 즉 측정된 프로세스가 논문이 주장하는 런타임이 아니다.
+2. **펌웨어 정보 부재.** provenance의 `firmware_vendor/version/date`가 모두
+   `unavailable`이라, 펌웨어 특이 주장을 어느 것도 정박할 수 없다. 또한 단일
+   기기(`device_id` 프리픽스 `bb2498ecbe619967`)·단일 커널(`6.18.35`)이며
+   ARM32 기기·독립 3번째 플랫폼·내구(device-hours)가 없다. 각 런도 8~18 ms
+   수준의 마이크로벤치로, 원고 프로토콜의 8시간 내구 세션과 규모가 다르다.
+3. **라벨과 실측 내용의 불일치(주의).** 이번 업로드는 이전과 달리 텍스트 필드가
+   `study_scope = research_actual_sage_mm`, `data_status = observed`,
+   `platform = Linux-6.18.35-arm64`로, disclaimer도 *"measured actually on real
+   devices"* / *"SAGE-MM manuscript evidence on the embedded real devices"* 로
+   **재라벨**되었다. 그러나 라벨 변경만으로는 증거가 되지 않는다 — 수집기가
+   비.NET Python이고 펌웨어가 `unavailable`인 실측 성격은 그대로다. `ACTUAL_RESULTS.md`
+   보고 규칙("목표/프록시 값을 result/improvement/evidence로 라벨하지 말 것")상
+   프록시를 재라벨해 Results로 승격하는 것은 정직성 원칙에 정면으로 위배된다.
 
 **활용 가능한 범위:** 레퍼런스 킷(`code/`)의 컨트롤러 로직·안전 가드가 독립적으로
 동작함을 보이는 **재현성/방법론 검증 자료**로는 인용 가능하다(원고는 이미 킷을
-"보고 수치의 증거가 아님"으로 스코프함). 단, x86_64/Python 프록시임을 명시해야
-한다. **원고의 핵심 주장(PSS·tail pause·fault·latency 개선)의 근거로는 쓰지 말 것.**
+"보고 수치의 증거가 아님"으로 스코프함). 단, **ARM64/비.NET Python 프록시**임을
+반드시 명시해야 한다(이관 디렉터리 README가 이를 고정). **원고의 핵심 주장
+(PSS·tail pause·fault·latency 개선)의 근거로는 쓰지 말 것.**
 
 ## 5. JSA 투고까지의 잔여 과제 (준비도 체크리스트)
 
@@ -118,7 +126,7 @@ JSA 문맥에 맞춰 재정리.
 | elsarticle 변환본 | ✅ 생성됨 | `make_jsa.py`로 동기화 |
 | 커버레터 초안 | 🟡 초안 존재 | `[...]` 필드 미완 |
 | **실측 증거(DTV)** | ❌ 없음 | **최대 차단 요인** |
-| 업로드 48런 데이터 | ⚠️ 부적합 | x86_64/Python, 자기 부인 — 킷 검증용만 |
+| 업로드 48런 데이터 | ⚠️ 부적합 | ARM64/비.NET Python, 펌웨어 unavailable — 킷 검증용만. `code/experiments/reference-kit-arm64/`에 이관 |
 | 3번째 플랫폼/일반화 | ❌ 미정 | 추가 또는 주장 축소 필요 |
 | 안전/내구/대조군 | ❌ 미측정 | 차단 과제 |
 | 참고문헌/메타데이터 | 🟡 미비 | 7개 항목, 플레이스홀더 |

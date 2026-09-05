@@ -1,0 +1,11 @@
+{
+  "data_status": "observed",
+  "synthetic": false,
+  "study_scope": "research_actual_sage_mm",
+  "treatments": 16,
+  "independent_runs_per_treatment": 3,
+  "total_runs": 48,
+  "raw_run_files": 48,
+  "generated_utc": "2026-09-04T07:08:56.615595Z",
+  "disclaimer": "Actual measurement; SAGE-MM manuscript evidence on the embedded real devices."
+}
