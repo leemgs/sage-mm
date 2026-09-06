@@ -173,8 +173,8 @@ def summary_tables(rows):
     return out, scenarios, platforms
 
 
-def policy_table(rows):
-    # aggregate mean of each index across runs per (scenario, treatment)
+def index_means(rows):
+    """Mean normalized index per (scenario, treatment) across runs."""
     agg = defaultdict(lambda: defaultdict(list))
     for r in rows:
         key = (r["scenario"], r["treatment"])
@@ -182,6 +182,132 @@ def policy_table(rows):
             v = _num(cell(r, col))
             if v is not None:
                 agg[key][col].append(v)
+    means = {}
+    for key, cols in agg.items():
+        means[key] = {c: (sum(v) / len(v) if v else None) for c, v in cols.items()}
+    return means
+
+
+def figures(rows):
+    """Emit pgfplots figures (ablation ladder, tradeoff, cross-regime) driven
+    by the normalized policy indices."""
+    m = index_means(rows)
+    treats = [t for t in TREATMENT_ORDER
+              if ("planning_hypothesis", t) in m]
+    short = {"Stock": "Stock", "Static-G": "S-G", "Static-GI": "S-GI",
+             "Static-GIR": "S-GIR", "Threshold-GIR": "Thr", "EWMA-GIR": "EWMA",
+             "Ridge-GIR": "Ridge"}
+
+    def coords(scen, col):
+        return " ".join(
+            f"({short[t]},{m[(scen, t)][col]:.1f})" for t in treats)
+
+    xsym = ",".join(short[t] for t in treats)
+    out = []
+
+    # ---- Figure 1: ablation ladder (favorable regime) ----
+    out.append(r"""\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+    width=\linewidth, height=5.2cm, ybar=1pt, bar width=4pt,
+    ymin=55, ymax=175, symbolic x coords={%s}, xtick=data,
+    x tick label style={font=\scriptsize}, ylabel={Index (Stock${=}100$)},
+    ylabel style={font=\scriptsize}, ytick={60,80,100,120,140,160},
+    tick label style={font=\scriptsize},
+    legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south, legend columns=4},
+    enlarge x limits=0.08, ymajorgrids, major grid style={dotted}]
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \draw[dashed] (axis cs:%s,100) -- (axis cs:%s,100);
+  \legend{PSS, GC p99, Fault, Input p99}
+  \end{axis}
+  \end{tikzpicture}
+  \caption{Ablation ladder under the favorable workload (normalized policy
+  indices, Stock${=}100$, mean of $n{=}30$ runs). Static heap and interop
+  ($\textsf{S-G}\to\textsf{S-GI}$) lower PSS and GC tail with no fault cost;
+  reclamation ($\textsf{S-GIR}$) reaches the lowest PSS but spikes the fault
+  rate, which the online policies ($\textsf{Thr}/\textsf{EWMA}/\textsf{Ridge}$)
+  pull back down while further improving input latency.}
+  \label{fig:ablation}
+\end{figure}""" % (xsym, coords("planning_hypothesis", "peak_pss_index"),
+                   coords("planning_hypothesis", "gc_p99_index"),
+                   coords("planning_hypothesis", "fault_rate_index"),
+                   coords("planning_hypothesis", "input_p99_index"),
+                   short[treats[0]], short[treats[-1]]))
+
+    # ---- Figure 2: PSS vs fault tradeoff (favorable regime) ----
+    pts = " ".join(
+        f"({m[('planning_hypothesis', t)]['peak_pss_index']:.1f},"
+        f"{m[('planning_hypothesis', t)]['fault_rate_index']:.1f})[{short[t]}]"
+        for t in treats)
+    out.append(r"""\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+    width=\linewidth, height=5.2cm,
+    xlabel={Peak PSS index (Stock${=}100$; lower is better)},
+    ylabel={Fault-rate index}, xlabel style={font=\scriptsize},
+    ylabel style={font=\scriptsize}, tick label style={font=\scriptsize},
+    xmin=72, xmax=104, ymin=90, ymax=175, grid=both,
+    major grid style={dotted}]
+  \addplot+[only marks, mark=*, point meta=explicit symbolic,
+    nodes near coords, every node near coord/.append style={font=\tiny,
+    anchor=west, xshift=1pt}] coordinates {%s};
+  \end{axis}
+  \end{tikzpicture}
+  \caption{Footprint--refault tradeoff under the favorable workload. Static
+  reclamation ($\textsf{S-GIR}$) buys the lowest PSS at a large refault
+  penalty; the online controllers recover most of that penalty at nearly the
+  same PSS, i.e.\ the controller's contribution is refault mitigation rather
+  than additional footprint.}
+  \label{fig:tradeoff}
+\end{figure}""" % pts)
+
+    # ---- Figure 3: cross-regime robustness for Ridge-GIR ----
+    regimes = [("planning_hypothesis", "Favorable"), ("no_benefit", "Neutral"),
+               ("regression", "Adverse")]
+    regimes = [(s, lab) for s, lab in regimes if (s, "Ridge-GIR") in m]
+    rsym = ",".join(lab for _, lab in regimes)
+
+    def rcoords(col):
+        return " ".join(
+            f"({lab},{m[(s, 'Ridge-GIR')][col]:.1f})" for s, lab in regimes)
+
+    out.append(r"""\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+    width=0.9\linewidth, height=5.0cm, ybar=2pt, bar width=9pt,
+    ymin=60, ymax=175, symbolic x coords={%s}, xtick=data,
+    ylabel={Ridge-GIR index (Stock${=}100$)}, ylabel style={font=\scriptsize},
+    tick label style={font=\scriptsize}, ytick={60,80,100,120,140,160},
+    legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south, legend columns=3},
+    enlarge x limits=0.35, ymajorgrids, major grid style={dotted}]
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \draw[dashed] (axis cs:%s,100) -- (axis cs:%s,100);
+  \legend{PSS, Fault, Input p99}
+  \end{axis}
+  \end{tikzpicture}
+  \caption{Cross-regime robustness of the coordinated learned policy
+  ($\textsf{Ridge-GIR}$). Coordination helps in the favorable regime, is
+  approximately neutral where no gain is available, and becomes a net cost in
+  the adverse (refault-dominated) regime---the guards bound but do not remove
+  that cost.}
+  \label{fig:regimes}
+\end{figure}""" % (rsym, rcoords("peak_pss_index"), rcoords("fault_rate_index"),
+                   rcoords("input_p99_index"), regimes[0][1], regimes[-1][1]))
+
+    with open(os.path.join(GEN, "measured-figures.tex"), "w") as fh:
+        fh.write("\n\n".join(out) + "\n")
+
+
+def policy_table(rows):
+    means = index_means(rows)
     lines = [
         r"\begin{table}[t]",
         r"  \caption{Normalized policy indices (Stock${=}100$ within each "
@@ -203,8 +329,8 @@ def policy_table(rows):
         for t in treats:
             cells = [_tex(scen), _tex(t)]
             for col, _ in INDEX_COLS:
-                vals = agg[(scen, t)][col]
-                cells.append(_fmt(sum(vals) / len(vals)) if vals else "--")
+                v = means.get((scen, t), {}).get(col)
+                cells.append(_fmt(v) if v is not None else "--")
             lines.append("    " + " & ".join(cells) + r" \\")
         lines.append(r"    \midrule")
     lines[-1] = r"    \bottomrule"
@@ -229,6 +355,7 @@ def main():
     parts.extend(tables)
     if pol:
         parts.append(policy_table(pol))
+        figures(pol)
     parts.append(
         r"\noindent\textit{Reading note.} Each cell is the mean of "
         r"run-level values over $n{=}30$ independent runs with a two-sided 95\% "
