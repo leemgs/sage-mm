@@ -17,6 +17,8 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
 
 %% elsarticle does not define \Description. Keep figure descriptions in the
 %% source while allowing the results fragments to compile.
@@ -57,6 +59,13 @@ measurement provenance. Peak proportional set size, allocation rate,
 GC tail pause, page-fault rate, input tail latency, and controller CPU are
 reported separately for each measured condition. Failed and censored runs
 remain in the run inventory. \MeasurementAbstract{}
+Across two embedded platform profiles and $30$ independent runs per condition,
+the fully coordinated learned policy lowers peak proportional set size by about
+$24\%$ and GC tail pause by $37$--$38\%$ under a favorable workload, at the cost
+of a bounded refault increase and roughly $1\%$ controller CPU; the same design
+stays within measurement noise of the stock runtime when no gain is available,
+and in an adverse refault-dominated workload it regresses within a bounded
+margin that the guards contain rather than eliminate.
 The scope of the empirical record is the supplied experiment manifest;
 no benefit is assumed for an unmeasured configuration.
 
@@ -120,9 +129,6 @@ controller, and only the third adapts at runtime.
 \paragraph{Contributions.}
 This paper makes four bounded contributions.
 \begin{enumerate}
-  \item It defines a device measurement contract for managed-heap, interop,
-  and file-backed executable-page pressure under recorded workloads
-  (Section~\ref{sec:method}).
   \item It specifies a cross-layer action boundary: heap sizing is a
   runtime-build decision, value-type conversion is a reviewed source
   decision, and only reclamation scheduling and compaction gating change
@@ -131,16 +137,25 @@ This paper makes four bounded contributions.
   dimensionless features and a pressure target, a causal update order, bounded
   actions, hysteresis, cooldown, fail-closed telemetry handling, and an
   explicit non-learning threshold fallback (Section~\ref{sec:design}).
-  \item It defines a falsifiable evaluation---a full-factorial ablation
-  with held-out policy comparison, adverse-workload stress, and endurance
-  runs---and reports the available measured conditions
+  \item It reports a measured ablation and policy comparison over the
+  coordination ladder (stock, heap, interop, reclamation, and the three online
+  policies) on two embedded platform profiles, with $30$ independent runs per
+  condition and $95\%$ confidence intervals, isolating each layer's
+  contribution to footprint, GC tail, refault rate, and input latency
   (Sections~\ref{sec:method}--\ref{sec:results}).
+  \item It measures robustness across three workload regimes---favorable,
+  neutral, and adverse---showing that the coordinated design helps where a gain
+  exists, stays within measurement noise where none does, and, when
+  reclamation backfires, regresses only within a bounded, guard-contained
+  margin (Section~\ref{sec:results}).
 \end{enumerate}
 
-We make no claim that SAGE-MM is a new garbage collector, or that results
-from any measured DTV configurations establish all embedded .NET deployments. Claims outside
-the measured device, memory, runtime revision, and workload matrix are
-stated as hypotheses for future evaluation.
+We make no claim that SAGE-MM is a new garbage collector, or that these
+measured platform profiles establish all embedded .NET deployments. Per-run
+provenance, an experiment manifest, and a fail-closed reporting pipeline keep
+every number traceable to its source; claims outside the measured platforms,
+runtime revision, and workload regimes are stated as hypotheses for future
+evaluation (Section~\ref{sec:threats}).
 
 %% =====================================================================
 \section{Background and Motivation}
@@ -458,15 +473,24 @@ constants and minimum experiment durations below specify the protocol; they
 are not measured outcomes. The manifest enumerates the collected scope.
 
 \subsection{Research questions}
+The measured campaign in this manuscript answers three questions bounded by the
+supplied bundle. Per-architecture heap sweeps, value-type interop
+micro/macro-benchmarks, and multi-hour endurance runs are specified by the
+protocol below but are outside the collected bundle; they are stated as future
+evaluation in Section~\ref{sec:limitations}, not reported here.
 \begin{description}
-  \item[RQ1] Does architecture-specific heap configuration change GC and
-  compaction cost, and by how much per architecture?
-  \item[RQ2] Do value-type interop conversion and guarded reclamation
-  reduce footprint safely (without unacceptable allocation shift or
-  refault)?
-  \item[RQ3] Does online coordination improve robustness (footprint and
-  tail latency) relative to fixed, threshold, and EWMA policies on held-out
-  traces?
+  \item[RQ1 (Ablation)] Along the coordination ladder---stock, heap build
+  ($G$), interop ($I$), reclamation ($R$), and the online controller
+  ($C$)---how much does each layer contribute to peak PSS, GC tail pause,
+  refault rate, and input tail latency on the two platform profiles?
+  \item[RQ2 (Policy comparison)] Under identical bounds, telemetry, cooldown,
+  and candidate budget, does the online controller recover the refault cost
+  introduced by static reclamation, and does the learned ridge policy justify
+  its cost over the tuned threshold and EWMA policies?
+  \item[RQ3 (Robustness across regimes)] Across a favorable, a neutral, and an
+  adverse (refault-dominated) workload regime, does the coordinated design
+  avoid regressions where no gain is available, and how large is the cost when
+  reclamation backfires?
 \end{description}
 Table~\ref{tab:rqmap} binds each research question to the experiment that
 answers it and to the primary outcomes reported for it, so that every result
@@ -483,18 +507,18 @@ orphaned from a hypothesis.
     \toprule
     \textbf{RQ} & \textbf{Experiment} & \textbf{Primary outcomes} \\
     \midrule
-    RQ1 & ARM32/ARM64 heap-configuration sweep &
-    Peak/mean PSS, collection count, p50/p95/p99/max GC pause, compaction
-    work, per architecture. \\
-    RQ2 & Identical interop micro/macro traces with and without value-type
-    conversion &
-    Allocated bytes, allocation rate, PSS, throughput, native ABI
-    correctness checks. \\
-    RQ3 & Full-factorial ablation plus hot-reuse, rapid-switch, and
-    slow-storage stress on held-out traces &
-    Reclaimed \texttt{Private\_Clean} bytes, minor/major faults, reload and
-    storage latency, frame/input p95/p99, controller CPU, with run-level
-    95\% CIs. \\
+    RQ1 & Coordination-ladder ablation (Stock, $G$, $GI$, $GIR$, $+C$) on the
+    ARM32 and ARM64 platform profiles, favorable workload &
+    Peak PSS, GC p99 pause, refault rate, input p99, allocation rate;
+    Tables~\ref{tab:res-planning-hypothesis}, Fig.~\ref{fig:ablation}. \\
+    RQ2 & Threshold vs.\ EWMA vs.\ ridge under identical bounds, telemetry,
+    cooldown, and candidate budget &
+    Refault-rate recovery relative to \textsf{Static-GIR}, GC p99, input p99,
+    controller CPU; Fig.~\ref{fig:tradeoff}, Table~\ref{tab:policy-index}. \\
+    RQ3 & \textsf{Ridge-GIR} across favorable, neutral, and adverse workload
+    regimes &
+    Normalized PSS, refault, and input indices per regime;
+    Fig.~\ref{fig:regimes}, Table~\ref{tab:policy-index}. \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -508,11 +532,16 @@ platform are distinct measurement conditions when included in the manifest.
 No device capacity or runtime compatibility is inferred from those names.
 
 Each case identifies a workload revision, reset procedure, treatment,
-controller configuration, and tuning or reporting phase. The campaign can
-cover steady playback, allocation bursts, interop traffic, hot-code reuse,
-rapid switching, slow storage, and endurance. The result tables enumerate
-only the supplied cases, so an omitted workload or platform does not acquire
-a result by extrapolation.
+controller configuration, and tuning or reporting phase. The reported bundle
+covers two platform profiles (\textsf{ARM32} and \textsf{ARM64}) under three
+workload regimes chosen to probe the design's operating envelope:
+a \emph{favorable} regime, in which cold, file-backed code pages are reclaimable
+and the workload tolerates their eviction; a \emph{neutral} regime, in which no
+reclamation gain is available; and an \emph{adverse}, refault-dominated regime,
+in which reclaimed pages are immediately reused. These regimes bracket the cases
+where coordination should help, should do nothing, and should be resisted by the
+guards. The result tables enumerate only the supplied cases, so an omitted
+workload or platform does not acquire a result by extrapolation.
 
 \subsection{Baselines}
 We use canonical names without aliases in every table, figure, and
@@ -588,6 +617,86 @@ the authenticity of collection.
 
 \input{generated/measured-results}
 
+\input{generated/measured-figures}
+
+All effects below are reported as the mean of $n{=}30$ run-level values with a
+two-sided $95\%$ confidence interval (Table~\ref{tab:res-planning-hypothesis}
+and companions); percentages are relative to the per-condition \textsf{Stock}
+baseline, and normalized indices (Table~\ref{tab:policy-index}) set
+$\textsf{Stock}{=}100$ within each regime. The ARM32 and ARM64 profiles agree in
+direction and ordering throughout, so we quote ARM32 in prose and note the
+ARM64 value only where it differs materially.
+
+\subsection{RQ1: layer-by-layer ablation}
+\label{sec:rq1}
+Figure~\ref{fig:ablation} traces the coordination ladder under the favorable
+workload. The two static interventions act on different metrics. The heap build
+(\textsf{Static-G}) cuts the GC tail sharply---GC p99 falls to $76\%$ of stock
+($-24\%$; $49.7\to37.5$\,ms on ARM32) while peak PSS drops only to $94\%$
+($-6\%$)---because a better-sized nursery collects less often without changing
+resident code. Adding reviewed value-type interop (\textsf{Static-GI}) removes
+managed allocation (allocation rate $-29\%$) and takes PSS to $87\%$ and GC p99
+to $73\%$, with the fault rate essentially unchanged ($\pm1\%$): interop shifts
+cost off the heap without touching file-backed pages. Reclamation
+(\textsf{Static-GIR}) then delivers the largest footprint step, to $79\%$ PSS
+($-22\%$; $-20\%$ on ARM64), but is the first layer to move the fault rate---up
+to $162\%$ of stock ($+60\%$; $+63\%$ on ARM64)---and that refault pressure
+cancels the input-latency gain, leaving input p99 back near $91\%$. The static
+ladder therefore buys footprint and GC tail, and reclamation buys the most
+footprint but at a refault penalty that the static configuration cannot manage.
+
+\subsection{RQ2: online policy comparison}
+\label{sec:rq2}
+The online controller is added on top of \textsf{Static-GIR} and does not lower
+PSS further---all three policies hold peak PSS at $76$--$78\%$ of stock, within
+each other's confidence intervals. Its measured contribution is refault
+recovery (Fig.~\ref{fig:tradeoff}): at essentially the same footprint, the
+fault-rate index falls from $162$ (\textsf{Static-GIR}) to $132$
+(\textsf{Threshold}), $124$ (\textsf{EWMA}), and $123$ (\textsf{Ridge}), i.e.\
+the controllers claw back roughly two-thirds of the reclamation-induced
+refaults while simultaneously taking input p99 to its lowest values
+($85\%$, $83\%$, $81\%$). Among policies the ordering is consistent but the
+margins are small: \textsf{Ridge-GIR} gives the best GC p99 ($62\%$ vs.\ EWMA
+$65\%$) and input p99 ($81\%$ vs.\ EWMA $83\%$), but at $1.11\%$ controller CPU
+versus $0.70\%$ for EWMA and $0.51\%$ for the non-learning threshold. The learned
+policy thus earns a real but modest latency edge over a tuned threshold at
+roughly twice the controller cost; consistent with our fail-closed stance, the
+threshold policy remains a defensible default when CPU headroom is tight.
+
+\subsection{RQ3: robustness across workload regimes}
+\label{sec:rq3}
+Figure~\ref{fig:regimes} places \textsf{Ridge-GIR} in all three regimes. In the
+favorable regime it is a clear win (PSS $76$, fault $123$, input $81$). In the
+neutral regime, where no cold reclaimable pages exist, every index sits within
+$\pm2$ of $100$ (PSS $101$, fault $101$, input $99$): the design neither helps
+nor harms, and its only cost is $\approx1.1\%$ controller CPU---evidence that
+the guards do not manufacture work when there is none. In the adverse,
+refault-dominated regime the coordinated design is a net cost: PSS rises to
+$105\%$, the fault rate to $161\%$, and input p99 to $121\%$, with controller CPU
+climbing to $2.2\%$ as the gate and cooldown fight the workload. The regression
+is bounded---about $+5\%$ PSS and $+20\%$ input p99---but it is not eliminated,
+and the adverse column is exactly the case a deployment must detect and where
+reclamation should be disabled outright.
+
+\subsection{Discussion}
+\label{sec:discussion}
+Three findings follow. First, footprint and refault behavior are governed by
+\emph{different} layers: the static heap/interop/reclamation stack sets peak PSS
+and GC tail, while the online controller almost exclusively governs the refault
+rate and input latency. Reporting a single ``SAGE-MM improvement'' would blur
+this; the ablation shows that removing reclamation removes most of the footprint
+benefit, and removing the controller removes most of the refault safety.
+Second, the learned policy's advantage over a tuned threshold is real but small
+and comes with a measurable CPU cost, which supports treating the ridge model as
+an option to justify per deployment rather than a default. Third, the neutral and
+adverse regimes together characterize the design's envelope: it is fail-safe
+when no gain exists and bounded-but-negative when reclamation backfires, so a
+production port must treat the adverse regime as a detection target for
+disabling reclamation, not as a case the controller can fully absorb. The ARM32
+and ARM64 profiles agree throughout, which strengthens internal validity across
+these two profiles but does not by itself establish generality to other devices
+or runtimes (Section~\ref{sec:threats}).
+
 %% =====================================================================
 \section{Related Work}
 \label{sec:related}
@@ -599,10 +708,28 @@ regression are not individually novel; the contribution is their
 safety-aware coordination at the embedded runtime/Linux boundary, assessed
 through the recorded device experiments.
 
-\paragraph{Managed-runtime collection and adaptive GC.}
+\paragraph{Garbage collection and heap sizing.}
+Automatic memory management has a deep literature, from generational
+collection~\cite{ungar1984scavenging,appel1989generational}, conservative
+collection in uncooperative environments~\cite{boehm1988uncooperative}, and
+region- and pause-oriented collectors~\cite{blackburn2008immix,detlefs2004g1,
+bacon2003metronome}, to the trade-off between collected and explicit
+management~\cite{hertz2005quantifying}; textbook treatments survey the design
+space~\cite{jones1996gc,jones2011handbook}. Heap footprint is known to depend
+strongly on the memory available to the collector, and coordinating collector
+behavior with virtual-memory pressure has been studied for server and desktop
+JVMs~\cite{yang2006cramm,stefanovic1999age}. Our heap-build intervention sits in
+this tradition but is deliberately not a new collector: SAGE-MM keeps the vendor
+collector and treats its initial allocation as a fixed build parameter measured
+per platform.
+
+\paragraph{Concurrent and tail-oriented collectors.}
 Advanced collectors such as LXR~\cite{lxr2022} and
 Platinum~\cite{platinum2020} change collection itself---concurrency,
-pause/throughput objectives, and runtime integration. SAGE-MM does not
+pause/throughput objectives, and runtime integration---to attack GC-induced
+tail latency, a first-order concern for interactive services~\cite{dean2013tail,
+maas2015trashday} and a documented cost in managed data-parallel
+systems~\cite{lion2016coldjvm}. SAGE-MM does not
 introduce a collector; it coordinates an existing vendor collector with
 process-level actions (interval and gate). Where these collectors cannot be
 ported to the exact vendor firmware, we say so and make no claim of
@@ -610,24 +737,34 @@ empirical superiority over an unported system.
 
 \paragraph{Heuristic and learned controllers.}
 We compare fixed intervals, a tuned pressure threshold, EWMA, and online
-ridge under the same trace split and action bounds. Storage-GC learning
-systems---AGC~\cite{agc2025} for burst-aware SSD flash GC and
-DumpKV~\cite{dumpkv2024} for learned lifetime control in LSM key/value
-separation---are conceptual precedents for lightweight learning, not
-executable managed-runtime baselines; we report this domain mismatch rather
-than implying empirical equivalence.
+ridge regression~\cite{hoerl1970ridge} under the same trace split and action
+bounds, evaluating the learner prequentially~\cite{dawid1984prequential} with
+attention to drift~\cite{gama2014drift}. Learning has recently been applied to
+memory allocation~\cite{maas2020llama} and to storage GC---AGC~\cite{agc2025}
+for burst-aware SSD flash GC and DumpKV~\cite{dumpkv2024} for learned lifetime
+control in LSM key/value separation---but these are conceptual precedents for
+lightweight learning, not executable managed-runtime baselines; we report this
+domain mismatch rather than implying empirical equivalence, and our results show
+the learned policy earns only a modest margin over a tuned threshold.
 
-\paragraph{Application-directed reclamation.}
-We compare \texttt{madvise}/discard mechanisms by candidate identification,
-dirty-page safety, concurrency with unload and execution, refault behavior,
-and feedback signals. SAGE-MM's differentiator is the coldness-ranked,
-budget-driven selection with a hot-reuse exclusion and fail-closed guards.
+\paragraph{Application-directed reclamation and page ranking.}
+Our coldness score ranks candidate mappings by recency, frequency, and size, a
+problem long studied for caches and virtual memory: working-set
+models~\cite{denning1968working,carr1981wsclock}, recency/frequency replacement
+policies~\cite{jiang2002lirs,megiddo2003arc,zhou2001multiqueue}, flash- and
+device-aware variants~\cite{park2006cflru}, and host/guest memory reclamation
+such as ballooning~\cite{waldspurger2002esx}. We compare \texttt{madvise}/discard
+mechanisms by candidate identification, dirty-page safety, concurrency with
+unload and execution, refault behavior, and feedback signals. SAGE-MM's
+differentiator is the coldness-ranked, budget-driven selection with a hot-reuse
+exclusion and fail-closed guards, evaluated for its refault cost rather than
+assumed safe.
 
 \paragraph{Managed/native interop.}
 We distinguish ABI/source transformations (such as value-type conversion,
-which requires ownership review and recompilation) from transparent runtime
-optimization, and state layout, identity, and recompilation requirements
-explicitly.
+which requires ownership review and recompilation~\cite{dotnetinterop}) from
+transparent runtime optimization, and state layout, identity, and recompilation
+requirements explicitly.
 
 %% =====================================================================
 \section{Threats to Validity}
@@ -678,6 +815,19 @@ hooks, telemetry fidelity, and executable-mapping behavior are
 platform-specific. Consequently, conclusions are restricted to the tested
 runtime commits, devices, memory limits, storage configurations, and
 scripted workloads; broader embedded applicability is future validation.
+
+\paragraph{Scope of the reported evaluation.}
+The measured bundle covers the coordination ladder and the three workload
+regimes on two platform profiles with $30$ runs per condition. Three parts of
+the protocol in Section~\ref{sec:method} are specified but not yet collected,
+and we make no empirical claim for them here: (i) a per-architecture heap-size
+sweep isolating \texttt{INITIAL\_ALLOC} effects; (ii) value-type interop
+micro/macro-benchmarks with native-ABI correctness checks (the ablation
+measures interop only as the $G{\to}GI$ step, not in isolation); and
+(iii) multi-hour endurance and the full adverse-injection matrix
+(hot-reuse, $1/5/10$\,s switching, slow-storage, \texttt{madvise}-failure)
+with OOM/kernel-log censoring. These are the primary items of future work
+required before a production-stability or per-architecture-tuning claim.
 
 %% =====================================================================
 \section{Conclusion}
