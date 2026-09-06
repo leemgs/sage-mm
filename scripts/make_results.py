@@ -239,23 +239,35 @@ def figures(rows):
                    short[treats[0]], short[treats[-1]]))
 
     # ---- Figure 2: PSS vs fault tradeoff (favorable regime) ----
-    pts = " ".join(
+    marks = " ".join(
         f"({m[('planning_hypothesis', t)]['peak_pss_index']:.1f},"
-        f"{m[('planning_hypothesis', t)]['fault_rate_index']:.1f})[{short[t]}]"
+        f"{m[('planning_hypothesis', t)]['fault_rate_index']:.1f})"
+        for t in treats)
+    # Per-point label anchors, hand-placed so the clustered controller points
+    # (Thr/EWMA/Ridge) do not overlap.
+    anchors = {"Stock": "west", "S-G": "north", "S-GI": "north",
+               "S-GIR": "south west", "Thr": "west", "EWMA": "east",
+               "Ridge": "north"}
+    nodes = "\n".join(
+        r"  \node[anchor=%s, font=\tiny, inner sep=1.5pt] at "
+        r"(axis cs:%.1f,%.1f) {%s};" % (
+            anchors.get(short[t], "west"),
+            m[("planning_hypothesis", t)]["peak_pss_index"],
+            m[("planning_hypothesis", t)]["fault_rate_index"], short[t])
         for t in treats)
     out.append(r"""\begin{figure}[t]
   \centering
   \begin{tikzpicture}
   \begin{axis}[
-    width=\linewidth, height=5.2cm,
+    width=\linewidth, height=5.6cm,
     xlabel={Peak PSS index (Stock${=}100$; lower is better)},
     ylabel={Fault-rate index}, xlabel style={font=\scriptsize},
     ylabel style={font=\scriptsize}, tick label style={font=\scriptsize},
-    xmin=72, xmax=104, ymin=90, ymax=175, grid=both,
+    xmin=72, xmax=106, ymin=88, ymax=178, grid=both,
     major grid style={dotted}]
-  \addplot+[only marks, mark=*, point meta=explicit symbolic,
-    nodes near coords, every node near coord/.append style={font=\tiny,
-    anchor=west, xshift=1pt}] coordinates {%s};
+  \addplot[only marks, mark=*, mark size=1.6pt, color=blue!60!black]
+    coordinates {%s};
+%s
   \end{axis}
   \end{tikzpicture}
   \caption{Footprint--refault tradeoff under the favorable workload. Static
@@ -264,7 +276,7 @@ def figures(rows):
   same PSS, i.e.\ the controller's contribution is refault mitigation rather
   than additional footprint.}
   \label{fig:tradeoff}
-\end{figure}""" % pts)
+\end{figure}""" % (marks, nodes))
 
     # ---- Figure 3: cross-regime robustness for Ridge-GIR ----
     regimes = [("planning_hypothesis", "Favorable"), ("no_benefit", "Neutral"),
