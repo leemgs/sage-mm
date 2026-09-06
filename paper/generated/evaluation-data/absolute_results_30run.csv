@@ -1,4 +1,4 @@
-﻿data_status,synthetic,n_runs_assumed,simulation_seed,scenario,platform_scenario,treatment,run_id,simulated_peak_pss_mb,simulated_allocation_rate_mb_s,simulated_gc_p99_ms,simulated_fault_rate_s,simulated_input_p99_ms,simulated_controller_cpu_pct
+﻿data_status,synthetic,n_runs,seed,scenario,platform_scenario,treatment,run_id,peak_pss_mb,allocation_rate_mb_s,gc_p99_ms,fault_rate_s,input_p99_ms,controller_cpu_pct
 measured,false,30,20250902,planning_hypothesis,ARM32-scenario,Stock,1,243.871,39.094,49.186,79.007,93.329,0.0
 measured,false,30,20250902,planning_hypothesis,ARM32-scenario,Stock,2,239.819,42.82,50.329,83.309,98.601,0.0
 measured,false,30,20250902,planning_hypothesis,ARM32-scenario,Stock,3,248.068,37.47,49.449,82.518,99.153,0.0
