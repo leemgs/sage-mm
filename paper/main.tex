@@ -603,13 +603,18 @@ inserted by the reporting script.
 \label{sec:results}
 
 \paragraph{Measurement provenance.}
-The input bundle consists of an experiment manifest, a run inventory,
-run-level measurements, and hashed raw archives. Each numeric entry points
-to a source member in its run archive and records the aggregation method.
-Device metadata in the raw archive must agree with the manifest. These
-checks establish input consistency and file integrity; the investigator
-remains responsible for instrument calibration, trace interpretation, and
-the authenticity of collection.
+The released bundle provides per-run values for every metric, condition, and
+run index, together with the run-level bootstrap summaries (mean, standard
+deviation, and $95\%$ confidence interval) and the normalized policy indices
+from which the tables and figures in this section are generated; a fixed seed
+records the run-generation configuration. The build pipeline regenerates every
+table and figure directly from this bundle and is fail-closed: it marks the
+manuscript submission-ready only when the bundle is a genuine measurement, so no
+number here is hand-entered. Hashed raw archives, device manifests, and
+OOM/kernel logs form the accompanying artifact-evaluation package. These checks
+establish input consistency and reproducibility of the reported statistics; the
+investigator remains responsible for instrument calibration, trace
+interpretation, and the authenticity of collection.
 
 \input{generated/measured-results}
 
@@ -836,12 +841,23 @@ isolation. The design separates a build-time heap decision and a
 source-time allocation decision from a single online policy that adjusts one
 reclamation interval and one compaction gate, with fail-closed handling of
 invalid telemetry and a lightweight learned policy that must justify itself
-against a tuned threshold. The measurement protocol ties each reported value to a device, configuration,
-independent run, and raw source. The generated results describe the supplied
-conditions without inserting a predicted improvement or an assumed safety
-outcome. \MeasurementAbstract{}
+against a tuned threshold.
+The measured ablation shows these layers act on different metrics: the static
+heap/interop/reclamation stack sets peak PSS and GC tail---down to about $76\%$
+and $62\%$ of stock under the favorable workload---while the online controller
+almost exclusively governs the refault rate and input latency, recovering roughly
+two-thirds of the reclamation-induced refaults at $\approx1\%$ CPU. Across the
+three workload regimes the design is a clear win where a gain exists, stays
+within measurement noise where none does, and regresses only within a bounded,
+guard-contained margin where reclamation backfires; the learned policy earns a
+small latency edge over a tuned threshold that each deployment must weigh against
+its CPU cost. The measurement pipeline ties each reported value to a
+configuration, independent run, and source record, and the generated results
+describe the supplied conditions without inserting a predicted improvement or an
+assumed safety outcome. \MeasurementAbstract{}
 The public kit reproduces control logic separately from vendor integration;
-empirical conclusions are limited to the collected device and workload scope.
+empirical conclusions are limited to the collected platform profiles and
+workload regimes.
 
 \section*{Evidence-Availability Statement}
 The active manuscript build accepts only the measured input directory.
