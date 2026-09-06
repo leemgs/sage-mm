@@ -556,34 +556,30 @@ of advantage. Storage GC systems (AGC, DumpKV) are conceptual
 adaptive-policy precedents, not executable managed-heap baselines
 (Section~\ref{sec:related}).
 
-\subsection{Full-factorial ablation}
+\subsection{Ablation and stress protocol}
 \label{sec:method-factorial}
-A complete factorial experiment defines all 16 combinations of heap build
-($G$), interop ($I$), reclamation ($R$), and controller ($C$) as separate cases
-under a common platform and workload. Each configuration identifies the
-concrete build, source changes, policy, and enabled mechanisms. Policy
-comparison cases use the named baselines separately; they are not aliases
-for factorial cells.
+The reported campaign measures the coordination \emph{ladder}---%
+\textsf{Stock}, $G$, $GI$, $GIR$, and the three online policies on top of
+$GIR$---on the two platform profiles under the three workload regimes of
+Section~\ref{sec:results}, at $30$ runs per condition. The generated tables
+report absolute per-run measurements with units, completed sample count, and
+run-level bootstrap intervals; they do not calculate factorial-interaction
+estimates or declare superiority from separate group intervals, which would
+require a specified contrast analysis this manuscript does not assert.
 
-The generated tables report absolute per-run measurements with units,
-completed sample count, and run-level bootstrap intervals. They do not
-calculate factorial interaction estimates or declare superiority from
-separate group intervals. Such claims require an additional specified
-contrast analysis; none is asserted by this manuscript. A partial campaign
-is reported with its actual coverage.
-
-\subsection{Adverse and endurance protocol}
-Reclamation adversity tests cover cold steady state, immediate hot-page
-reuse, 1/5/10\,s switching, slow-storage injection, concurrent execution of
-selected mappings, \texttt{madvise} failure injection, and a fault storm
-above 500\,faults/s. We collect \texttt{Private\_Clean} before/after from
-\texttt{smaps}, faults, bytes read, reload latency, syscall errno/duration,
-frame drops, input latency, and guard activations, and verify that no
-writable, anonymous, or shared mapping is selected and that failure leaves
-process correctness intact. Endurance evidence requires multiple
-independent eight-hour runs per primary platform with OOM/kernel logs,
-censoring rules, and per-run trajectories; five short runs do not support a
-production-stability claim.
+The design admits two extensions that the reported bundle does not yet cover,
+stated here as protocol and reserved for future collection
+(Section~\ref{sec:limitations}). First, the complete $2^4$ factorial over
+$G/I/R/C$ isolates each interaction rather than only the ladder. Second, a
+stress battery---cold steady state, immediate hot-page reuse, $1/5/10$\,s
+switching, slow-storage injection, \texttt{madvise}-failure injection, and a
+fault storm above $500$\,faults/s---together with multi-hour endurance runs
+carrying OOM/kernel logs and censoring rules, is required before any
+production-stability claim. Where collected, such runs record
+\texttt{Private\_Clean} before/after from \texttt{smaps}, faults, reload
+latency, syscall errno/duration, frame drops, input latency, and guard
+activations, and verify that no writable, anonymous, or shared mapping is ever
+selected and that failure leaves process correctness intact.
 
 \subsection{Statistics}
 The input contract requires at least 30 completed independent reset runs

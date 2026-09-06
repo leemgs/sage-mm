@@ -30,15 +30,21 @@
   \centering
   \begin{tikzpicture}
   \begin{axis}[
-    width=\linewidth, height=5.2cm,
+    width=\linewidth, height=5.6cm,
     xlabel={Peak PSS index (Stock${=}100$; lower is better)},
     ylabel={Fault-rate index}, xlabel style={font=\scriptsize},
     ylabel style={font=\scriptsize}, tick label style={font=\scriptsize},
-    xmin=72, xmax=104, ymin=90, ymax=175, grid=both,
+    xmin=72, xmax=106, ymin=88, ymax=178, grid=both,
     major grid style={dotted}]
-  \addplot+[only marks, mark=*, point meta=explicit symbolic,
-    nodes near coords, every node near coord/.append style={font=\tiny,
-    anchor=west, xshift=1pt}] coordinates {(100.0,100.0)[Stock] (94.0,99.9)[S-G] (87.0,100.6)[S-GI] (79.0,162.3)[S-GIR] (77.9,131.7)[Thr] (76.8,123.8)[EWMA] (76.1,122.7)[Ridge]};
+  \addplot[only marks, mark=*, mark size=1.6pt, color=blue!60!black]
+    coordinates {(100.0,100.0) (94.0,99.9) (87.0,100.6) (79.0,162.3) (77.9,131.7) (76.8,123.8) (76.1,122.7)};
+  \node[anchor=west, font=\tiny, inner sep=1.5pt] at (axis cs:100.0,100.0) {Stock};
+  \node[anchor=north, font=\tiny, inner sep=1.5pt] at (axis cs:94.0,99.9) {S-G};
+  \node[anchor=north, font=\tiny, inner sep=1.5pt] at (axis cs:87.0,100.6) {S-GI};
+  \node[anchor=south west, font=\tiny, inner sep=1.5pt] at (axis cs:79.0,162.3) {S-GIR};
+  \node[anchor=west, font=\tiny, inner sep=1.5pt] at (axis cs:77.9,131.7) {Thr};
+  \node[anchor=east, font=\tiny, inner sep=1.5pt] at (axis cs:76.8,123.8) {EWMA};
+  \node[anchor=north, font=\tiny, inner sep=1.5pt] at (axis cs:76.1,122.7) {Ridge};
   \end{axis}
   \end{tikzpicture}
   \caption{Footprint--refault tradeoff under the favorable workload. Static
