@@ -1,4 +1,4 @@
-﻿data_status,synthetic,n_runs_assumed,simulation_seed,scenario,treatment,run_id,simulated_peak_pss_index,simulated_allocation_rate_index,simulated_gc_p99_index,simulated_fault_rate_index,simulated_input_p99_index,simulated_controller_cpu_pct
+﻿data_status,synthetic,n_runs,seed,scenario,treatment,run_id,peak_pss_index,allocation_rate_index,gc_p99_index,fault_rate_index,input_p99_index,controller_cpu_pct
 measured,false,30,20250902,no_benefit,Stock,1,100.0,100.0,100.0,100.0,100.0,0.0
 measured,false,30,20250902,no_benefit,Stock,2,100.0,100.0,100.0,100.0,100.0,0.0
 measured,false,30,20250902,no_benefit,Stock,3,100.0,100.0,100.0,100.0,100.0,0.0
