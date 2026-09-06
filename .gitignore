@@ -1,1 +1,19 @@
 .env
+
+# LaTeX build intermediates
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.toc
+paper/*.spl
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+# Intermediate PDF built in paper/; the shipped output is code/main.pdf
+paper/main.pdf
+
+# Python
+__pycache__/
+*.pyc
