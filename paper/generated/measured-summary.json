@@ -1,0 +1,10 @@
+{
+  "blockers": [
+    "No device runs have been supplied."
+  ],
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260906,
+  "cases": [],
+  "ready": false,
+  "study_id": null
+}
