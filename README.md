@@ -81,15 +81,46 @@ Prioritizing safety by maintaining previous values, enabling compression, and su
 
 ```
 paper/
-
-├── main.tex # Authoritative manuscript (Elsevier elsarticle class)
-
-├── sagemm.bib # References
-
-├── elsarticle.cls / .bst # Elsevier templates
-
-└── generated/ # Result fragments generated from measurement bundles (.tex/.json)
-
+├── main.tex                     # Authoritative manuscript (Elsevier elsarticle class)
+├── sagemm.bib                   # References
+├── elsarticle.cls / .bst        # Elsevier templates
+└── generated/
+    ├── evaluation-data/         # 30-run measurement bundle (per-run CSVs + summary)
+    └── *.tex / *.json           # Result fragments generated from the bundle
+scripts/
+├── make_results.py              # Render evaluation-data/ into the results fragments
+└── build.sh                     # Regenerate results, compile, and emit code/main.pdf
+code/
+└── main.pdf                     # Build output (Journal of Systems Architecture PDF)
 ```
 
-Builds are performed from the repository root using `bash scripts/build_jsa.sh`.
+## Building the PDF
+
+```bash
+bash scripts/build.sh
+```
+
+This regenerates the results fragments from
+`paper/generated/evaluation-data/`, compiles `paper/main.tex` with `pdflatex`
++ `bibtex` (Elsevier `elsarticle` class), and writes the result to
+**`code/main.pdf`**.
+
+Requirements (Debian/Ubuntu): a TeX Live install providing `pdflatex`,
+`bibtex`, and the `elsarticle` class, e.g.
+
+```bash
+sudo apt-get install -y --no-install-recommends \
+  texlive-latex-base texlive-latex-recommended texlive-latex-extra \
+  texlive-science texlive-fonts-recommended texlive-publishers
+```
+
+### Results and the measurement gate
+
+`scripts/make_results.py` reads the 30-run bundle
+(`summary_30run.csv` for the mean $\pm$ 95% CI tables and
+`policy_indices_30run.csv` for the normalized index table) and renders the
+per-scenario results tables. The manuscript is marked submission-ready only
+when the bundle holds genuine measurements (`data_status=measured`,
+`synthetic=false`, `n>0`); otherwise the build stays fail-closed with a
+NOT-FOR-SUBMISSION watermark. Edit the CSV bundle and rerun the build to
+refresh every table and the readiness gate.

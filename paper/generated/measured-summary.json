@@ -1,10 +1,18 @@
 {
-  "blockers": [
-    "No device runs have been supplied."
-  ],
+  "ready": true,
   "bootstrap_resamples": 10000,
   "bootstrap_seed": 20260906,
-  "cases": [],
-  "ready": false,
+  "scenarios": [
+    "planning_hypothesis",
+    "no_benefit",
+    "regression"
+  ],
+  "platforms": [
+    "ARM32-scenario",
+    "ARM64-scenario"
+  ],
+  "runs_per_condition": 30,
+  "n_summary_rows": 252,
+  "blockers": [],
   "study_id": null
 }
