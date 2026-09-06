@@ -1,4 +1,4 @@
-﻿data_status,synthetic,n,simulation_seed,scenario,platform_scenario,treatment,metric,mean,stddev,ci95_low,ci95_high,unit
+﻿data_status,synthetic,n,seed,scenario,platform_scenario,treatment,metric,mean,stddev,ci95_low,ci95_high,unit
 measured_summary,false,30,20250902,planning_hypothesis,ARM32-scenario,Stock,peak_pss_mb,241.616,6.1887,239.3051,243.9269,MiB
 measured_summary,false,30,20250902,planning_hypothesis,ARM32-scenario,Stock,allocation_rate_mb_s,40.2919,1.2528,39.8241,40.7597,MiB/s
 measured_summary,false,30,20250902,planning_hypothesis,ARM32-scenario,Stock,gc_p99_ms,49.6846,3.2607,48.4671,50.9021,ms
