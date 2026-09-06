@@ -1,0 +1,93 @@
+%% =====================================================================
+%% SAGE-MM bibliography.
+%%
+%% CITATION AUDIT (per docs/LITERATURE_AUDIT.md) --- resolved. The earlier
+%% reviewer-supplied DOIs for AGC and DumpKV both pointed at arXiv 2406.01250,
+%% which is the DumpKV preprint only. Corrected records below:
+%%   * DumpKV  -> publisher DOI 10.14778/3717755.3717778 (PVLDB 18(4), 2024),
+%%               confirmed via the ACM Digital Library and vldb.org records;
+%%               its co-author names have also been corrected.
+%%   * AGC     -> a DISTINCT paper in IEEE Transactions on Computers, cited by
+%%               its stable IEEE Xplore record (article 11298441). Its IEEE DOI
+%%               could not be confirmed from a primary source at edit time, so
+%%               no DOI is asserted; take it from the linked Xplore page.
+%%   * Platinum-> USENIX ATC papers carry no publisher DOI; cited by the stable
+%%               USENIX presentation URL instead.
+%% Do NOT claim empirical superiority over an unported collector.
+%% =====================================================================
+
+@inproceedings{lxr2022,
+  author    = {Zhao, Wenyu and Blackburn, Stephen M. and McKinley, Kathryn S.},
+  title     = {Low-Latency, High-Throughput Garbage Collection},
+  booktitle = {Proceedings of the 43rd ACM SIGPLAN International Conference
+               on Programming Language Design and Implementation (PLDI)},
+  year      = {2022},
+  pages     = {76--91},
+  doi       = {10.1145/3519939.3523440},
+  publisher = {ACM}
+}
+
+@inproceedings{platinum2020,
+  author    = {Wu, Mingyu and Zhao, Ziming and Yang, Yanfei and Li, Haoyu and
+               Chen, Haibo and Zang, Binyu and Guan, Haibing and Li, Sanhong and
+               Lu, Chuansheng and Zhang, Tongbao},
+  title     = {Platinum: A {CPU}-Efficient Concurrent Garbage Collector for
+               Tail-Reduction of Interactive Services},
+  booktitle = {Proceedings of the 2020 USENIX Annual Technical Conference
+               (USENIX ATC)},
+  year      = {2020},
+  pages     = {159--172},
+  url       = {https://www.usenix.org/conference/atc20/presentation/wu-mingyu},
+  note      = {USENIX ATC papers carry no publisher DOI},
+  publisher = {USENIX Association}
+}
+
+@article{agc2025,
+  author  = {Sun, Hui and Ding, Hao and Tong, Han and Cheng, Xiao and
+             Chai, Hua and Qin, Xiao},
+  title   = {{AGC}: An Adaptive Workload Burst-Aware Garbage Collection
+             Mechanism for High-Performance {SSDs}},
+  journal = {IEEE Transactions on Computers},
+  year    = {2026},
+  url     = {https://ieeexplore.ieee.org/document/11298441},
+  note    = {Storage GC; conceptual precedent, not a managed-runtime baseline.
+             Final volume, issue, pages, and IEEE DOI as listed on the linked
+             IEEE Xplore record}
+}
+
+@article{dumpkv2024,
+  author  = {Zhuang, Zhutao and Zeng, Xinqi and Chen, Zhiguang},
+  title   = {{DumpKV}: Learning Based Lifetime Aware Garbage Collection for
+             Key Value Separation in {LSM}-Tree},
+  journal = {Proceedings of the VLDB Endowment (PVLDB)},
+  volume  = {18},
+  number  = {4},
+  year    = {2024},
+  pages   = {1223--1236},
+  doi     = {10.14778/3717755.3717778},
+  url     = {https://www.vldb.org/pvldb/vol18/p1223-zhuang.pdf},
+  note    = {Storage GC; motivates lightweight learning comparison only}
+}
+
+@manual{madvise,
+  title        = {madvise(2) --- Linux Programmer's Manual},
+  author       = {{Linux man-pages project}},
+  note         = {MADV\_DONTNEED semantics for file-backed private mappings},
+  year         = {2024}
+}
+
+@manual{monoruntime,
+  title        = {Mono Runtime Documentation},
+  author       = {{Mono Project}},
+  note         = {Cite the exact vendor Mono source commit and patch hash
+                  used in the evaluated firmware},
+  year         = {2024}
+}
+
+@manual{dotnetinterop,
+  title        = {.NET Interoperability and Garbage Collection Documentation},
+  author       = {{Microsoft}},
+  note         = {Authoritative reference for managed/native interop and
+                  collector behavior},
+  year         = {2024}
+}
