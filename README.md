@@ -116,11 +116,29 @@ sudo apt-get install -y --no-install-recommends \
 
 ### Results and the measurement gate
 
-`scripts/make_results.py` reads the 30-run bundle
-(`summary_30run.csv` for the mean $\pm$ 95% CI tables and
-`policy_indices_30run.csv` for the normalized index table) and renders the
-per-scenario results tables. The manuscript is marked submission-ready only
-when the bundle holds genuine measurements (`data_status=measured`,
-`synthetic=false`, `n>0`); otherwise the build stays fail-closed with a
-NOT-FOR-SUBMISSION watermark. Edit the CSV bundle and rerun the build to
-refresh every table and the readiness gate.
+`scripts/make_results.py` reads the 30-run bundle under
+`paper/generated/evaluation-data/`: it computes each table cell as the mean with
+a two-sided 95% **percentile bootstrap** CI (10,000 resamples) directly from the
+per-run values in `absolute_results_30run.csv`, and renders the normalized
+policy-index table and the three figures from `policy_indices_30run.csv`. The
+manuscript is marked submission-ready only when the bundle holds genuine
+measurements (`data_status=measured`, `synthetic=false`, `n>0`); otherwise the
+build stays fail-closed with a NOT-FOR-SUBMISSION watermark. Edit the CSV bundle
+and rerun the build to refresh every table, figure, and the readiness gate.
+
+### Submission materials
+
+- `paper/HIGHLIGHTS_JSA.md` — Elsevier Highlights (≤85 chars each).
+- `paper/COVER_LETTER_JSA.md` — cover letter to the JSA editor.
+
+### Extending the evaluation
+
+The future-work experiments (per-architecture heap sweep, isolated interop
+benchmarks, endurance/adverse battery) have drop-in schemas and collectors:
+
+- `docs/EXPERIMENT_SCHEMAS.md` — CSV schemas and conventions.
+- `paper/generated/evaluation-data/templates/` — header-only CSV templates.
+- `scripts/collect/` — collector skeletons; implement the `run_one_condition`
+  device hook, run on the target device, then drop the CSV into the bundle.
+- `scripts/validate_bundle.py` — validates a bundle CSV against its schema and
+  the measurement gate (`python3 scripts/validate_bundle.py`).
