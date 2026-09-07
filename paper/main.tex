@@ -140,14 +140,14 @@ This paper makes four bounded contributions.
   \item It reports a measured ablation and policy comparison over the
   coordination ladder (stock, heap, interop, reclamation, and the three online
   policies) on two embedded platform profiles, with $30$ independent runs per
-  condition and $95\%$ bootstrap confidence intervals, isolating each layer's
-  contribution to footprint, GC tail, refault rate, and input latency
+  condition and $95\%$ bootstrap confidence intervals, characterizing the
+  sequential increments in footprint, GC tail, refault rate, and input latency
   (Sections~\ref{sec:method}--\ref{sec:results}).
   \item It measures robustness across three workload regimes---favorable,
   neutral, and adverse---showing that the coordinated design helps where a gain
   exists, stays within measurement noise where none does, and, when
-  reclamation backfires, regresses only within a bounded, guard-contained
-  margin (Section~\ref{sec:results}).
+  reclamation backfires, exposes a regime that the present guards do not avoid
+  and that requires supervisory shutdown (Section~\ref{sec:results}).
 \end{enumerate}
 
 We make no claim that SAGE-MM is a new garbage collector, or that these
@@ -200,6 +200,40 @@ SAGE-MM coordinates three interventions that differ in lifecycle and in
 whether they adapt at runtime. Table~\ref{tab:boundary} states the boundary
 precisely; conflating these layers is the single most common source of
 overclaiming in this design space.
+
+\subsection{Architectural novelty over independent tuning}
+\label{sec:architectural-novelty}
+
+SAGE-MM's novelty is not the union of four familiar mechanisms. It is an
+architectural pattern for making cross-layer tuning reviewable: (i) separate
+irreversible build/source decisions from reversible online actions; (ii) map
+heterogeneous runtime and OS signals into a dimensionless pressure contract;
+(iii) restrict online authority to a bounded interval and one gate; (iv) order
+prediction, actuation, and learning causally; and (v) place fail-closed and
+supervisory guards outside the interchangeable policy. This decomposition lets
+a threshold, EWMA, or ridge policy be replaced without changing mapping
+eligibility or the safety envelope. Table~\ref{tab:novelty} distinguishes that
+coordination contract from independent tuning.
+
+\begin{table}[t]
+  \caption{Architectural novelty relative to independently applied mechanisms.}
+  \label{tab:novelty}
+  \small
+  \begin{tabular}{@{}p{2.6cm}p{2.6cm}p{5.5cm}@{}}
+    \toprule
+    \textbf{Existing approach} & \textbf{Usual scope} & \textbf{SAGE-MM distinction} \\
+    \midrule
+    Heap sizing & Runtime/GC & Recorded static budget decision upstream of a
+      shared runtime/OS controller. \\
+    VM-aware GC & Heap $\leftrightarrow$ VM & Also controls an executable
+      working set outside the managed heap. \\
+    \texttt{madvise} reclamation & OS/application & Latency- and
+      reuse-aware scheduling with eligibility and shutdown guards. \\
+    ML controller & Generic policy & Interchangeable policy inside a bounded
+      embedded action and failure contract. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \begin{table}[t]
   \caption{Cross-layer action boundary. Only the online policy adapts at
@@ -372,6 +406,19 @@ set, active cooldown, and hot-reuse exclusion are each counted no-ops. The
 evaluation reports the frequency, duration, and outcome of every fallback
 class.
 
+\paragraph{Adverse-regime supervisory shutdown.}
+The policy-independent supervisor observes fault pressure and end-to-end input
+latency after each otherwise valid decision. If
+$P_f>P_{\mathrm{high}}$ and $L_{\mathrm{input}}>L_{\mathrm{SLO}}$ for $N$
+consecutive intervals, it latches reclamation off, enables compaction, clears
+pending learning state, and records \textsf{AdverseShutdown}. Reclamation can
+resume only after both signals remain below lower hysteresis thresholds
+$P_{\mathrm{low}}$ and $L_{\mathrm{recover}}$ for $M$ intervals; a deployment
+may require an explicit operator reset instead. $N$, $M$, the four thresholds,
+and every transition belong in the manifest. This guard is an architectural
+revision prompted by the adverse result; it was \emph{not} active in the
+reported campaign, so Section~\ref{sec:rq3} does not claim measured avoidance.
+
 \begin{algorithm}[t]
 \caption{SAGE-MM controller decision for one interval. Prediction precedes
 its own update (causal, prequential); every branch keeps $T$ within
@@ -379,7 +426,7 @@ $[T_{\min},T_{\max}]$ and leaves process correctness intact on failure.}
 \label{alg:controller}
 \small
 \begin{algorithmic}[1]
-\Require raw sample $s=(L_{\mathrm{gc}},F_h,P_f,\Delta M,\mathrm{dt})$; state
+\Require raw sample $s=(L_{\mathrm{gc}},L_{\mathrm{input}},F_h,P_f,\Delta M,\mathrm{dt})$; state
 $(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
 \Ensure next reclamation interval $T$ and compaction gate
 \If{$\neg\textsc{Valid}(s)$}\Comment{non-finite, negative rate/pause, or $F_h\notin[0,1]$}
@@ -387,6 +434,10 @@ $(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
   \State \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$ \Comment{fail-closed: hold, no model update}
 \EndIf
 \State $\mathbf{x}\gets\textsc{Normalize}(s)$; \quad $y\gets\textsc{Pressure}(s)$ \Comment{Eq.~(1),~(2)}
+\If{$\textsc{AdverseForNIntervals}(P_f,L_{\mathrm{input}})$}
+  \State latch reclamation off; enable compaction; clear pending update
+  \State record \textsf{AdverseShutdown}; \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$
+\EndIf
 \If{$\textit{mode}=\textsf{Ridge}$}
   \State $\hat{y}\gets\mathrm{clamp}(\mathbf{w}^{\!\top}\mathbf{x},0,2)$
   \If{$\hat{y}$ persistently clipped at $0$ or $2$}
@@ -406,7 +457,7 @@ $(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
   \State \textsc{FlushModules}$(K)$ excluding recently accessed (hot-reuse guard)
 \EndIf
 \If{$\textit{mode}=\textsf{Ridge}$ \textbf{and} a pending prediction exists \textbf{and} on tuning trace}
-  \State record prequential loss $[\hat{y}-y]^2/2$; take one ridge SGD step \Comment{Eq.~(4)}
+  \State record prequential loss $[\hat{y}-y]^2/2$; take one ridge SGD step \Comment{Eq.~(3)}
 \EndIf
 \State \Return $T$
 \end{algorithmic}
@@ -481,7 +532,7 @@ evaluation in Section~\ref{sec:limitations}, not reported here.
 \begin{description}
   \item[RQ1 (Ablation)] Along the coordination ladder---stock, heap build
   ($G$), interop ($I$), reclamation ($R$), and the online controller
-  ($C$)---how much does each layer contribute to peak PSS, GC tail pause,
+  ($C$)---what sequential increment is observed at each ladder step for peak PSS, GC tail pause,
   refault rate, and input tail latency on the two platform profiles?
   \item[RQ2 (Policy comparison)] Under identical bounds, telemetry, cooldown,
   and candidate budget, does the online controller recover the refault cost
@@ -598,6 +649,14 @@ the accompanying counts and exclusion reasons must be read with them.
 No fixed success outcome, percentage gain, or zero-failure statement is
 inserted by the reporting script.
 
+For policy comparisons we additionally bootstrap the unpaired difference of
+independent run means, $\Delta=\overline{x}_{\mathrm{Ridge}}-
+\overline{x}_{\mathrm{EWMA}}$, resampling within each policy group. The direct
+$95\%$ interval is the inferential object; overlap or non-overlap of two
+separate group intervals is not used as a test. Because run matching was not
+part of the bundle contract, no paired analysis is implied. Effect estimates
+whose interval includes zero are described only as numerical differences.
+
 %% =====================================================================
 \section{Results}
 \label{sec:results}
@@ -610,8 +669,11 @@ seed records the workload configuration. The build pipeline regenerates every
 table and figure directly from the per-run values---computing each reported mean
 and its $95\%$ percentile bootstrap confidence interval---and is fail-closed: it
 marks the manuscript submission-ready only when the bundle is a genuine
-measurement, so no number here is hand-entered. Hashed raw archives, device manifests, and
-OOM/kernel logs form the accompanying artifact-evaluation package. These checks
+measurement, so no number here is hand-entered. The repository bundle includes
+a machine-readable manifest, per-condition provenance and outcome inventory,
+checksums, and the per-run CSV. The manifest also identifies unavailable
+runtime/firmware identifiers and raw device logs; those items remain mandatory
+for the submission artifact and are not implied by a checksum file. These checks
 establish input consistency and reproducibility of the reported statistics; the
 investigator remains responsible for instrument calibration, trace
 interpretation, and the authenticity of collection.
@@ -632,20 +694,22 @@ ARM64 value only where it differs materially.
 \subsection{RQ1: layer-by-layer ablation}
 \label{sec:rq1}
 Figure~\ref{fig:ablation} traces the coordination ladder under the favorable
-workload. The two static interventions act on different metrics. The heap build
-(\textsf{Static-G}) cuts the GC tail sharply---GC p99 falls to $76\%$ of stock
+workload. The successive ladder steps move different metrics. The increment from Stock
+to \textsf{Static-G} is a lower GC tail---GC p99 falls to $76\%$ of stock
 ($-24\%$; $49.7\to37.5$\,ms on ARM32) while peak PSS drops only to $94\%$
 ($-6\%$)---because a better-sized nursery collects less often without changing
-resident code. Adding reviewed value-type interop (\textsf{Static-GI}) removes
-managed allocation (allocation rate $-29\%$) and takes PSS to $87\%$ and GC p99
+resident code. The $G\rightarrow GI$ step coincides with lower managed
+allocation (allocation rate $-29\%$) and takes PSS to $87\%$ and GC p99
 to $73\%$, with the fault rate essentially unchanged ($\pm1\%$): interop shifts
-cost off the heap without touching file-backed pages. Reclamation
-(\textsf{Static-GIR}) then delivers the largest footprint step, to $79\%$ PSS
+cost off the heap without touching file-backed pages. The $GI\rightarrow GIR$
+step has the largest footprint decrement, to $79\%$ PSS
 ($-22\%$; $-20\%$ on ARM64), but is the first layer to move the fault rate---up
 to $162\%$ of stock ($+60\%$; $+63\%$ on ARM64)---and that refault pressure
 cancels the input-latency gain, leaving input p99 back near $91\%$. The static
-ladder therefore buys footprint and GC tail, and reclamation buys the most
-footprint but at a refault penalty that the static configuration cannot manage.
+ladder therefore associates later configurations with lower footprint and GC
+tail, but it cannot identify main effects or interactions without the unmeasured
+factorial cells. The $GI\rightarrow GIR$ increment also carries a refault
+penalty that the static configuration cannot manage.
 
 \subsection{RQ2: online policy comparison}
 \label{sec:rq2}
@@ -661,8 +725,11 @@ refaults while simultaneously taking input p99 to its lowest values
 margins are small: \textsf{Ridge-GIR} gives the best GC p99 ($62\%$ vs.\ EWMA
 $65\%$) and input p99 ($81\%$ vs.\ EWMA $83\%$), but at $1.11\%$ controller CPU
 versus $0.70\%$ for EWMA and $0.51\%$ for the non-learning threshold. The learned
-policy thus earns a real but modest latency edge over a tuned threshold at
-roughly twice the controller cost; consistent with our fail-closed stance, the
+policy is numerically lower on these latency metrics than a tuned threshold at
+roughly twice the controller cost. Direct Ridge--EWMA contrasts
+(Table~\ref{tab:policy-contrasts}) show that the interval includes zero for
+ARM32 GC p99 and ARM64 input p99, but excludes zero for ARM32 input p99 and
+ARM64 GC p99; consistent with our fail-closed stance, the
 threshold policy remains a defensible default when CPU headroom is tight.
 
 \subsection{RQ3: robustness across workload regimes}
@@ -675,8 +742,8 @@ nor harms, and its only cost is $\approx1.1\%$ controller CPU---evidence that
 the guards do not manufacture work when there is none. In the adverse,
 refault-dominated regime the coordinated design is a net cost: PSS rises to
 $105\%$, the fault rate to $161\%$, and input p99 to $121\%$, with controller CPU
-climbing to $2.2\%$ as the gate and cooldown fight the workload. The regression
-is bounded---about $+5\%$ PSS and $+20\%$ input p99---but it is not eliminated,
+climbing to $2.2\%$ as the gate and cooldown fight the workload. The observed regression is about $+5\%$ PSS and $+20\%$ input p99; the existing
+guards do not eliminate or establish a general bound on it,
 and the adverse regime is exactly the case a deployment must detect, and where
 reclamation should be disabled outright.
 
@@ -688,13 +755,14 @@ and GC tail, while the online controller almost exclusively governs the refault
 rate and input latency. Reporting a single ``SAGE-MM improvement'' would blur
 this; the ablation shows that removing reclamation removes most of the footprint
 benefit, and removing the controller removes most of the refault safety.
-Second, the learned policy's advantage over a tuned threshold is real but small
-and comes with a measurable CPU cost, which supports treating the ridge model as
+Second, the learned policy is numerically better than a tuned threshold on
+the reported latency means, but the effect is small and comes with a measurable CPU cost, which supports treating the ridge model as
 an option to be justified per deployment rather than as a default. Third, the neutral and
-adverse regimes together characterize the design's envelope: it is fail-safe
-when no gain exists and bounded-but-negative when reclamation backfires, so a
-production port must treat the adverse regime as a detection target for
-disabling reclamation, not as a case the controller can fully absorb. The ARM32
+adverse regimes characterize the measured envelope: results are neutral within
+the descriptive intervals when no gain exists and negative when reclamation
+backfires. The new supervisor therefore treats the adverse regime as a detection
+target for disabling reclamation, but its effectiveness still requires
+measurement. The ARM32
 and ARM64 profiles agree throughout, which strengthens internal validity across
 these two profiles but does not by itself establish generality to other devices
 or runtimes (Section~\ref{sec:threats}).
@@ -843,7 +911,8 @@ micro/macro-benchmarks with native-ABI correctness checks (the ablation
 measures interop only as the $G{\to}GI$ step, not in isolation); and
 (iii) multi-hour endurance and the full adverse-injection matrix
 (hot-reuse, $1/5/10$\,s switching, slow-storage, \texttt{madvise}-failure)
-with OOM/kernel-log censoring. These are the primary items of future work
+with OOM/kernel-log censoring, including an evaluation of the new
+\textsf{AdverseShutdown} supervisor. These are the primary items of future work
 required before a production-stability or per-architecture-tuning claim.
 
 %% =====================================================================
@@ -864,9 +933,8 @@ and $62\%$ of stock under the favorable workload---while the online controller
 almost exclusively governs the refault rate and input latency, recovering roughly
 two-thirds of the reclamation-induced refaults at $\approx1\%$ CPU. Across the
 three workload regimes the design is a clear win where a gain exists, stays
-within measurement noise where none does, and regresses only within a bounded,
-guard-contained margin where reclamation backfires; the learned policy earns a
-small latency edge over a tuned threshold that each deployment must weigh against
+within measurement noise where none does, and regresses where reclamation backfires; the learned policy is numerically
+lower on latency than a tuned threshold that each deployment must weigh against
 its CPU cost. The measurement pipeline ties each reported value to a
 configuration, independent run, and source record, and the generated results
 describe the supplied conditions without inserting a predicted improvement or an
@@ -920,7 +988,7 @@ boundary, and evaluation protocol of this work.
 \section{Reproducibility and Artifact Manifest}
 \label{app:artifact}
 
-To support an artifact evaluation, the released bundle records, where
+To support an artifact evaluation, the complete submission bundle records, where
 licensing permits: the vendor Mono runtime name and source revision; the
 minimal runtime patch and per-architecture build flags and
 \texttt{INITIAL\_ALLOC} values; the exposed host interfaces; the native
@@ -930,6 +998,11 @@ seeds; the build, measurement, and bootstrap scripts; the device reset
 script; raw per-run telemetry with OOM/kernel logs; and the raw traces used for the reported measurements. Each result bundle carries a machine-readable manifest with
 the Git revision, device-ID pseudonym, start/end UTC, treatment, seed, and
 checksum, so that every number in the paper traces to one versioned source.
+The repository snapshot's \texttt{manifest.json}, \texttt{provenance.csv},
+\texttt{failures.csv}, and \texttt{checksums.sha256} make its present scope
+machine-readable. Null manifest fields are explicit blockers rather than
+invented provenance: the runtime/firmware identifiers, device manifest, and raw
+log archive must be attached before artifact submission.
 
 The public reference kit deliberately separates reproducible control logic
 from proprietary firmware integration. Its user-space compaction event and GC

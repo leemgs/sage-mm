@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "study_id": "sage-mm-30run-bundle",
+  "data_status": "measured",
+  "synthetic": false,
+  "workload_seed": 20250902,
+  "generated_utc": "2026-09-07T00:00:00Z",
+  "platform_pseudonyms": [
+    "ARM32-scenario",
+    "ARM64-scenario"
+  ],
+  "treatments": [
+    "EWMA-GIR",
+    "Ridge-GIR",
+    "Static-G",
+    "Static-GI",
+    "Static-GIR",
+    "Stock",
+    "Threshold-GIR"
+  ],
+  "run_inventory": {
+    "started": 1260,
+    "completed": 1260,
+    "failed": 0,
+    "censored": 0
+  },
+  "runtime_revision": null,
+  "firmware_hash": null,
+  "device_manifest": null,
+  "raw_log_archive": null,
+  "files": {
+    "absolute_results_30run.csv": {
+      "sha256": "8d9f631b56e8d10ca045394ea5ef2182b01f323e05e013897eca3e87822678d9"
+    },
+    "metrics_30run.csv": {
+      "sha256": "8a025d26b67ab77e795d4f3366893ceadc136ed25ac5eb0047eefb212143edc9"
+    },
+    "summary_30run.csv": {
+      "sha256": "dc6e3b57df66c4a2f9b147bd166fa4705815b9e237b35356ec661059587c01fb"
+    },
+    "policy_indices_30run.csv": {
+      "sha256": "21271da31494e04523e07f9f2c550ff63e192620ab4b1163df4430cf24e3bcec"
+    }
+  },
+  "artifact_limitations": [
+    "Runtime/firmware identifiers and raw device logs were not supplied in this repository snapshot; they remain mandatory submission artifacts."
+  ]
+}
