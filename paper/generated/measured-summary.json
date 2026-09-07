@@ -12,7 +12,7 @@
     "ARM64-scenario"
   ],
   "runs_per_condition": 30,
-  "n_summary_rows": 252,
+  "n_perrun_rows": 1260,
   "blockers": [],
   "study_id": null
 }

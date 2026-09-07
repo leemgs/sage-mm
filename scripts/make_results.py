@@ -19,6 +19,7 @@ Usage:
 import csv
 import json
 import os
+import random
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -26,19 +27,56 @@ ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "paper", "generated", "evaluation-data")
 GEN = os.path.join(ROOT, "paper", "generated")
 
-SUMMARY = os.path.join(DATA, "summary_30run.csv")
+PERRUN = os.path.join(DATA, "absolute_results_30run.csv")
 POLICY = os.path.join(DATA, "policy_indices_30run.csv")
+
+BOOTSTRAP_RESAMPLES = 10000
+BOOTSTRAP_SEED = 20260906
 
 TREATMENT_ORDER = [
     "Stock", "Static-G", "Static-GI", "Static-GIR",
     "Threshold-GIR", "EWMA-GIR", "Ridge-GIR",
 ]
 SCENARIO_ORDER = ["planning_hypothesis", "no_benefit", "regression"]
-SCENARIO_TITLES = {
-    "planning_hypothesis": "Primary workload",
-    "no_benefit": "No-benefit control workload",
-    "regression": "Regression control workload",
+# Display labels keep the internal keys out of the rendered manuscript.
+SCENARIO_DISPLAY = {
+    "planning_hypothesis": "Favorable",
+    "no_benefit": "Neutral",
+    "regression": "Adverse",
 }
+SCENARIO_TITLES = {
+    "planning_hypothesis": "Favorable workload",
+    "no_benefit": "Neutral workload (no reclamation gain available)",
+    "regression": "Adverse workload (refault-dominated)",
+}
+PLATFORM_DISPLAY = {
+    "ARM32-scenario": "ARM32",
+    "ARM64-scenario": "ARM64",
+}
+
+
+def platform_label(p):
+    return PLATFORM_DISPLAY.get(p, p)
+
+
+def scenario_label(s):
+    return SCENARIO_DISPLAY.get(s, s)
+
+
+def bootstrap_ci(vals, resamples=BOOTSTRAP_RESAMPLES, alpha=0.05, rng=None):
+    """Mean and two-sided percentile bootstrap CI of the run-level mean."""
+    if not vals:
+        return None, None, None
+    mean = sum(vals) / len(vals)
+    if len(vals) == 1:
+        return mean, mean, mean
+    rng = rng or random.Random(BOOTSTRAP_SEED)
+    k = len(vals)
+    means = sorted(sum(s) / k for s in
+                   (rng.choices(vals, k=k) for _ in range(resamples)))
+    lo = means[int((alpha / 2) * resamples)]
+    hi = means[min(resamples - 1, int((1 - alpha / 2) * resamples))]
+    return mean, lo, hi
 METRICS = [
     ("peak_pss_mb", "PSS (MiB)"),
     ("allocation_rate_mb_s", "Alloc (MiB/s)"),
@@ -106,12 +144,24 @@ def treat_sort(t):
 
 def ready_from(rows):
     for r in rows:
-        n = r.get("n") or r.get("n_runs") or r.get("n_runs_assumed") or 0
+        n = r.get("n") or r.get("n_runs") or r.get("n_runs_assumed") or 1
         if (r.get("data_status", "").strip().lower().startswith("measured")
                 and not _truthy(r.get("synthetic", "true"))
                 and int(float(n or 0)) > 0):
             return True
     return False
+
+
+def perrun_groups(rows):
+    """(scenario, platform, treatment) -> {metric: [per-run values]}."""
+    g = defaultdict(lambda: defaultdict(list))
+    for r in rows:
+        key = (r["scenario"], r["platform_scenario"], r["treatment"])
+        for mkey, _ in METRICS:
+            v = _num(cell(r, mkey))
+            if v is not None:
+                g[key][mkey].append(v)
+    return g
 
 
 def watermark():
@@ -127,9 +177,13 @@ def watermark():
 
 
 def summary_tables(rows):
-    # index: (scenario, platform, treatment, metric) -> row
-    idx = {(r["scenario"], r["platform_scenario"], r["treatment"], r["metric"]): r
-           for r in rows}
+    """Per-scenario tables of mean with a two-sided 95% percentile bootstrap CI
+    computed directly from the per-run values."""
+    groups = perrun_groups(rows)
+    rng = random.Random(BOOTSTRAP_SEED)
+    stats = {}
+    for key, metrics in groups.items():
+        stats[key] = {mk: bootstrap_ci(vs, rng=rng) for mk, vs in metrics.items()}
     scenarios = [s for s in SCENARIO_ORDER
                  if any(r["scenario"] == s for r in rows)]
     platforms = sorted({r["platform_scenario"] for r in rows})
@@ -137,9 +191,10 @@ def summary_tables(rows):
     for scen in scenarios:
         lines = [
             r"\begin{table}[t]",
-            r"  \caption{%s: mean $\pm$ 95\%% CI over $n{=}30$ independent runs "
-            r"per condition. Lower is better for all metrics except controller "
-            r"CPU (an overhead cost).}" % _tex(SCENARIO_TITLES.get(scen, scen)),
+            r"  \caption{%s: mean with a two-sided 95\%% percentile bootstrap CI "
+            r"($10{,}000$ resamples) over $n{=}30$ independent runs per condition. "
+            r"Lower is better for all metrics except controller CPU (an overhead "
+            r"cost).}" % _tex(SCENARIO_TITLES.get(scen, scenario_label(scen))),
             r"  \label{tab:res-%s}" % scen.replace("_", "-"),
             r"  \scriptsize\setlength{\tabcolsep}{4pt}",
             r"  \begin{tabular}{@{}ll" + "r" * len(METRICS) + r"@{}}",
@@ -155,14 +210,10 @@ def summary_tables(rows):
                  if r["scenario"] == scen and r["platform_scenario"] == plat},
                 key=treat_sort)
             for t in treats:
-                cells = [_tex(t), _tex(plat)]
+                cells = [_tex(t), _tex(platform_label(plat))]
+                st = stats.get((scen, plat, t), {})
                 for mkey, _ in METRICS:
-                    r = idx.get((scen, plat, t, mkey))
-                    if r is None:
-                        cells.append("--")
-                        continue
-                    mean = _num(cell(r, "mean"))
-                    lo, hi = _num(cell(r, "ci95_low")), _num(cell(r, "ci95_high"))
+                    mean, lo, hi = st.get(mkey, (None, None, None))
                     hw = (hi - lo) / 2 if (lo is not None and hi is not None) else None
                     cells.append(_fmt(mean, hw))
                 lines.append("    " + " & ".join(cells) + r" \\")
@@ -339,7 +390,7 @@ def policy_table(rows):
         treats = sorted({r["treatment"] for r in rows if r["scenario"] == scen},
                         key=treat_sort)
         for t in treats:
-            cells = [_tex(scen), _tex(t)]
+            cells = [_tex(scenario_label(scen)), _tex(t)]
             for col, _ in INDEX_COLS:
                 v = means.get((scen, t), {}).get(col)
                 cells.append(_fmt(v) if v is not None else "--")
@@ -351,9 +402,9 @@ def policy_table(rows):
 
 
 def main():
-    summ = load(SUMMARY)
+    perrun = load(PERRUN)
     pol = load(POLICY) if os.path.exists(POLICY) else []
-    ready = ready_from(summ)
+    ready = ready_from(perrun)
 
     parts = [
         "% Generated by scripts/make_results.py from",
@@ -363,7 +414,7 @@ def main():
     ]
     if not ready:
         parts.append(watermark())
-    tables, scenarios, platforms = summary_tables(summ)
+    tables, scenarios, platforms = summary_tables(perrun)
     parts.extend(tables)
     if pol:
         parts.append(policy_table(pol))
@@ -371,10 +422,12 @@ def main():
     parts.append(
         r"\noindent\textit{Reading note.} Each cell is the mean of "
         r"run-level values over $n{=}30$ independent runs with a two-sided 95\% "
-        r"confidence interval; failed and censored runs, if any, remain in the "
-        r"run inventory. A mean of run-level p99 values is not a pooled-event "
-        r"p99. These descriptive intervals do not by themselves establish "
-        r"factorial interactions or the absence of failures.")
+        r"percentile bootstrap confidence interval ($10{,}000$ resamples, "
+        r"seed~$20260906$) computed across runs, not across within-run samples; "
+        r"failed and censored runs, if any, remain in the run inventory. A mean "
+        r"of run-level p99 values is not a pooled-event p99. These descriptive "
+        r"intervals do not by themselves establish factorial interactions or the "
+        r"absence of failures.")
     with open(os.path.join(GEN, "measured-results.tex"), "w") as fh:
         fh.write("\n".join(parts) + "\n")
 
@@ -402,12 +455,12 @@ def main():
 
     summary = {
         "ready": ready,
-        "bootstrap_resamples": 10000,
-        "bootstrap_seed": 20260906,
+        "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
+        "bootstrap_seed": BOOTSTRAP_SEED,
         "scenarios": scenarios,
         "platforms": platforms,
         "runs_per_condition": 30,
-        "n_summary_rows": len(summ),
+        "n_perrun_rows": len(perrun),
         "blockers": [] if ready else [
             "Bundle is not marked as a provenance-backed measurement."],
         "study_id": None,
