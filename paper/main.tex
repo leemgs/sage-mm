@@ -140,7 +140,7 @@ This paper makes four bounded contributions.
   \item It reports a measured ablation and policy comparison over the
   coordination ladder (stock, heap, interop, reclamation, and the three online
   policies) on two embedded platform profiles, with $30$ independent runs per
-  condition and $95\%$ confidence intervals, isolating each layer's
+  condition and $95\%$ bootstrap confidence intervals, isolating each layer's
   contribution to footprint, GC tail, refault rate, and input latency
   (Sections~\ref{sec:method}--\ref{sec:results}).
   \item It measures robustness across three workload regimes---favorable,
@@ -604,13 +604,13 @@ inserted by the reporting script.
 
 \paragraph{Measurement provenance.}
 The released bundle provides per-run values for every metric, condition, and
-run index, together with the run-level bootstrap summaries (mean, standard
-deviation, and $95\%$ confidence interval) and the normalized policy indices
-from which the tables and figures in this section are generated; a fixed seed
-records the run-generation configuration. The build pipeline regenerates every
-table and figure directly from this bundle and is fail-closed: it marks the
-manuscript submission-ready only when the bundle is a genuine measurement, so no
-number here is hand-entered. Hashed raw archives, device manifests, and
+run index, together with run-level summary statistics and the normalized policy
+indices from which the tables and figures in this section are generated; a fixed
+seed records the workload configuration. The build pipeline regenerates every
+table and figure directly from the per-run values---computing each reported mean
+and its $95\%$ percentile bootstrap confidence interval---and is fail-closed: it
+marks the manuscript submission-ready only when the bundle is a genuine
+measurement, so no number here is hand-entered. Hashed raw archives, device manifests, and
 OOM/kernel logs form the accompanying artifact-evaluation package. These checks
 establish input consistency and reproducibility of the reported statistics; the
 investigator remains responsible for instrument calibration, trace
@@ -621,7 +621,8 @@ interpretation, and the authenticity of collection.
 \input{generated/measured-figures}
 
 All effects below are reported as the mean of $n{=}30$ run-level values with a
-two-sided $95\%$ confidence interval (Table~\ref{tab:res-planning-hypothesis}
+two-sided $95\%$ percentile bootstrap confidence interval
+(Table~\ref{tab:res-planning-hypothesis}
 and companions); percentages are relative to the per-condition \textsf{Stock}
 baseline, and normalized indices (Table~\ref{tab:policy-index}) set
 $\textsf{Stock}{=}100$ within each regime. The ARM32 and ARM64 profiles agree in
@@ -676,7 +677,7 @@ refault-dominated regime the coordinated design is a net cost: PSS rises to
 $105\%$, the fault rate to $161\%$, and input p99 to $121\%$, with controller CPU
 climbing to $2.2\%$ as the gate and cooldown fight the workload. The regression
 is bounded---about $+5\%$ PSS and $+20\%$ input p99---but it is not eliminated,
-and the adverse column is exactly the case a deployment must detect and where
+and the adverse regime is exactly the case a deployment must detect, and where
 reclamation should be disabled outright.
 
 \subsection{Discussion}
@@ -689,7 +690,7 @@ this; the ablation shows that removing reclamation removes most of the footprint
 benefit, and removing the controller removes most of the refault safety.
 Second, the learned policy's advantage over a tuned threshold is real but small
 and comes with a measurable CPU cost, which supports treating the ridge model as
-an option to justify per deployment rather than a default. Third, the neutral and
+an option to be justified per deployment rather than as a default. Third, the neutral and
 adverse regimes together characterize the design's envelope: it is fail-safe
 when no gain exists and bounded-but-negative when reclamation backfires, so a
 production port must treat the adverse regime as a detection target for
