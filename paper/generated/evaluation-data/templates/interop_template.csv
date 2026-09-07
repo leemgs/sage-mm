@@ -1,0 +1,1 @@
+data_status,synthetic,n_runs,seed,platform,treatment,benchmark,run_id,allocated_bytes,allocation_rate_mb_s,peak_pss_mb,gc_p99_ms,throughput_ops_s,copy_cost_ns,native_abi_ok,censored,censor_reason
