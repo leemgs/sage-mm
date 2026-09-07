@@ -119,13 +119,13 @@ def _num(x):
         return None
 
 
-def _fmt(v, hw=None):
+def _fmt(v, lo=None, hi=None):
     if v is None:
         return "--"
     dec = 2 if abs(v) < 10 else 1
     s = f"{v:.{dec}f}"
-    if hw is not None:
-        s += f"\\,$\\pm$\\,{hw:.{dec}f}"
+    if lo is not None and hi is not None:
+        s += f" [{lo:.{dec}f}, {hi:.{dec}f}]"
     return s
 
 
@@ -191,16 +191,16 @@ def summary_tables(rows):
     for scen in scenarios:
         lines = [
             r"\begin{table}[t]",
-            r"  \caption{%s: mean with a two-sided 95\%% percentile bootstrap CI "
+            r"  \caption{%s: mean [two-sided 95\%% percentile bootstrap CI] "
             r"($10{,}000$ resamples) over $n{=}30$ independent runs per condition. "
             r"Lower is better for all metrics except controller CPU (an overhead "
             r"cost).}" % _tex(SCENARIO_TITLES.get(scen, scenario_label(scen))),
             r"  \label{tab:res-%s}" % scen.replace("_", "-"),
             r"  \scriptsize\setlength{\tabcolsep}{4pt}",
-            r"  \begin{tabular}{@{}ll" + "r" * len(METRICS) + r"@{}}",
+            r"  \begin{tabular}{@{}llr" + "r" * len(METRICS) + r"@{}}",
             r"    \toprule",
             "    " + " & ".join(
-                ["\\textbf{Treatment}", "\\textbf{Platform}"]
+                ["\\textbf{Treatment}", "\\textbf{Platform}", "\\textbf{S/C/F/X}"]
                 + [f"\\textbf{{{m[1]}}}" for m in METRICS]) + r" \\",
             r"    \midrule",
         ]
@@ -210,18 +210,65 @@ def summary_tables(rows):
                  if r["scenario"] == scen and r["platform_scenario"] == plat},
                 key=treat_sort)
             for t in treats:
-                cells = [_tex(t), _tex(platform_label(plat))]
+                condition_rows = [r for r in rows if r["scenario"] == scen
+                                  and r["platform_scenario"] == plat
+                                  and r["treatment"] == t]
+                statuses = [r.get("run_status", "").strip().lower()
+                            for r in condition_rows]
+                completed = sum(s == "completed" for s in statuses)
+                failed = sum(s == "failed" for s in statuses)
+                censored = sum(s == "censored" for s in statuses)
+                inventory = f"{len(condition_rows)}/{completed}/{failed}/{censored}"
+                cells = [_tex(t), _tex(platform_label(plat)), inventory]
                 st = stats.get((scen, plat, t), {})
                 for mkey, _ in METRICS:
                     mean, lo, hi = st.get(mkey, (None, None, None))
-                    hw = (hi - lo) / 2 if (lo is not None and hi is not None) else None
-                    cells.append(_fmt(mean, hw))
+                    cells.append(_fmt(mean, lo, hi))
                 lines.append("    " + " & ".join(cells) + r" \\")
             lines.append(r"    \midrule")
         lines[-1] = r"    \bottomrule"
         lines += [r"  \end{tabular}", r"\end{table}", ""]
         out.append("\n".join(lines))
     return out, scenarios, platforms
+
+
+def contrast_table(rows):
+    """Direct unpaired Ridge-EWMA bootstrap contrasts for policy claims."""
+    groups = perrun_groups(rows)
+    rng = random.Random(BOOTSTRAP_SEED + 1)
+    lines = [
+        r"\begin{table}[t]",
+        r"  \caption{Direct policy contrasts under the favorable workload. "
+        r"Mean difference $\Delta=\textsf{Ridge-GIR}-\textsf{EWMA-GIR}$ "
+        r"[two-sided 95\% bootstrap CI]; 10{,}000 within-group resamples.}",
+        r"  \label{tab:policy-contrasts}",
+        r"  \small",
+        r"  \begin{tabular}{@{}llr@{}}",
+        r"    \toprule",
+        r"    \textbf{Platform} & \textbf{Metric} & \textbf{$\Delta$ [95\% CI]} \\",
+        r"    \midrule",
+    ]
+    for plat in sorted({r["platform_scenario"] for r in rows}):
+        for metric, label in (("gc_p99_ms", "GC p99 (ms)"),
+                              ("input_p99_ms", "Input p99 (ms)"),
+                              ("controller_cpu_pct", "Controller CPU (pp)")):
+            ridge = groups[("planning_hypothesis", plat, "Ridge-GIR")][metric]
+            ewma = groups[("planning_hypothesis", plat, "EWMA-GIR")][metric]
+            if not ridge or not ewma:
+                continue
+            diffs = sorted(
+                sum(rng.choices(ridge, k=len(ridge))) / len(ridge)
+                - sum(rng.choices(ewma, k=len(ewma))) / len(ewma)
+                for _ in range(BOOTSTRAP_RESAMPLES))
+            mean = sum(ridge) / len(ridge) - sum(ewma) / len(ewma)
+            lo = diffs[int(0.025 * BOOTSTRAP_RESAMPLES)]
+            hi = diffs[int(0.975 * BOOTSTRAP_RESAMPLES)]
+            lines.append("    " + " & ".join([
+                _tex(platform_label(plat)), label, _fmt(mean, lo, hi)]) + r" \\")
+        lines.append(r"    \midrule")
+    lines[-1] = r"    \bottomrule"
+    lines += [r"  \end{tabular}", r"\end{table}", ""]
+    return "\n".join(lines)
 
 
 def index_means(rows):
@@ -416,6 +463,7 @@ def main():
         parts.append(watermark())
     tables, scenarios, platforms = summary_tables(perrun)
     parts.extend(tables)
+    parts.append(contrast_table(perrun))
     if pol:
         parts.append(policy_table(pol))
         figures(pol)
@@ -424,7 +472,7 @@ def main():
         r"run-level values over $n{=}30$ independent runs with a two-sided 95\% "
         r"percentile bootstrap confidence interval ($10{,}000$ resamples, "
         r"seed~$20260906$) computed across runs, not across within-run samples; "
-        r"failed and censored runs, if any, remain in the run inventory. A mean "
+        r"the S/C/F/X column reports started/completed/failed/censored runs. A mean "
         r"of run-level p99 values is not a pooled-event p99. These descriptive "
         r"intervals do not by themselves establish factorial interactions or the "
         r"absence of failures.")

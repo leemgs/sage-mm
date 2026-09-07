@@ -33,6 +33,7 @@ SCHEMAS = {
     "absolute_results_30run.csv": {
         "required": {"data_status", "synthetic", "scenario",
                      "platform_scenario", "treatment", "run_id",
+                     "run_status",
                      "peak_pss_mb", "allocation_rate_mb_s", "gc_p99_ms",
                      "fault_rate_s", "input_p99_ms", "controller_cpu_pct"},
         "condition": ("scenario", "platform_scenario", "treatment"),
@@ -97,6 +98,11 @@ def validate(path, schema):
                    if str(get(r, "data_status") or "").startswith("measured"))
     if measured != len(rows):
         notes.append(f"{len(rows)-measured} rows are not data_status=measured")
+    bad_status = [get(r, "run_status") for r in rows
+                  if str(get(r, "run_status") or "").lower()
+                  not in {"completed", "failed", "censored"}]
+    if bad_status:
+        problems.append(f"{len(bad_status)} rows have an invalid run_status")
 
     # run_id coverage per condition
     cond_runs = defaultdict(set)
