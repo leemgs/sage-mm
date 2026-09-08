@@ -19,6 +19,7 @@
 \usepackage{xcolor}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 
 %% elsarticle does not define \Description. Keep figure descriptions in the
 %% source while allowing the results fragments to compile.
@@ -283,21 +284,69 @@ compose at runtime.
 
 \begin{figure}[t]
   \centering
-  \setlength{\fboxsep}{7pt}%
-  \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering\small
-  \textbf{Telemetry $\rightarrow$ controller $\rightarrow$ guarded actions}\\[5pt]
-  System overview. Per-interval telemetry
-  ($L_{\mathrm{gc}}$, $F_h$, $P_f$, $\Delta M$) is normalized
-  (Eq.~\ref{eq:pressure}) and consumed by the online controller, which
-  emits two bounded actions: the reclamation interval $T$ and the compaction
-  gate. The reclamation path ranks cold, private, file-backed code mappings
-  and issues \texttt{madvise(MADV\_DONTNEED)} through the conservative native
-  helper, gated by the hot-reuse and cooldown guards. Static interventions
-  (heap build $G$, interop $I$) sit upstream and reduce the pressure
-  presented to the controller; they do not adapt online.}}
+  \resizebox{\linewidth}{!}{%
+  \begin{tikzpicture}[
+    font=\footnotesize,
+    box/.style={rounded corners=2pt, draw=black!55, fill=black!3,
+                align=center, inner sep=4pt, minimum height=1.0cm},
+    stat/.style={box, fill=black!8, draw=black!45},
+    ctrl/.style={box, draw=orange!70!black, fill=orange!8, line width=0.7pt},
+    act/.style={box, draw=blue!55!black, fill=blue!6},
+    guard/.style={draw=orange!70!black, dashed, rounded corners=3pt,
+                  inner sep=6pt},
+    flow/.style={-{Stealth[length=5pt]}, line width=0.9pt, black!70},
+    fb/.style={-{Stealth[length=5pt]}, line width=0.9pt, blue!55!black, dashed},
+  ]
+    % top sensing row
+    \node[box, minimum width=2.7cm] (sys) at (0,0)
+      {Embedded process\\\scriptsize heap $\cdot$ interop $\cdot$ code pages\\
+       \scriptsize one swapless budget};
+    \node[box, right=0.7cm of sys, minimum width=2.6cm] (tel)
+      {Telemetry\\\scriptsize $L_{\mathrm{gc}},F_h,P_f,\Delta M,L_{\mathrm{input}}$};
+    \node[box, right=0.7cm of tel, minimum width=2.4cm] (norm)
+      {Normalize\\\scriptsize $\mathbf{x}$, pressure $y$ (Eq.~\ref{eq:pressure})};
+    \node[ctrl, right=0.7cm of norm, minimum width=2.7cm] (ctrl)
+      {Online controller\\\scriptsize policy: Thr / EWMA / Ridge};
+
+    % static interventions upstream
+    \node[stat, above=0.55cm of sys, minimum width=2.7cm] (stat)
+      {Static (fixed before deploy)\\\scriptsize heap build $G$ $\cdot$ interop $I$};
+
+    % action + reclamation row
+    \node[act, below=1.15cm of ctrl, minimum width=3.0cm] (act)
+      {Bounded actions\\\scriptsize reclamation interval $T$ + compaction gate};
+    \node[box, left=1.3cm of act, minimum width=3.6cm] (recl)
+      {Reclamation path\\\scriptsize rank cold modules $\to$
+       \texttt{madvise(MADV\_DONTNEED)}\\\scriptsize hot-reuse + cooldown guards};
+
+    % flows
+    \draw[flow] (stat) -- (sys);
+    \draw[flow] (sys) -- (tel);
+    \draw[flow] (tel) -- (norm);
+    \draw[flow] (norm) -- (ctrl);
+    \draw[flow] (ctrl) -- (act);
+    \draw[flow] (act) -- (recl);
+    \draw[fb] (recl) -- (sys.south)
+      node[midway, below, font=\scriptsize, black!70] {reclaim + refault feedback};
+
+    % guard band around the controller
+    \begin{scope}[on background layer]
+      \node[guard, fit=(ctrl)(act)] (gb) {};
+    \end{scope}
+    \node[font=\scriptsize\itshape, orange!70!black, anchor=north west,
+          align=left]
+      at ([xshift=3pt,yshift=-1pt]gb.north east)
+      {fail-closed \&\\adverse-regime\\supervisor};
+  \end{tikzpicture}}
   \caption{SAGE-MM runtime composition and the narrow online action space
-  (reclamation interval $T$ and compaction gate). Only the control path
-  adapts; heap build and interop conversion are fixed before deployment.}
+  (reclamation interval $T$ and compaction gate). Static interventions
+  (heap build $G$, interop $I$) sit upstream and reduce the pressure presented
+  to the controller; only the control path adapts online. Per-interval telemetry
+  is normalized into a dimensionless pressure, the interchangeable policy emits
+  the two bounded actions, and the reclamation path issues
+  \texttt{madvise(MADV\_DONTNEED)} through the conservative native helper under
+  the hot-reuse and cooldown guards. The dashed band marks the policy-independent
+  fail-closed and adverse-regime supervisory guards.}
   \label{fig:arch}
 \end{figure}
 
@@ -585,14 +634,24 @@ No device capacity or runtime compatibility is inferred from those names.
 Each case identifies a workload revision, reset procedure, treatment,
 controller configuration, and tuning or reporting phase. The reported bundle
 covers two platform profiles (\textsf{ARM32} and \textsf{ARM64}) under three
-workload regimes chosen to probe the design's operating envelope:
-a \emph{favorable} regime, in which cold, file-backed code pages are reclaimable
-and the workload tolerates their eviction; a \emph{neutral} regime, in which no
-reclamation gain is available; and an \emph{adverse}, refault-dominated regime,
-in which reclaimed pages are immediately reused. These regimes bracket the cases
-where coordination should help, should do nothing, and should be resisted by the
-guards. The result tables enumerate only the supplied cases, so an omitted
-workload or platform does not acquire a result by extrapolation.
+workload regimes chosen to probe the design's operating envelope. Each regime
+has an operational definition tied to a DTV usage pattern rather than a label:
+\begin{itemize}
+  \item \emph{Favorable} --- steady single-application playback with occasional
+  code pages left cold and reclaimable, and no immediate reuse of an evicted
+  module; reclamation should help here.
+  \item \emph{Neutral} --- a compact working set with no cold, reclaimable
+  file-backed pages available, so no reclamation gain exists; coordination
+  should do nothing.
+  \item \emph{Adverse} --- rapid application switching that immediately reuses
+  just-reclaimed code pages (refault-dominated); reclamation should be resisted
+  by the guards.
+\end{itemize}
+These regimes bracket the cases where coordination should help, should do
+nothing, and should be resisted; they are operating conditions, not a claim of
+coverage over all DTV workloads. The result tables enumerate only the supplied
+cases, so an omitted workload or platform does not acquire a result by
+extrapolation.
 
 \subsection{Baselines}
 We use canonical names without aliases in every table, figure, and
