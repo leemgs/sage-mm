@@ -39,4 +39,15 @@ echo "[3/3] copying build output to code/main.pdf"
 mkdir -p "$root/code"
 cp "$root/paper/main.pdf" "$root/code/main.pdf"
 
+# Graphical abstract (standalone). Also export a PNG when a rasterizer exists.
+if [ -f "$root/paper/graphical_abstract.tex" ]; then
+  echo "[extra] building graphical abstract"
+  pdflatex -interaction=nonstopmode -halt-on-error graphical_abstract.tex >/dev/null
+  cp "$root/paper/graphical_abstract.pdf" "$root/code/graphical_abstract.pdf"
+  if command -v pdftoppm >/dev/null; then
+    pdftoppm -png -r 600 -singlefile "$root/paper/graphical_abstract.pdf" \
+      "$root/code/graphical_abstract" >/dev/null 2>&1 || true
+  fi
+fi
+
 echo "done: $root/code/main.pdf"
