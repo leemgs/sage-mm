@@ -11,8 +11,9 @@ paper/*.spl
 paper/*.fls
 paper/*.fdb_latexmk
 paper/*.synctex.gz
-# Intermediate PDF built in paper/; the shipped output is code/main.pdf
+# Intermediate PDFs built in paper/; the shipped outputs live in code/
 paper/main.pdf
+paper/graphical_abstract.pdf
 
 # Python
 __pycache__/
