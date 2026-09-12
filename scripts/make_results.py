@@ -426,6 +426,7 @@ def policy_table(rows):
         r"${>}100$ are regressions.}",
         r"  \label{tab:policy-index}",
         r"  \small\setlength{\tabcolsep}{5pt}",
+        r"  \resizebox{\linewidth}{!}{%",
         r"  \begin{tabular}{@{}ll" + "r" * len(INDEX_COLS) + r"@{}}",
         r"    \toprule",
         "    " + " & ".join(
@@ -445,7 +446,7 @@ def policy_table(rows):
             lines.append("    " + " & ".join(cells) + r" \\")
         lines.append(r"    \midrule")
     lines[-1] = r"    \bottomrule"
-    lines += [r"  \end{tabular}", r"\end{table}", ""]
+    lines += [r"  \end{tabular}}", r"\end{table}", ""]
     return "\n".join(lines)
 
 
@@ -490,7 +491,8 @@ def main():
             "\n"
             r"\newcommand{\MeasurementAvailability}{The run-level measurement "
             r"bundle (per-run values and bootstrap summaries) accompanies the "
-            r"manuscript under \texttt{paper/generated/evaluation-data/}.}" "\n")
+            r"manuscript under \texttt{paper/\allowbreak generated/"
+            r"\allowbreak evaluation-data/}.}" "\n")
     else:
         state = (
             r"\newif\ifmeasurementready" "\n"
