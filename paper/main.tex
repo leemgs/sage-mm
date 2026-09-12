@@ -2,10 +2,10 @@
 %% SAGE-MM --- Journal of Systems Architecture (Elsevier) submission
 %% Template: Elsevier `elsarticle' class (preprint, single column).
 %%
-%% Measured results are generated from code/experiments/measured/.
+%% Measured results are generated from paper/generated/evaluation-data/.
 
 %% Canonical manuscript source. Edit paper/main.tex directly and build
-%% with bash scripts/build_jsa.sh from the repository root.
+%% with bash scripts/build.sh from the repository root.
 %% =====================================================================
 \documentclass[preprint,12pt]{elsarticle}
 
@@ -62,7 +62,7 @@ telemetry, hysteresis, and a threshold fallback. The public implementation
 provides the controller and native mapping helper; deployment requires
 vendor-runtime integration and device instrumentation.
 The evaluation records device identity, runtime and firmware revisions,
-workload and treatment configuration, independent run duration, and raw
+workload and treatment configuration, independent run duration, and per-run
 measurement provenance. Peak proportional set size, allocation rate,
 GC tail pause, page-fault rate, input tail latency, and controller CPU are
 reported separately for each measured condition. Failed and censored runs
@@ -178,7 +178,7 @@ and the exact runtime revision. The runtime measured in this study is
 so the collector and vendor patches are recorded explicitly
 \cite{monoruntime}. Device-memory capacity and runtime identity are not
 pre-filled as experimental facts. For a swapless configuration, OOM and
-watchdog outcomes are retained in the run logs and failure inventory.
+watchdog outcomes are retained in the failure inventory.
 
 \subsection{Why independent tuning regresses}
 Three cross-layer tensions motivate coordination.
@@ -445,7 +445,7 @@ $\eta = 5\times10^{-4}$, and $\lambda = 10^{-4}$. Training occurs only on a
 designated tuning trace; reporting calls pass \texttt{updateModel:false} to
 freeze weights, and \texttt{BeginReporting()} clears the training-boundary
 pending prediction while retaining learned weights. The run manifest distinguishes tuning from reporting; only reporting runs
-enter the result tables, and raw archives cannot be reused across runs.
+enter the result tables, and run records cannot be reused across runs.
 
 \paragraph{Compaction gating and hysteresis.}
 In adaptive modes, compaction is disabled below fragmentation $0.05$ and
@@ -570,7 +570,7 @@ A device experiment therefore supplies its own runtime GC traces, live
 fragmentation accounting, mapping-level \texttt{smaps} samples, workload
 event timestamps, and an implemented compaction hook. The firmware image,
 runtime patch, collector revision, controller configuration, and reset
-procedure are recorded in the measurement manifest and raw run archive.
+procedure are recorded in the measurement manifest and per-run bundle.
 A public-kit execution alone does not establish a production deployment.
 
 %% =====================================================================
@@ -637,7 +637,7 @@ orphaned from a hypothesis.
 Each platform entry identifies an actual device, physical and cgroup memory,
 swap configuration, storage, kernel, runtime name and commit, patch hash,
 firmware image hash, compiler flags, and thermal/power/network policy.
-ARM32 and ARM64 DTVs and an independently assembled constrained Linux
+The ARM32 and ARM64 profiles and an independently assembled constrained Linux
 platform are distinct measurement conditions when included in the manifest.
 No device capacity or runtime compatibility is inferred from those names.
 Concretely, both profiles run on a single Raspberry~Pi~4 Model~B (Broadcom
@@ -754,9 +754,10 @@ and its $95\%$ percentile bootstrap confidence interval---and is fail-closed: it
 marks the manuscript submission-ready only when the bundle is a genuine
 measurement, so no number here is hand-entered. The repository bundle includes
 a machine-readable manifest, per-condition provenance and outcome inventory,
-checksums, and the per-run CSV. The manifest also identifies unavailable
-runtime/firmware identifiers and raw device logs; those items remain mandatory
-for the submission artifact and are not implied by a checksum file. These checks
+checksums, and the per-run CSV. The manifest records the device, runtime, and
+firmware identity and the heap-configuration knob; the run-level per-run bundle
+with checksums is the released evidence, and raw device logs are outside the
+scope of this release. These checks
 establish input consistency and reproducibility of the reported statistics; the
 investigator remains responsible for instrument calibration, trace
 interpretation, and the authenticity of collection.
@@ -976,9 +977,9 @@ not claimed.
 \label{sec:limitations}
 
 SAGE-MM combines known mechanisms, so its novelty is limited to their
-specified coordination and device measurement protocol. Static heap and
-interop changes require runtime or application rebuilding; only controller
-actions are adaptive. \texttt{MADV\_DONTNEED} can trade PSS for page faults
+specified coordination and device measurement protocol. The static heap setting
+is fixed at launch and interop changes require application recompilation; only
+controller actions are adaptive. \texttt{MADV\_DONTNEED} can trade PSS for page faults
 and storage-dependent latency; the guards reduce but do not eliminate that
 risk. The ridge model is deliberately lightweight and may offer no benefit
 over a tuned threshold policy; results must report such cases. Firmware
@@ -992,7 +993,7 @@ The measured bundle covers the coordination ladder and the three workload
 regimes on two platform profiles with $30$ runs per condition. Three parts of
 the protocol in Section~\ref{sec:method} are specified but not yet collected,
 and we make no empirical claim for them here: (i) a per-architecture heap-size
-sweep isolating \texttt{INITIAL\_ALLOC} effects; (ii) value-type interop
+sweep isolating \texttt{DOTNET\_GCgen0size} effects; (ii) value-type interop
 micro/macro-benchmarks with native-ABI correctness checks (the ablation
 measures interop only as the $G{\to}GI$ step, not in isolation); and
 (iii) multi-hour endurance and the full adverse-injection matrix
@@ -1041,8 +1042,6 @@ experiment, and the public demo is not the production measurement instrument.
 %% =====================================================================
 %% Elsevier-required author statements. Single author; no competing
 %% interests; no specific funding. Edit these directly in this manuscript.
-%% The same text is mirrored, human-readable, in
-%% docs/paper/DECLARATIONS_JSA.md for pasting into the submission system.
 \section*{CRediT authorship contribution statement}
 \textbf{Geunsik Lim:} Conceptualization, Methodology, Software, Validation,
 Formal analysis, Investigation, Data curation, Writing --- original draft,
