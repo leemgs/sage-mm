@@ -14,12 +14,19 @@
 \usepackage{array}
 \usepackage{longtable}
 \usepackage{graphicx}
+\usepackage{lmodern}   % scalable fonts (required for microtype font expansion)
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{xurl}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{xcolor}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+%% Absorb the last few points of over-long lines (long compound words, URLs)
+%% without altering wording; microtype protrusion handles the rest.
+\setlength{\emergencystretch}{4em}
 
 %% elsarticle does not define \Description. Keep figure descriptions in the
 %% source while allowing the results fragments to compile.
@@ -243,7 +250,7 @@ coordination contract from independent tuning.
   without source changes, after firmware replacement.}
   \label{tab:boundary}
   \small
-  \begin{tabular}{@{}p{3.1cm}p{2.4cm}p{1.7cm}p{4.4cm}@{}}
+  \begin{tabular}{@{}p{3.1cm}p{2.4cm}p{2.0cm}p{4.1cm}@{}}
     \toprule
     \textbf{Mechanism} & \textbf{Lifecycle} & \textbf{Adaptive?} &
     \textbf{Notes} \\

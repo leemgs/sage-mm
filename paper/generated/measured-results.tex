@@ -109,6 +109,7 @@
   \caption{Normalized policy indices (Stock${=}100$ within each scenario), mean over $n{=}30$ runs. Values ${<}100$ are improvements; ${>}100$ are regressions.}
   \label{tab:policy-index}
   \small\setlength{\tabcolsep}{5pt}
+  \resizebox{\linewidth}{!}{%
   \begin{tabular}{@{}llrrrrrr@{}}
     \toprule
     \textbf{Scenario} & \textbf{Treatment} & \textbf{PSS} & \textbf{Alloc} & \textbf{GC p99} & \textbf{Fault} & \textbf{Input p99} & \textbf{Ctrl CPU (\%)} \\
@@ -137,7 +138,7 @@
     Adverse & EWMA-GIR & 105.1 & 105.4 & 108.4 & 160.3 & 119.6 & 1.36 \\
     Adverse & Ridge-GIR & 104.7 & 104.8 & 110.8 & 161.2 & 120.6 & 2.20 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular}}
 \end{table}
 
 \noindent\textit{Reading note.} Each cell is the mean of run-level values over $n{=}30$ independent runs with a two-sided 95\% percentile bootstrap confidence interval ($10{,}000$ resamples, seed~$20260906$) computed across runs, not across within-run samples; the S/C/F/X column reports started/completed/failed/censored runs. A mean of run-level p99 values is not a pooled-event p99. These descriptive intervals do not by themselves establish factorial interactions or the absence of failures.
