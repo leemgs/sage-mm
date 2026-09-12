@@ -640,16 +640,19 @@ firmware image hash, compiler flags, and thermal/power/network policy.
 ARM32 and ARM64 DTVs and an independently assembled constrained Linux
 platform are distinct measurement conditions when included in the manifest.
 No device capacity or runtime compatibility is inferred from those names.
-Concretely, the two profiles are Raspberry~Pi boards running the Tizen~10.0
-unified image (build~\texttt{20260910.082900}): the \textsf{ARM64} profile is
-the \texttt{aarch64} target and \textsf{ARM32} the \texttt{armv7l} target, each
-booted from the matching \texttt{tizen-boot-*-rpi} image with separate
-\texttt{/boot}, \texttt{/hal}, and \texttt{/lib/modules} partitions, and the
-managed runtime is .NET~8 (CoreCLR)---packages \texttt{coreclr}, \texttt{corefx},
-and \texttt{mscorlib} at version~8.0.11 with \texttt{dotnet-launcher}---built from
-the \texttt{platform/upstream/dotnet/runtime} source at commit
-\texttt{ffd6dad}. The released manifest records the OS image build and this
-runtime revision; the exact Raspberry~Pi board revision and raw per-run logs
+Concretely, both profiles run on a single Raspberry~Pi~4 Model~B (Broadcom
+BCM2711 SoC, quad-core 64-bit ARM Cortex-A72, VideoCore~VI GPU): the
+\textsf{ARM64} profile is the \texttt{aarch64} build and \textsf{ARM32} the
+\texttt{armv7l} build of that same board, each running the Tizen~10.0 unified
+image (build~\texttt{20260910.082900}) from the matching
+\texttt{tizen-boot-*-rpi} image with separate \texttt{/boot}, \texttt{/hal}, and
+\texttt{/lib/modules} partitions. The managed runtime is .NET~8
+(CoreCLR)---packages \texttt{coreclr}, \texttt{corefx}, and \texttt{mscorlib} at
+version~8.0.11 with \texttt{dotnet-launcher}---built from the
+\texttt{platform/upstream/dotnet/runtime} source at commit \texttt{ffd6dad}.
+The two profiles thus share hardware and differ only in ISA and runtime build,
+so their agreement is cross-build rather than cross-device; the released
+manifest records the image build and runtime revision, and raw per-run logs
 accompany the artifact.
 
 Each case identifies a workload revision, reset procedure, treatment,
@@ -959,11 +962,14 @@ replaced by an assumed zero. Descriptive summaries do not establish a
 statistically significant difference between policies.
 
 \paragraph{External validity.}
-Results are specific to the evaluated runtime commits, devices, memory
-limits, storage configurations, and scripted workloads. An additional
-independently assembled platform, if measured, probes generality but does not establish it
-for all embedded managed runtimes; broader applicability is stated as future
-validation, not claimed.
+Results are specific to the evaluated runtime commit, device, memory
+limits, storage configuration, and scripted workloads. In particular, both
+platform profiles share one Raspberry~Pi~4 Model~B, so their agreement reflects
+robustness across the 32- and 64-bit ISA and runtime builds on common hardware,
+not diversity across physically distinct devices. Measuring additional,
+independently assembled SoCs probes generality but does not establish it for all
+embedded managed runtimes; broader applicability is stated as future validation,
+not claimed.
 
 %% =====================================================================
 \section{Limitations}

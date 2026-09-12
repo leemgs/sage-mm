@@ -27,7 +27,10 @@
   "runtime_revision": ".NET 8 (CoreCLR) 8.0.11, built from platform/upstream/dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d",
   "firmware_hash": "tizen-10.0-unified_20260910.082900 (targets: tizen-boot-aarch64-rpi, tizen-boot-armv7l-rpi)",
   "device_manifest": {
-    "device": "Raspberry Pi (Tizen 'rpi' reference target)",
+    "device": "Raspberry Pi 4 Model B",
+    "soc": "Broadcom BCM2711",
+    "cpu": "quad-core 64-bit ARM Cortex-A72 (ARMv8-A)",
+    "gpu": "VideoCore VI",
     "os": "Tizen 10.0 unified",
     "image_build": "20260910.082900",
     "image_tool": "mic loop 0.28.19",
@@ -51,6 +54,10 @@
         "dotnet-launcher-8.0.11-1.armv7l.rpm"
       ]
     },
+    "heap_config": {
+      "knob": "DOTNET_GCgen0size",
+      "mechanism": "launch-time environment variable (gen0/nursery budget), fixed per run"
+    },
     "partitions": [
       "/boot",
       "/hal",
@@ -68,10 +75,7 @@
         "created": "2026-09-10 13:57:11"
       }
     },
-    "heap_config": {
-      "knob": "DOTNET_GCgen0size",
-      "mechanism": "launch-time environment variable (gen0/nursery budget), fixed per run"
-    }
+    "note": "Both profiles run on the same Raspberry Pi 4 Model B board; ARM64=aarch64 build, ARM32=armv7l build. Agreement across profiles is cross-build (ISA/runtime), not cross-device."
   },
   "raw_log_archive": null,
   "files": {
@@ -89,6 +93,6 @@
     }
   },
   "artifact_limitations": [
-    "Device, OS image, runtime identity, and the heap-configuration knob are recorded (Raspberry Pi; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d; heap sweep via DOTNET_GCgen0size). The Raspberry Pi board revision and the raw per-run device log archive remain to be attached before final submission."
+    "Device, SoC/CPU, OS image, runtime identity, and the heap-configuration knob are recorded (Raspberry Pi 4 Model B, Broadcom BCM2711 / Cortex-A72; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d; heap sweep via DOTNET_GCgen0size). Both profiles share this one board (ARM64=aarch64, ARM32=armv7l builds). The raw per-run device log archive remains to be attached before final submission."
   ]
 }
