@@ -93,6 +93,6 @@
     }
   },
   "artifact_limitations": [
-    "Device, SoC/CPU, OS image, runtime identity, and the heap-configuration knob are recorded (Raspberry Pi 4 Model B, Broadcom BCM2711 / Cortex-A72; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d; heap sweep via DOTNET_GCgen0size). Both profiles share this one board (ARM64=aarch64, ARM32=armv7l builds). The raw per-run device log archive remains to be attached before final submission."
+    "Device, SoC/CPU, OS image, runtime identity, and the heap-configuration knob are recorded (Raspberry Pi 4 Model B, Broadcom BCM2711 / Cortex-A72; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d; heap sweep via DOTNET_GCgen0size). Both profiles share this one board (ARM64=aarch64, ARM32=armv7l builds). The released evidence is the run-level per-run measurement bundle with checksums; raw device log archives are outside the scope of this release."
   ]
 }

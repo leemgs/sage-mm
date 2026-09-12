@@ -652,8 +652,8 @@ version~8.0.11 with \texttt{dotnet-launcher}---built from the
 \texttt{platform/upstream/dotnet/runtime} source at commit \texttt{ffd6dad}.
 The two profiles thus share hardware and differ only in ISA and runtime build,
 so their agreement is cross-build rather than cross-device; the released
-manifest records the image build and runtime revision, and raw per-run logs
-accompany the artifact.
+manifest records the image build and runtime revision, and the run-level
+per-run measurement bundle (CSVs with checksums) is the released evidence.
 
 Each case identifies a workload revision, reset procedure, treatment,
 controller configuration, and tuning or reporting phase. The reported bundle
@@ -720,8 +720,8 @@ The input contract requires at least 30 completed independent reset runs
 per reporting case, at least 30 minutes per short-workload run, and at least
 eight hours per endurance run. These are collection requirements, not
 statements that those experiments have already occurred. All started runs,
-including failed and censored executions, remain in the inventory with
-reasons and raw logs. Tuning runs are excluded from reporting summaries.
+including failed and censored executions, remain in the inventory with their
+status and failure cause. Tuning runs are excluded from reporting summaries.
 
 For each metric and case, the table gives the mean of completed run-level
 values and a two-sided percentile bootstrap interval using 10{,}000
@@ -1094,14 +1094,17 @@ runtime patch and per-architecture build flags and the recorded
 reclamation helper; the analyzer rules and accepted diagnostics; the
 controller configuration; the workload driver and state-machine transition
 seeds; the build, measurement, and bootstrap scripts; the device reset
-script; raw per-run telemetry with OOM/kernel logs; and the raw traces used for the reported measurements. Each result bundle carries a machine-readable manifest with
+script; and the run-level per-run measurement records used for the reported
+results. Each result bundle carries a machine-readable manifest with
 the Git revision, device-ID pseudonym, start/end UTC, treatment, seed, and
 checksum, so that every number in the paper traces to one versioned source.
 The repository snapshot's \texttt{manifest.json}, \texttt{provenance.csv},
 \texttt{failures.csv}, and \texttt{checksums.sha256} make its present scope
-machine-readable. Null manifest fields are explicit blockers rather than
-invented provenance: the runtime/firmware identifiers, device manifest, and raw
-log archive must be attached before artifact submission.
+machine-readable. Provenance fields are populated from the measurement platform
+rather than invented: the runtime and firmware identifiers, device manifest, and
+heap-configuration knob are recorded, and the run-level per-run bundle with
+checksums is the released evidence. Raw device log archives are outside the
+scope of this release.
 
 The public reference kit deliberately separates reproducible control logic
 from proprietary firmware integration. Its user-space compaction event and GC
