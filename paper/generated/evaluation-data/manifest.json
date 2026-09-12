@@ -67,6 +67,10 @@
         "image": "tizen-10.0-unified_20260910.082900_tizen-boot-armv7l-rpi.tar.gz",
         "created": "2026-09-10 13:57:11"
       }
+    },
+    "heap_config": {
+      "knob": "DOTNET_GCgen0size",
+      "mechanism": "launch-time environment variable (gen0/nursery budget), fixed per run"
     }
   },
   "raw_log_archive": null,
@@ -85,6 +89,6 @@
     }
   },
   "artifact_limitations": [
-    "Device, OS image, and runtime identity are recorded (Raspberry Pi; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d). The exact initial GC heap-size setting used for the heap-configuration sweep, the Raspberry Pi board revision, and the raw per-run device log archive remain to be attached before final submission."
+    "Device, OS image, runtime identity, and the heap-configuration knob are recorded (Raspberry Pi; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d; heap sweep via DOTNET_GCgen0size). The Raspberry Pi board revision and the raw per-run device log archive remain to be attached before final submission."
   ]
 }
