@@ -82,7 +82,7 @@ no benefit is assumed for an unmeasured configuration.
 \begin{keyword}
 Embedded runtimes \sep memory management \sep garbage collection \sep
 managed/native interop \sep page reclamation \sep \texttt{madvise} \sep
-online control \sep cross-layer coordination \sep .NET \sep Mono \sep
+online control \sep cross-layer coordination \sep .NET \sep CoreCLR \sep
 digital television
 \end{keyword}
 
@@ -173,8 +173,9 @@ evaluation (Section~\ref{sec:threats}).
 The deployment environment is recorded from each device rather than inferred
 from an architecture or marketing label. The platform manifest identifies
 physical and cgroup memory, swap configuration, storage, kernel, firmware,
-and the exact runtime revision. Mono and CoreCLR are distinct runtime
-implementations; the collector and vendor patches are recorded explicitly
+and the exact runtime revision. The runtime measured in this study is
+.NET~8 (CoreCLR) 8.0.11; Mono and CoreCLR are distinct runtime implementations,
+so the collector and vendor patches are recorded explicitly
 \cite{monoruntime}. Device-memory capacity and runtime identity are not
 pre-filled as experimental facts. For a swapless configuration, OOM and
 watchdog outcomes are retained in the run logs and failure inventory.
@@ -256,10 +257,10 @@ coordination contract from independent tuning.
     \textbf{Notes} \\
     \midrule
     Heap build config
-    (recorded \texttt{INITIAL\_ALLOC}) &
+    (recorded initial GC heap size) &
     Vendor runtime build & No &
-    Requires rebuilding the vendor Mono runtime; transparent after firmware
-    replacement; not an online control. \\
+    Requires rebuilding the vendor .NET (CoreCLR) runtime; transparent after
+    firmware replacement; not an online control. \\
     Value-type interop conversion &
     Source / recompile & No &
     Reviewed class-to-struct migration; changes identity, boxing, layout,
@@ -642,9 +643,12 @@ unified image (build~\texttt{20260910.082900}): the \textsf{ARM64} profile is
 the \texttt{aarch64} target and \textsf{ARM32} the \texttt{armv7l} target, each
 booted from the matching \texttt{tizen-boot-*-rpi} image with separate
 \texttt{/boot}, \texttt{/hal}, and \texttt{/lib/modules} partitions, and the
-managed runtime is the Mono-based .NET stack shipped in that image. The released
-manifest records the image build as the firmware reference; the exact Raspberry~Pi
-board revision and Mono runtime commit accompany the artifact.
+managed runtime is .NET~8 (CoreCLR)---packages \texttt{coreclr}, \texttt{corefx},
+and \texttt{mscorlib} at version~8.0.11 with \texttt{dotnet-launcher}---built from
+the \texttt{platform/upstream/dotnet/runtime} source at commit
+\texttt{ffd6dad}. The released manifest records the OS image build and this
+runtime revision; the exact Raspberry~Pi board revision and raw per-run logs
+accompany the artifact.
 
 Each case identifies a workload revision, reset procedure, treatment,
 controller configuration, and tuning or reporting phase. The reported bundle
@@ -1075,9 +1079,10 @@ and takes full responsibility for the content of the publication.
 \label{app:artifact}
 
 To support an artifact evaluation, the complete submission bundle records, where
-licensing permits: the vendor Mono runtime name and source revision; the
-minimal runtime patch and per-architecture build flags and
-\texttt{INITIAL\_ALLOC} values; the exposed host interfaces; the native
+licensing permits: the vendor .NET (CoreCLR) runtime name and source revision
+(\texttt{dotnet/runtime} at \texttt{ffd6dad}, version 8.0.11); the minimal
+runtime patch and per-architecture build flags and recorded initial GC
+heap-size settings; the exposed host interfaces; the native
 reclamation helper; the analyzer rules and accepted diagnostics; the
 controller configuration; the workload driver and state-machine transition
 seeds; the build, measurement, and bootstrap scripts; the device reset
