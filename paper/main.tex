@@ -54,7 +54,7 @@ Page Reclamation in Memory-Constrained Embedded .NET Firmware}
 Memory-constrained embedded devices co-locate a managed heap, native
 interoperability, and file-backed executable mappings inside a single
 process budget, yet these layers are conventionally tuned in isolation.
-We present SAGE-MM, a coordination design for a build-time managed-heap
+We present SAGE-MM, a coordination design for a launch-time managed-heap
 configuration, a reviewed source-time interop conversion, and online
 reclamation scheduling with a runtime-host compaction gate. The design
 combines established mechanisms through a bounded action space, normalized
@@ -128,9 +128,9 @@ claims are limited to the supplied device measurements.
 
 We deliberately separate the three interventions by \emph{lifecycle} and
 \emph{adaptivity} (Section~\ref{sec:boundary}). Heap sizing is a
-runtime-build decision; value-type conversion is a reviewed
-source-and-recompile decision; only reclamation scheduling and compaction
-gating change online. Conflating them as ``three adaptive components''
+firmware/launch-time decision (a fixed \texttt{DOTNET\_GCgen0size} budget);
+value-type conversion is a reviewed source-and-recompile decision; only
+reclamation scheduling and compaction gating change online. Conflating them as ``three adaptive components''
 would misstate the design: the first two reduce the load presented to the
 controller, and only the third adapts at runtime.
 
@@ -138,7 +138,7 @@ controller, and only the third adapts at runtime.
 This paper makes four bounded contributions.
 \begin{enumerate}
   \item It specifies a cross-layer action boundary: heap sizing is a
-  runtime-build decision, value-type conversion is a reviewed source
+  firmware/launch-time decision, value-type conversion is a reviewed source
   decision, and only reclamation scheduling and compaction gating change
   online (Section~\ref{sec:boundary}).
   \item It provides an implementable controller definition with
@@ -256,11 +256,12 @@ coordination contract from independent tuning.
     \textbf{Mechanism} & \textbf{Lifecycle} & \textbf{Adaptive?} &
     \textbf{Notes} \\
     \midrule
-    Heap build config
-    (recorded initial GC heap size) &
-    Vendor runtime build & No &
-    Requires rebuilding the vendor .NET (CoreCLR) runtime; transparent after
-    firmware replacement; not an online control. \\
+    Heap config
+    (recorded \texttt{DOTNET\_\allowbreak GCgen0size}) &
+    Firmware launch env & No &
+    Sets the gen0 budget via \texttt{DOTNET\_GCgen0size} in the firmware launch
+    environment; fixed per run and changed only by a firmware/config update;
+    not an online control. \\
     Value-type interop conversion &
     Source / recompile & No &
     Reviewed class-to-struct migration; changes identity, boxing, layout,
@@ -361,12 +362,13 @@ compose at runtime.
 \subsection{Static interventions}
 \label{sec:static}
 
-\paragraph{Architecture-specific heap build.}
-A heap-configuration experiment records the initial allocation, compiler
-flags, source revision, and patch hash for each runtime build. This is a
-build-time intervention. Collection count, pause distribution, and resident
+\paragraph{Architecture-specific heap configuration.}
+A heap-configuration experiment records the gen0 nursery budget
+(\texttt{DOTNET\_GCgen0size}), compiler flags, source revision, and patch hash
+for each configuration. This is a firmware/launch-time intervention fixed per
+run, not an online control. Collection count, pause distribution, and resident
 memory are measured separately for each architecture and configuration;
-no improvement is inferred from the chosen allocation size.
+no improvement is inferred from the chosen size.
 
 \paragraph{Value-type interop conversion.}
 A source-time analyzer (diagnostic \textsf{DTV0001}) flags plain-old-data
@@ -870,8 +872,8 @@ available to the collector, so controlling heap growth and dynamically selecting
 or sizing the collector are established levers~\cite{brecht2006heapgrowth,
 soman2004dynamic,stefanovic1999age}. Our heap-build intervention sits in this
 tradition but is deliberately not a new collector: SAGE-MM keeps the vendor
-collector and treats its initial allocation as a fixed build parameter measured
-per platform.
+collector and treats its gen0 nursery budget as a fixed launch parameter
+measured per platform.
 
 \paragraph{Garbage collection and virtual-memory interaction.}
 The tension SAGE-MM manages---footprint reduction versus refault cost---is the
@@ -1000,7 +1002,7 @@ required before a production-stability or per-architecture-tuning claim.
 SAGE-MM specifies how heap configuration, interop allocation, and clean-page
 reclamation can be coordinated under a single embedded-process memory budget
 through a narrow, safety-guarded online control action, rather than tuned in
-isolation. The design separates a build-time heap decision and a
+isolation. The design separates a launch-time heap decision and a
 source-time allocation decision from a single online policy that adjusts one
 reclamation interval and one compaction gate, with fail-closed handling of
 invalid telemetry and a lightweight learned policy that must justify itself
@@ -1081,8 +1083,8 @@ and takes full responsibility for the content of the publication.
 To support an artifact evaluation, the complete submission bundle records, where
 licensing permits: the vendor .NET (CoreCLR) runtime name and source revision
 (\texttt{dotnet/runtime} at \texttt{ffd6dad}, version 8.0.11); the minimal
-runtime patch and per-architecture build flags and recorded initial GC
-heap-size settings; the exposed host interfaces; the native
+runtime patch and per-architecture build flags and the recorded
+\texttt{DOTNET\_GCgen0size} settings; the exposed host interfaces; the native
 reclamation helper; the analyzer rules and accepted diagnostics; the
 controller configuration; the workload driver and state-machine transition
 seeds; the build, measurement, and bootstrap scripts; the device reset
