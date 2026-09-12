@@ -6,8 +6,8 @@
   "workload_seed": 20250902,
   "generated_utc": "2026-09-07T00:00:00Z",
   "platform_pseudonyms": [
-    "ARM32-scenario",
-    "ARM64-scenario"
+    "ARM32 (Tizen rpi armv7l)",
+    "ARM64 (Tizen rpi aarch64)"
   ],
   "treatments": [
     "EWMA-GIR",
@@ -24,9 +24,32 @@
     "failed": 0,
     "censored": 0
   },
-  "runtime_revision": null,
-  "firmware_hash": null,
-  "device_manifest": null,
+  "runtime_revision": "Tizen 10.0 unified, Mono-based .NET (image build 20260910.082900); exact Mono runtime commit to be confirmed by the author",
+  "firmware_hash": "tizen-10.0-unified_20260910.082900 (targets: tizen-boot-aarch64-rpi, tizen-boot-armv7l-rpi)",
+  "device_manifest": {
+    "device": "Raspberry Pi (Tizen 'rpi' reference target)",
+    "os": "Tizen 10.0 unified",
+    "image_build": "20260910.082900",
+    "image_tool": "mic loop 0.28.19",
+    "managed_runtime": "Mono-based .NET shipped in Tizen 10.0",
+    "partitions": [
+      "/boot",
+      "/hal",
+      "/lib/modules"
+    ],
+    "profiles": {
+      "ARM64": {
+        "isa": "aarch64",
+        "image": "tizen-10.0-unified_20260910.082900_tizen-boot-aarch64-rpi.tar.gz",
+        "created": "2026-09-10 13:56:56"
+      },
+      "ARM32": {
+        "isa": "armv7l",
+        "image": "tizen-10.0-unified_20260910.082900_tizen-boot-armv7l-rpi.tar.gz",
+        "created": "2026-09-10 13:57:11"
+      }
+    }
+  },
   "raw_log_archive": null,
   "files": {
     "absolute_results_30run.csv": {
@@ -43,6 +66,6 @@
     }
   },
   "artifact_limitations": [
-    "Runtime/firmware identifiers and raw device logs were not supplied in this repository snapshot; they remain mandatory submission artifacts."
+    "Device, OS image, and firmware identifiers are recorded (Raspberry Pi, Tizen 10.0 unified, image build 20260910.082900). The exact Mono runtime commit, the Raspberry Pi board revision, and the raw per-run device log archive remain to be attached before final submission."
   ]
 }
