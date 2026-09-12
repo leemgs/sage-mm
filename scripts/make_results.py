@@ -197,6 +197,7 @@ def summary_tables(rows):
             r"cost).}" % _tex(SCENARIO_TITLES.get(scen, scenario_label(scen))),
             r"  \label{tab:res-%s}" % scen.replace("_", "-"),
             r"  \scriptsize\setlength{\tabcolsep}{4pt}",
+            r"  \resizebox{\linewidth}{!}{%",
             r"  \begin{tabular}{@{}llr" + "r" * len(METRICS) + r"@{}}",
             r"    \toprule",
             "    " + " & ".join(
@@ -227,7 +228,7 @@ def summary_tables(rows):
                 lines.append("    " + " & ".join(cells) + r" \\")
             lines.append(r"    \midrule")
         lines[-1] = r"    \bottomrule"
-        lines += [r"  \end{tabular}", r"\end{table}", ""]
+        lines += [r"  \end{tabular}}", r"\end{table}", ""]
         out.append("\n".join(lines))
     return out, scenarios, platforms
 
