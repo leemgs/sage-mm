@@ -637,6 +637,14 @@ firmware image hash, compiler flags, and thermal/power/network policy.
 ARM32 and ARM64 DTVs and an independently assembled constrained Linux
 platform are distinct measurement conditions when included in the manifest.
 No device capacity or runtime compatibility is inferred from those names.
+Concretely, the two profiles are Raspberry~Pi boards running the Tizen~10.0
+unified image (build~\texttt{20260910.082900}): the \textsf{ARM64} profile is
+the \texttt{aarch64} target and \textsf{ARM32} the \texttt{armv7l} target, each
+booted from the matching \texttt{tizen-boot-*-rpi} image with separate
+\texttt{/boot}, \texttt{/hal}, and \texttt{/lib/modules} partitions, and the
+managed runtime is the Mono-based .NET stack shipped in that image. The released
+manifest records the image build as the firmware reference; the exact Raspberry~Pi
+board revision and Mono runtime commit accompany the artifact.
 
 Each case identifies a workload revision, reset procedure, treatment,
 controller configuration, and tuning or reporting phase. The reported bundle
