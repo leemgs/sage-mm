@@ -24,14 +24,33 @@
     "failed": 0,
     "censored": 0
   },
-  "runtime_revision": "Tizen 10.0 unified, Mono-based .NET (image build 20260910.082900); exact Mono runtime commit to be confirmed by the author",
+  "runtime_revision": ".NET 8 (CoreCLR) 8.0.11, built from platform/upstream/dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d",
   "firmware_hash": "tizen-10.0-unified_20260910.082900 (targets: tizen-boot-aarch64-rpi, tizen-boot-armv7l-rpi)",
   "device_manifest": {
     "device": "Raspberry Pi (Tizen 'rpi' reference target)",
     "os": "Tizen 10.0 unified",
     "image_build": "20260910.082900",
     "image_tool": "mic loop 0.28.19",
-    "managed_runtime": "Mono-based .NET shipped in Tizen 10.0",
+    "managed_runtime": {
+      "family": ".NET 8 (CoreCLR)",
+      "version": "8.0.11",
+      "source": "platform/upstream/dotnet/runtime",
+      "commit": "ffd6daddb63daaa3f54971c17d91ffc13125a12d",
+      "packages_aarch64": [
+        "coreclr-8.0.11-0.aarch64.rpm",
+        "corefx-managed-8.0.11-0.aarch64.rpm",
+        "corefx-native-8.0.11-0.aarch64.rpm",
+        "mscorlib-8.0.11-0.aarch64.rpm",
+        "dotnet-launcher-8.0.11-1.aarch64.rpm"
+      ],
+      "packages_armv7l": [
+        "coreclr-8.0.11-0.armv7l.rpm",
+        "corefx-managed-8.0.11-0.armv7l.rpm",
+        "corefx-native-8.0.11-0.armv7l.rpm",
+        "mscorlib-8.0.11-0.armv7l.rpm",
+        "dotnet-launcher-8.0.11-1.armv7l.rpm"
+      ]
+    },
     "partitions": [
       "/boot",
       "/hal",
@@ -66,6 +85,6 @@
     }
   },
   "artifact_limitations": [
-    "Device, OS image, and firmware identifiers are recorded (Raspberry Pi, Tizen 10.0 unified, image build 20260910.082900). The exact Mono runtime commit, the Raspberry Pi board revision, and the raw per-run device log archive remain to be attached before final submission."
+    "Device, OS image, and runtime identity are recorded (Raspberry Pi; Tizen 10.0 unified image build 20260910.082900; .NET 8 CoreCLR 8.0.11 from dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d). The exact initial GC heap-size setting used for the heap-configuration sweep, the Raspberry Pi board revision, and the raw per-run device log archive remain to be attached before final submission."
   ]
 }
