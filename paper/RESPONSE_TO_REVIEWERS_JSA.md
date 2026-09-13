@@ -89,10 +89,21 @@ becomes: coordination is disabled automatically in the regime where it would
 regress, bounding the worst case rather than eliminating it.
 
 **Data needed.** Re-run the adverse regime (n=30) in two arms —
-`Ridge-GIR` (supervisor off, current) and `Ridge-GIR+Supervisor` (on) — logging
-`guard_activations`, `input_p99_ms`, `fault_rate_s`, and time-to-latch. Add a
-treatment label `Ridge-GIR-sup` to the bundle; the results pipeline will pick it
-up. **This is the single highest-leverage experiment for acceptance.**
+`Ridge-GIR` (supervisor off, current) and `Ridge-GIR-sup` (on) — logging
+`guard_activations`, `time_to_latch_s`, `recovery_time_s`, `input_p99_ms`,
+`fault_rate_s`, and `oom_events`. **This is the single highest-leverage
+experiment for acceptance.**
+
+**Reference CSV (schema + intended result shape):**
+`paper/examples/adverse_supervisor.example.csv` (120 rows, SYNTHETIC —
+`data_status=simulated`) shows exactly the columns to collect and the contrast a
+successful measurement should reproduce: with the supervisor on, fault rate and
+input p99 fall back toward the Stock baseline (the regression is *contained*),
+controller CPU drops (~2.2%→~0.9%), OOM goes to zero, and the latch/recovery
+columns record detection delay (~3\,s) and recovery (~10\,s). Regenerate with
+`python3 scripts/make_example_supervisor.py`. Replace it with the real
+measurement (`data_status=measured`) and hand it back for integration into the
+tables, figures, and RQ3 text.
 
 ---
 
