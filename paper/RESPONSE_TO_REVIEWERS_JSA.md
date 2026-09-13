@@ -73,7 +73,18 @@ strongest external-validity upgrade.*
 
 ---
 
-### R-M3. In the adverse regime the coordinated design is a net regression, and the proposed mitigation (AdverseShutdown supervisor) is unmeasured. [NEEDS EXPERIMENT]
+### R-M3. In the adverse regime the coordinated design is a net regression, and the proposed mitigation (AdverseShutdown supervisor) is unmeasured. [RESOLVED — now measured]
+
+**Update (measured).** The adverse-regime supervisor experiment was collected
+(`adverse_supervisor.csv`, measured, n=30, two arms) and integrated as
+Table~\ref{tab:supervisor} and Section 7.3. With the supervisor on
+(`Ridge-GIR-sup`) the regression is contained toward the Stock baseline on both
+platforms, every difference interval excluding zero: fault rate −41/s (ARM32),
+−48/s (ARM64); input p99 −17 ms / −11 ms; controller CPU 2.2%→0.9%; detection
+latch ~3.1 s; recovery ~10–11 s; and the 2 OOM events per platform (supervisor
+off) eliminated. The manuscript's earlier "not active / effectiveness still
+requires measurement" disclaimers were removed accordingly.
+
 
 **Anticipated comment.** RQ3 shows coordination *hurts* under the
 refault-dominated workload (PSS +5%, fault +61%, input p99 +20%), and the fix
