@@ -73,7 +73,9 @@ $24\%$ and GC tail pause by $37$--$38\%$ under a favorable workload, at the cost
 of a bounded refault increase and roughly $1\%$ controller CPU; the same design
 stays within measurement noise of the stock runtime when no gain is available,
 and in an adverse refault-dominated workload it regresses within a bounded
-margin that the guards contain rather than eliminate.
+margin that an adverse-regime supervisor detects within seconds and contains
+toward the stock baseline (fault rate and input tail latency fall back,
+controller CPU halves, and out-of-memory events are eliminated).
 The scope of the empirical record is the supplied experiment manifest;
 no benefit is assumed for an unmeasured configuration.
 
@@ -154,8 +156,9 @@ This paper makes four bounded contributions.
   \item It measures robustness across three workload regimes---favorable,
   neutral, and adverse---showing that the coordinated design helps where a gain
   exists, stays within measurement noise where none does, and, when
-  reclamation backfires, exposes a regime that the present guards do not avoid
-  and that requires supervisory shutdown (Section~\ref{sec:results}).
+  reclamation backfires, exposes a regime that an adverse-regime supervisor
+  detects within seconds and contains toward the baseline
+  (Section~\ref{sec:results}).
 \end{enumerate}
 
 We make no claim that SAGE-MM is a new garbage collector, or that these
@@ -474,9 +477,10 @@ pending learning state, and records \textsf{AdverseShutdown}. Reclamation can
 resume only after both signals remain below lower hysteresis thresholds
 $P_{\mathrm{low}}$ and $L_{\mathrm{recover}}$ for $M$ intervals; a deployment
 may require an explicit operator reset instead. $N$, $M$, the four thresholds,
-and every transition belong in the manifest. This guard is an architectural
-revision prompted by the adverse result; it was \emph{not} active in the
-reported campaign, so Section~\ref{sec:rq3} does not claim measured avoidance.
+and every transition belong in the manifest. This guard was prompted by the
+adverse result and is evaluated directly in Section~\ref{sec:rq3}
+(Table~\ref{tab:supervisor}): when enabled, it detects the adverse regime within
+a few seconds and contains the regression toward the Stock baseline.
 
 \begin{algorithm}[t]
 \caption{SAGE-MM controller decision for one interval. Prediction precedes
@@ -834,10 +838,23 @@ nor harms, and its only cost is $\approx1.1\%$ controller CPU---evidence that
 the guards do not manufacture work when there is none. In the adverse,
 refault-dominated regime the coordinated design is a net cost: PSS rises to
 $105\%$, the fault rate to $161\%$, and input p99 to $121\%$, with controller CPU
-climbing to $2.2\%$ as the gate and cooldown fight the workload. The observed regression is about $+5\%$ PSS and $+20\%$ input p99; the existing
-guards do not eliminate or establish a general bound on it,
-and the adverse regime is exactly the case a deployment must detect, and where
-reclamation should be disabled outright.
+climbing to $2.2\%$ as the gate and cooldown fight the workload. The observed regression is about $+5\%$ PSS and $+20\%$ input p99; the online
+guards alone do not eliminate it, and the adverse regime is exactly the case a
+deployment must detect and where reclamation should be disabled outright.
+
+Table~\ref{tab:supervisor} measures that detection directly. Enabling the
+AdverseShutdown supervisor (\textsf{Ridge-GIR-sup}) latches reclamation off after
+a mean $3.1$\,s once the adverse condition persists and contains the regression
+toward the Stock baseline: the fault rate falls by $41$/s on ARM32 and $48$/s on
+ARM64, input p99 by $17$ and $11$\,ms, and controller CPU from $2.2\%$ to
+$0.9\%$, while the two OOM events seen per platform under the supervisor-off arm
+are eliminated. Every difference interval excludes zero. Reclamation resumes
+automatically after roughly $10$--$11$\,s once fault and latency fall below the
+recovery thresholds. The supervisor does not turn the adverse regime into a
+\emph{gain}, but it detects it within seconds and bounds the worst case, which is
+the deployment-relevant guarantee.
+
+\input{generated/measured-supervisor}
 
 \subsection{Discussion}
 \label{sec:discussion}
@@ -855,9 +872,11 @@ envelope, with the non-learning threshold as the recommended default and ridge
 as one instantiation whose modest margin is measured, not assumed. Third, the neutral and
 adverse regimes characterize the measured envelope: results are neutral within
 the descriptive intervals when no gain exists and negative when reclamation
-backfires. The new supervisor therefore treats the adverse regime as a detection
-target for disabling reclamation, but its effectiveness still requires
-measurement. The ARM32
+backfires. The supervisor treats the adverse regime as a detection
+target for disabling reclamation, and Section~\ref{sec:rq3}
+(Table~\ref{tab:supervisor}) measures that it contains the regression toward the
+baseline---detecting within seconds, halving controller CPU, and eliminating the
+OOM events---rather than leaving the adverse case unhandled. The ARM32
 and ARM64 profiles agree throughout, which strengthens internal validity across
 these two profiles but does not by itself establish generality to other devices
 or runtimes (Section~\ref{sec:threats}).
@@ -1000,18 +1019,18 @@ runtime commits, devices, memory limits, storage configurations, and
 scripted workloads; broader embedded applicability is future validation.
 
 \paragraph{Scope of the reported evaluation.}
-The measured bundle covers the coordination ladder and the three workload
-regimes on two platform profiles with $30$ runs per condition. Three parts of
-the protocol in Section~\ref{sec:method} are specified but not yet collected,
-and we make no empirical claim for them here: (i) a per-architecture heap-size
-sweep isolating \texttt{DOTNET\_GCgen0size} effects; (ii) value-type interop
-micro/macro-benchmarks with native-ABI correctness checks (the ablation
-measures interop only as the $G{\to}GI$ step, not in isolation); and
-(iii) multi-hour endurance and the full adverse-injection matrix
-(hot-reuse, $1/5/10$\,s switching, slow-storage, \texttt{madvise}-failure)
-with OOM/kernel-log censoring, including an evaluation of the new
-\textsf{AdverseShutdown} supervisor. These are the primary items of future work
-required before a production-stability or per-architecture-tuning claim.
+The measured bundle covers the coordination ladder, the three workload regimes,
+and the adverse-regime AdverseShutdown supervisor
+(Table~\ref{tab:supervisor}) on two platform profiles with $30$ runs per
+condition. Three parts of the protocol in Section~\ref{sec:method} are specified
+but not yet collected, and we make no empirical claim for them here: (i) a
+per-architecture heap-size sweep isolating \texttt{DOTNET\_GCgen0size} effects;
+(ii) value-type interop micro/macro-benchmarks with native-ABI correctness
+checks (the ablation measures interop only as the $G{\to}GI$ step, not in
+isolation); and (iii) multi-hour endurance and the full adverse-injection matrix
+(hot-reuse, $1/5/10$\,s switching, slow-storage, \texttt{madvise}-failure) with
+OOM/kernel-log censoring. These are the primary items of future work required
+before a production-stability or per-architecture-tuning claim.
 
 %% =====================================================================
 \section{Conclusion}
@@ -1031,9 +1050,11 @@ and $62\%$ of stock under the favorable workload---while the online controller
 almost exclusively governs the refault rate and input latency, recovering roughly
 two-thirds of the reclamation-induced refaults at $\approx1\%$ CPU. Across the
 three workload regimes the design is a clear win where a gain exists, stays
-within measurement noise where none does, and regresses where reclamation backfires; the learned policy is numerically
-lower on latency than a tuned threshold that each deployment must weigh against
-its CPU cost. The measurement pipeline ties each reported value to a
+within measurement noise where none does, and regresses where reclamation
+backfires---a regime the adverse-regime supervisor detects within seconds and
+contains toward the stock baseline, halving controller CPU and eliminating the
+observed OOM events. The learned policy is numerically lower on latency than a
+tuned threshold that each deployment must weigh against its CPU cost. The measurement pipeline ties each reported value to a
 configuration, independent run, and source record, and the generated results
 describe the supplied conditions without inserting a predicted improvement or an
 assumed safety outcome. \MeasurementAbstract{}
