@@ -627,7 +627,7 @@ orphaned from a hypothesis.
     RQ1 & Coordination-ladder ablation (Stock, $G$, $GI$, $GIR$, $+C$) on the
     ARM32 and ARM64 platform profiles, favorable workload &
     Peak PSS, GC p99 pause, refault rate, input p99, allocation rate;
-    Tables~\ref{tab:res-planning-hypothesis}, Fig.~\ref{fig:ablation}. \\
+    Table~\ref{tab:res-planning-hypothesis}, Fig.~\ref{fig:ablation}. \\
     RQ2 & Threshold vs.\ EWMA vs.\ ridge under identical bounds, telemetry,
     cooldown, and candidate budget &
     Refault-rate recovery relative to \textsf{Static-GIR}, GC p99, input p99,
@@ -786,8 +786,8 @@ interpretation, and the authenticity of collection.
 
 All effects below are reported as the mean of $n{=}30$ run-level values with a
 two-sided $95\%$ percentile bootstrap confidence interval
-(Table~\ref{tab:res-planning-hypothesis}
-and companions); percentages are relative to the per-condition \textsf{Stock}
+(Tables~\ref{tab:res-planning-hypothesis}--\ref{tab:res-regression}, one per
+regime); percentages are relative to the per-condition \textsf{Stock}
 baseline, and normalized indices (Table~\ref{tab:policy-index}) set
 $\textsf{Stock}{=}100$ within each regime. The \textsf{ARM32} and \textsf{ARM64}
 profiles run on identical Raspberry~Pi~4 Model~B hardware (the same BCM2711 SoC),
@@ -822,10 +822,12 @@ refault penalty that the static configuration cannot manage.
 
 \subsection{RQ2: online policy comparison}
 \label{sec:rq2}
-The online controller is added on top of \textsf{Static-GIR} and does not lower
+Figure~\ref{fig:tradeoff} plots the footprint--refault trade-off across the
+static ladder and the three online policies. The online controller is added on
+top of \textsf{Static-GIR} and does not lower
 PSS further---all three policies hold peak PSS at $76$--$78\%$ of stock, within
 each other's confidence intervals. Its measured contribution is refault
-recovery (Fig.~\ref{fig:tradeoff}): at essentially the same footprint, the
+recovery: at essentially the same footprint, the
 fault-rate index falls from $162$ (\textsf{Static-GIR}) to $132$
 (\textsf{Threshold}), $124$ (\textsf{EWMA}), and $123$ (\textsf{Ridge}), i.e.\
 the controllers claw back roughly two-thirds of the reclamation-induced
@@ -844,12 +846,15 @@ threshold policy remains a defensible default when CPU headroom is tight.
 \subsection{RQ3: robustness across workload regimes}
 \label{sec:rq3}
 Figure~\ref{fig:regimes} places \textsf{Ridge-GIR} in all three regimes. In the
-favorable regime it is a clear win (PSS $76$, fault $123$, input $81$). In the
-neutral regime, where no cold reclaimable pages exist, every index sits within
+favorable regime it is a clear win (Table~\ref{tab:res-planning-hypothesis};
+PSS $76$, fault $123$, input $81$). In the
+neutral regime, where no cold reclaimable pages exist (Table~\ref{tab:res-no-benefit}),
+every index sits within
 $\pm2$ of $100$ (PSS $101$, fault $101$, input $99$): the design neither helps
 nor harms, and its only cost is $\approx1.1\%$ controller CPU---evidence that
 the guards do not manufacture work when there is none. In the adverse,
-refault-dominated regime the coordinated design is a net cost: PSS rises to
+refault-dominated regime (Table~\ref{tab:res-regression}) the coordinated design
+is a net cost: PSS rises to
 $105\%$, the fault rate to $161\%$, and input p99 to $121\%$, with controller CPU
 climbing to $2.2\%$ as the gate and cooldown fight the workload. The observed regression is about $+5\%$ PSS and $+20\%$ input p99; the online
 guards alone do not eliminate it, and the adverse regime is exactly the case a
