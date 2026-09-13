@@ -7,7 +7,7 @@
 #   1. Regenerate the results fragments from the evaluation bundle under
 #      paper/generated/evaluation-data/ via scripts/make_results.py.
 #   2. Compile paper/main.tex with pdflatex + bibtex (elsarticle class).
-#   3. Copy the result to ./code/main.pdf (the build output the project ships).
+#   3. Copy the result to ./output/main.pdf (the build output the project ships).
 #
 # Requirements: a TeX Live install providing pdflatex, bibtex, and the
 # elsarticle class (Debian/Ubuntu: texlive-latex-base texlive-latex-recommended
@@ -35,19 +35,19 @@ bibtex main >/dev/null
 pdflatex -interaction=nonstopmode -halt-on-error main.tex >/dev/null
 pdflatex -interaction=nonstopmode -halt-on-error main.tex >/dev/null
 
-echo "[3/3] copying build output to code/main.pdf"
-mkdir -p "$root/code"
-cp "$root/paper/main.pdf" "$root/code/main.pdf"
+echo "[3/3] copying build output to output/main.pdf"
+mkdir -p "$root/output"
+cp "$root/paper/main.pdf" "$root/output/main.pdf"
 
 # Graphical abstract (standalone). Also export a PNG when a rasterizer exists.
 if [ -f "$root/paper/graphical_abstract.tex" ]; then
   echo "[extra] building graphical abstract"
   pdflatex -interaction=nonstopmode -halt-on-error graphical_abstract.tex >/dev/null
-  cp "$root/paper/graphical_abstract.pdf" "$root/code/graphical_abstract.pdf"
+  cp "$root/paper/graphical_abstract.pdf" "$root/output/graphical_abstract.pdf"
   if command -v pdftoppm >/dev/null; then
     pdftoppm -png -r 600 -singlefile "$root/paper/graphical_abstract.pdf" \
-      "$root/code/graphical_abstract" >/dev/null 2>&1 || true
+      "$root/output/graphical_abstract" >/dev/null 2>&1 || true
   fi
 fi
 
-echo "done: $root/code/main.pdf"
+echo "done: $root/output/main.pdf"

@@ -89,8 +89,8 @@ paper/
     └── *.tex / *.json           # Result fragments generated from the bundle
 scripts/
 ├── make_results.py              # Render evaluation-data/ into the results fragments
-└── build.sh                     # Regenerate results, compile, and emit code/main.pdf
-code/
+└── build.sh                     # Regenerate results, compile, and emit output/main.pdf
+output/
 └── main.pdf                     # Build output (Journal of Systems Architecture PDF)
 ```
 
@@ -103,7 +103,7 @@ bash scripts/build.sh
 This regenerates the results fragments from
 `paper/generated/evaluation-data/`, compiles `paper/main.tex` with `pdflatex`
 + `bibtex` (Elsevier `elsarticle` class), and writes the result to
-**`code/main.pdf`**.
+**`output/main.pdf`**.
 
 Requirements (Debian/Ubuntu): a TeX Live install providing `pdflatex`,
 `bibtex`, and the `elsarticle` class, e.g.
