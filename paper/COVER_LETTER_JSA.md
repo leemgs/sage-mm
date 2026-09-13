@@ -77,4 +77,4 @@ Sincerely,
 
 Geunsik Lim
 Sungkyunkwan University, Suwon, Republic of Korea
-leemgs@gmail.com (corresponding author)
+leemgs@g.skku.edu (corresponding author)
