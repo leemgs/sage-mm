@@ -16,7 +16,7 @@ Page Reclamation in Memory-Constrained Embedded .NET Firmware
 
 ## Major concerns
 
-### R-M1. The central premise "memory-constrained" is never quantified. [NEEDS VALUE → then EDIT-READY]
+### R-M1. The central premise "memory-constrained" is never quantified. [RESOLVED]
 
 **Anticipated comment.** The paper repeatedly invokes a "small, swapless memory
 budget" but never states the actual per-process budget (cgroup limit / device
@@ -24,8 +24,10 @@ RAM). Peak PSS values of ~180–350 MiB cannot be judged as "constrained" withou
 the budget.
 
 **Response.** We agree and now state the exact budget. On the Raspberry Pi 4
-Model B we ran under a fixed cgroup memory limit of **`<B>` MiB** (device RAM
-`<RAM>` GiB, swap disabled), so peak PSS is reported against a known ceiling.
+Model B we ran under a fixed per-process cgroup memory limit of **512 MiB**
+(device RAM 4 GiB, swap disabled), so peak PSS (176–363 MiB across runs, 34–71%
+of the budget) is reported against a known ceiling. **Applied** in §6 and in
+`manifest.json` (`device_manifest.memory_budget`).
 
 **Manuscript change (paste into §6 Platforms and workloads, after the board
 sentence; replace `<B>`/`<RAM>`):**
