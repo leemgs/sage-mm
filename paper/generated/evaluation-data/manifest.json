@@ -27,7 +27,7 @@
   "runtime_revision": ".NET 8 (CoreCLR) 8.0.11, built from platform/upstream/dotnet/runtime commit ffd6daddb63daaa3f54971c17d91ffc13125a12d",
   "firmware_hash": "tizen-10.0-unified_20260910.082900 (targets: tizen-boot-aarch64-rpi, tizen-boot-armv7l-rpi)",
   "device_manifest": {
-    "device": "Raspberry Pi 4 Model B",
+    "device": "2x Raspberry Pi 4 Model B (identical boards, same SoC)",
     "soc": "Broadcom BCM2711",
     "cpu": "quad-core 64-bit ARM Cortex-A72 (ARMv8-A)",
     "gpu": "VideoCore VI",
@@ -80,7 +80,7 @@
         "created": "2026-09-10 13:57:11"
       }
     },
-    "note": "Both profiles run on the same Raspberry Pi 4 Model B board; ARM64=aarch64 build, ARM32=armv7l build. Agreement across profiles is cross-build (ISA/runtime), not cross-device."
+    "note": "Controlled ISA comparison: two identical Raspberry Pi 4 Model B boards (same BCM2711 SoC) differ only in the 32-/64-bit kernel, image, and runtime build (ARM32=armv7l, ARM64=aarch64). Holding the SoC fixed isolates the ISA/runtime-build effect and eliminates cross-SoC confounds; by the same design it does not test a physically different SoC."
   },
   "raw_log_archive": null,
   "files": {
