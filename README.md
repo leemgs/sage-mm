@@ -24,17 +24,12 @@ The effectiveness of individual mechanisms (larger nurseries, value types, `madv
 ### 2. Distinguishing Action Boundaries Based on Lifecycle and Adaptability
 
 | Mechanism | Lifecycle | Online Adaptability? |
-
 |---|---|---|
-
 | Heap build configuration (`INITIAL_ALLOC`) | Vendor runtime build | No |
+| Value type interop conversion (class → struct) | Source/recompile | No |
+| Reclamation & compression control | Runtime, online | **Yes** |
 
-| Value type interop conversion (class→struct) | Source/recompile | No |
-
-| Reclamation & compression control | Runtime, Online | **Yes** |
-
-The first two (static interventions) **pre-reduce** the load the controller will handle, and only the third adapts at runtime. It is clear that calling all three "adaptive components" is an overstatement.
-
+The first two (static interventions) **pre-reduce** the load that the controller will handle, and only the third adapts at runtime. Therefore, calling all three "adaptive components" is an overstatement.
 ### 3. Narrow and Safe Online Controller
 
 - **Normalized Telemetry**: GC latency $L_{gc}$, fragmentation $F_h$, page fault rate $P_f$, and resident increase $\Delta M$ are normalized to dimensionless and clamped to $[0,2]$.
