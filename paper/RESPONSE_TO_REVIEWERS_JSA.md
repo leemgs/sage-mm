@@ -49,7 +49,16 @@ configuration, and the two profiles are the same Raspberry Pi 4 in 32- and
 64-bit builds rather than distinct devices. The motivation targets DTV/STB
 firmware but the measurement platform is a developer board.
 
-**Response.** We already disclose this explicitly (§6 and §8, External validity):
+**Clarification (what "additional SoC" means).** The measured device is fully
+specified (Raspberry Pi 4 Model B; Broadcom BCM2711; quad-core Cortex-A72;
+4 GiB RAM; aarch64 + armv7l builds). The gap is not missing specs — it is that
+all runs use *one physical chip* (a single BCM2711); ARM32 and ARM64 are two ISA
+builds of that same chip. "Additional SoC" therefore means a physically
+distinct chip (e.g., a different vendor's DTV SoC or a newer Pi's BCM2712), not
+more detail about the current one.
+
+**Response.** We already disclose this explicitly (§6, §7, and §8 External
+validity), now stated at the results' first use too:
 the two profiles share one Raspberry Pi 4 Model B, so their agreement is
 cross-build, not cross-device, and we state that measuring additional SoCs is
 future validation rather than a claim of generality. We have (i) retitled the
@@ -174,14 +183,17 @@ this revision, we retitle to remove the production-stability implication.
 
 - **R-m1 (RAM/cgroup model).** Fixed by R-M1: state the exact device RAM and
   cgroup limit in the §6 platform table. **[NEEDS VALUE]**
-- **R-m2 ("two platform profiles" phrasing).** Softened per R-M2 on first use;
-  keep the honest single-board disclosure. **[EDIT-READY]**
+- **R-m2 ("two platform profiles" phrasing).** **[APPLIED]** First use in §7
+  now states the two profiles are 32/64-bit builds of one BCM2711 (cross-build,
+  not cross-device).
 - **R-m3 (repetitive public-kit vs device-instrument hedging).** Consolidate the
   three near-duplicate disclaimers (Impl, Results provenance, Appendix) into one
   statement referenced from the others. **[EDIT-READY]**
-- **R-m4 (native helper / analyzer correctness & overhead unmeasured).** Add the
-  native-ABI round-trip checks and helper overhead to the interop/stress runs, or
-  state explicitly they are validated only in the reference kit. **[NEEDS EXPERIMENT]**
+- **R-m4 (native helper / analyzer correctness & overhead unmeasured).**
+  **[APPLIED as statement]** §9 now states the helper eligibility checks and
+  analyzer diagnostics are exercised in the reference kit and their device-side
+  overhead / false-positive rates are not separately quantified; measuring them
+  remains future work.
 - **R-m5 (internal table label `tab:res-planning-hypothesis`).** Cosmetic
   source-only; rename the scenario key to `favorable` in `make_results.py` for
   readability. **[EDIT-READY]**
