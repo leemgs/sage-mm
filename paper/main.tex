@@ -779,9 +779,12 @@ two-sided $95\%$ percentile bootstrap confidence interval
 (Table~\ref{tab:res-planning-hypothesis}
 and companions); percentages are relative to the per-condition \textsf{Stock}
 baseline, and normalized indices (Table~\ref{tab:policy-index}) set
-$\textsf{Stock}{=}100$ within each regime. The ARM32 and ARM64 profiles agree in
-direction and ordering throughout, so we quote ARM32 in prose and note the
-ARM64 value only where it differs materially.
+$\textsf{Stock}{=}100$ within each regime. The \textsf{ARM32} and \textsf{ARM64}
+profiles are the 32- and 64-bit builds of the \emph{same} Raspberry~Pi~4 Model~B
+(one Broadcom BCM2711 SoC), so agreement between them is cross-build robustness
+on one chip, not diversity across physically distinct SoCs; they agree in
+direction and ordering throughout, so we quote ARM32 in prose and note the ARM64
+value only where it differs materially.
 
 \subsection{RQ1: layer-by-layer ablation}
 \label{sec:rq1}
@@ -1012,8 +1015,11 @@ is fixed at launch and interop changes require application recompilation; only
 controller actions are adaptive. \texttt{MADV\_DONTNEED} can trade PSS for page faults
 and storage-dependent latency; the guards reduce but do not eliminate that
 risk. The ridge model is deliberately lightweight and may offer no benefit
-over a tuned threshold policy; results must report such cases. Firmware
-hooks, telemetry fidelity, and executable-mapping behavior are
+over a tuned threshold policy; results must report such cases. The native
+reclamation helper's mapping-eligibility checks and the interop analyzer's
+diagnostics are exercised in the reference kit; their device-side overhead and
+false-positive/false-negative rates are not separately quantified in this
+campaign. Firmware hooks, telemetry fidelity, and executable-mapping behavior are
 platform-specific. Consequently, conclusions are restricted to the tested
 runtime commits, devices, memory limits, storage configurations, and
 scripted workloads; broader embedded applicability is future validation.
