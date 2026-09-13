@@ -796,8 +796,12 @@ to $162\%$ of stock ($+60\%$; $+63\%$ on ARM64)---and that refault pressure
 cancels the input-latency gain, leaving input p99 back near $91\%$. The static
 ladder therefore associates later configurations with lower footprint and GC
 tail, but it cannot identify main effects or interactions without the unmeasured
-factorial cells. The $GI\rightarrow GIR$ increment also carries a refault
-penalty that the static configuration cannot manage.
+factorial cells. What the ladder does establish is that the layers
+\emph{compose}: each step adds a bounded, separately attributable increment
+under one safety contract---the property an integrator actually tunes---whereas
+isolating individual main effects and interactions requires the $2^4$ design of
+Section~\ref{sec:limitations}. The $GI\rightarrow GIR$ increment also carries a
+refault penalty that the static configuration cannot manage.
 
 \subsection{RQ2: online policy comparison}
 \label{sec:rq2}
@@ -845,7 +849,10 @@ this; the ablation shows that removing reclamation removes most of the footprint
 benefit, and removing the controller removes most of the refault safety.
 Second, the learned policy is numerically better than a tuned threshold on
 the reported latency means, but the effect is small and comes with a measurable CPU cost, which supports treating the ridge model as
-an option to be justified per deployment rather than as a default. Third, the neutral and
+an option to be justified per deployment rather than as a default; the
+controller contribution is the interchangeable policy slot inside a fixed safety
+envelope, with the non-learning threshold as the recommended default and ridge
+as one instantiation whose modest margin is measured, not assumed. Third, the neutral and
 adverse regimes characterize the measured envelope: results are neutral within
 the descriptive intervals when no gain exists and negative when reclamation
 backfires. The new supervisor therefore treats the adverse regime as a detection
