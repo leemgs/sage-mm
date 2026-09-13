@@ -77,24 +77,6 @@ Prioritizing safety by maintaining previous values, enabling compression, and su
 
 - Missing metrics are left as missing rather than being replaced with zeros. The script does not insert predicted improvements or assumed safety results.
 
-## Repository Configuration
-
-```
-paper/
-├── main.tex                     # Authoritative manuscript (Elsevier elsarticle class)
-├── sagemm.bib                   # References
-├── elsarticle.cls / .bst        # Elsevier templates
-├── measured/
-│   ├── evaluation-data/         # 30-run measurement bundle (per-run CSVs + summary)
-│   └── *.tex / *.json           # Result fragments generated from the bundle
-├── scripts/
-│   ├── make_results.py          # Render evaluation-data/ into the results fragments
-│   ├── validate_bundle.py       # Validate a bundle CSV against schema + gate
-│   └── build.sh                 # Regenerate results, compile, and emit paper/output/main.pdf
-├── docs/                        # CSV schemas and collector documentation
-└── output/
-    └── main.pdf                 # Build output (Journal of Systems Architecture PDF)
-```
 
 ## Building the PDF
 
@@ -128,19 +110,3 @@ measurements (`data_status=measured`, `synthetic=false`, `n>0`); otherwise the
 build stays fail-closed with a NOT-FOR-SUBMISSION watermark. Edit the CSV bundle
 and rerun the build to refresh every table, figure, and the readiness gate.
 
-### Submission materials
-
-- `paper/HIGHLIGHTS_JSA.md` — Elsevier Highlights (≤85 chars each).
-- `paper/COVER_LETTER_JSA.md` — cover letter to the JSA editor.
-
-### Extending the evaluation
-
-The future-work experiments (per-architecture heap sweep, isolated interop
-benchmarks, endurance/adverse battery) have drop-in schemas and collectors:
-
-- `paper/docs/EXPERIMENT_SCHEMAS.md` — CSV schemas and conventions.
-- `paper/measured/evaluation-data/templates/` — header-only CSV templates.
-- `paper/scripts/collect/` — collector skeletons; implement the `run_one_condition`
-  device hook, run on the target device, then drop the CSV into the bundle.
-- `paper/scripts/validate_bundle.py` — validates a bundle CSV against its schema and
-  the measurement gate (`python3 paper/scripts/validate_bundle.py`).
