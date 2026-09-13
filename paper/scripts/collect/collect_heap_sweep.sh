@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RQ1-extended: per-architecture INITIAL_ALLOC heap sweep.
-# Emits heap_sweep_30run.csv (see docs/EXPERIMENT_SCHEMAS.md).
+# Emits heap_sweep_30run.csv (see paper/docs/EXPERIMENT_SCHEMAS.md).
 set -euo pipefail
 
 OUT="${1:-heap_sweep_30run.csv}"

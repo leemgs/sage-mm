@@ -8,8 +8,8 @@ the isolated **interop** micro/macro benchmarks (RQ2-extended), and the
 
 Collect real device runs into files matching these schemas, drop them under
 `paper/generated/evaluation-data/`, validate with
-`python3 scripts/validate_bundle.py`, and the results pipeline
-(`scripts/make_results.py`) can be extended to render them. **You run the
+`python3 paper/scripts/validate_bundle.py`, and the results pipeline
+(`paper/scripts/make_results.py`) can be extended to render them. **You run the
 experiments; the schema and validator make the data drop-in.**
 
 ## Conventions (shared with the existing bundle)
@@ -108,8 +108,8 @@ Multi-hour endurance and the adverse-injection battery.
 ## Validation
 
 ```bash
-python3 scripts/validate_bundle.py            # validate all known bundle files
-python3 scripts/validate_bundle.py PATH.csv   # validate one file
+python3 paper/scripts/validate_bundle.py            # validate all known bundle files
+python3 paper/scripts/validate_bundle.py PATH.csv   # validate one file
 ```
 
 The validator checks the header against the schema, that provenance columns are

@@ -133,7 +133,7 @@ successful measurement should reproduce: with the supervisor on, fault rate and
 input p99 fall back toward the Stock baseline (the regression is *contained*),
 controller CPU drops (~2.2%→~0.9%), OOM goes to zero, and the latch/recovery
 columns record detection delay (~3\,s) and recovery (~10\,s). Regenerate with
-`python3 scripts/make_example_supervisor.py`. Replace it with the real
+`python3 paper/scripts/make_example_supervisor.py`. Replace it with the real
 measurement (`data_status=measured`) and hand it back for integration into the
 tables, figures, and RQ3 text.
 
