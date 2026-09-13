@@ -31,6 +31,11 @@
     "soc": "Broadcom BCM2711",
     "cpu": "quad-core 64-bit ARM Cortex-A72 (ARMv8-A)",
     "gpu": "VideoCore VI",
+    "ram_gb": 4,
+    "memory_budget": {
+      "cgroup_limit_mb": 512,
+      "swap": "disabled"
+    },
     "os": "Tizen 10.0 unified",
     "image_build": "20260910.082900",
     "image_tool": "mic loop 0.28.19",

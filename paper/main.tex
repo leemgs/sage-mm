@@ -646,7 +646,11 @@ BCM2711 SoC, quad-core 64-bit ARM Cortex-A72, VideoCore~VI GPU): the
 \texttt{armv7l} build of that same board, each running the Tizen~10.0 unified
 image (build~\texttt{20260910.082900}) from the matching
 \texttt{tizen-boot-*-rpi} image with separate \texttt{/boot}, \texttt{/hal}, and
-\texttt{/lib/modules} partitions. The managed runtime is .NET~8
+\texttt{/lib/modules} partitions. Each profile runs under a fixed per-process
+cgroup memory limit of $512$\,MiB with swap disabled on the $4$\,GiB board, so
+every reported peak PSS (roughly $176$--$363$\,MiB across runs, i.e.\
+$34$--$71\%$ of the budget) is measured against a known ceiling and OOM/watchdog
+outcomes are meaningful. The managed runtime is .NET~8
 (CoreCLR)---packages \texttt{coreclr}, \texttt{corefx}, and \texttt{mscorlib} at
 version~8.0.11 with \texttt{dotnet-launcher}---built from the
 \texttt{platform/upstream/dotnet/runtime} source at commit \texttt{ffd6dad}.
