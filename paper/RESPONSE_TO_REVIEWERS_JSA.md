@@ -96,7 +96,7 @@ up. **This is the single highest-leverage experiment for acceptance.**
 
 ---
 
-### R-M4. "Coordination" (interactions) is under-evidenced: RQ1 is a ladder, not a factorial; interop is not isolated. [NEEDS EXPERIMENT / reframe]
+### R-M4. "Coordination" (interactions) is under-evidenced: RQ1 is a ladder, not a factorial; interop is not isolated. [REFRAME APPLIED; factorial = future work]
 
 **Anticipated comment.** The title claims *Coordinating*, but the evaluation is a
 sequential ladder (Stock→G→GI→GIR→+C) that cannot identify main effects or
@@ -118,7 +118,7 @@ path and (a) as the strong-accept path.
 
 ---
 
-### R-M5. The learned (ridge) policy barely justifies itself over a tuned threshold. [EDIT-READY, already honest]
+### R-M5. The learned (ridge) policy barely justifies itself over a tuned threshold. [REFRAME APPLIED]
 
 **Anticipated comment.** All three policies hold PSS at 76–78% and recover
 refaults similarly (132/124/123); ridge wins only marginally on latency at ~2×
