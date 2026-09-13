@@ -67,8 +67,10 @@ measurement provenance. Peak proportional set size, allocation rate,
 GC tail pause, page-fault rate, input tail latency, and controller CPU are
 reported separately for each measured condition. Failed and censored runs
 remain in the run inventory. \MeasurementAbstract{}
-Across two embedded platform profiles and $30$ independent runs per condition,
-the fully coordinated learned policy lowers peak proportional set size by about
+On one memory-constrained ARM platform (a Raspberry~Pi~4 Model~B, in 32- and
+64-bit builds) under a $512$\,MiB swapless budget, across $30$ independent runs
+per condition, the fully coordinated learned policy lowers peak proportional
+set size by about
 $24\%$ and GC tail pause by $37$--$38\%$ under a favorable workload, at the cost
 of a bounded refault increase and roughly $1\%$ controller CPU; the same design
 stays within measurement noise of the stock runtime when no gain is available,
@@ -149,8 +151,9 @@ This paper makes four bounded contributions.
   explicit non-learning threshold fallback (Section~\ref{sec:design}).
   \item It reports a measured ablation and policy comparison over the
   coordination ladder (stock, heap, interop, reclamation, and the three online
-  policies) on two embedded platform profiles, with $30$ independent runs per
-  condition and $95\%$ bootstrap confidence intervals, characterizing the
+  policies) on one ARM platform in its 32- and 64-bit builds, with $30$
+  independent runs per condition and $95\%$ bootstrap confidence intervals,
+  characterizing the
   sequential increments in footprint, GC tail, refault rate, and input latency
   (Sections~\ref{sec:method}--\ref{sec:results}).
   \item It measures robustness across three workload regimes---favorable,
