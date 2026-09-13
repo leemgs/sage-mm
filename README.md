@@ -84,7 +84,7 @@ paper/
 ├── main.tex                     # Authoritative manuscript (Elsevier elsarticle class)
 ├── sagemm.bib                   # References
 ├── elsarticle.cls / .bst        # Elsevier templates
-├── generated/
+├── measured/
 │   ├── evaluation-data/         # 30-run measurement bundle (per-run CSVs + summary)
 │   └── *.tex / *.json           # Result fragments generated from the bundle
 ├── scripts/
@@ -103,7 +103,7 @@ bash paper/scripts/build.sh
 ```
 
 This regenerates the results fragments from
-`paper/generated/evaluation-data/`, compiles `paper/main.tex` with `pdflatex`
+`paper/measured/evaluation-data/`, compiles `paper/main.tex` with `pdflatex`
 + `bibtex` (Elsevier `elsarticle` class), and writes the result to
 **`paper/output/main.pdf`**.
 
@@ -119,7 +119,7 @@ sudo apt-get install -y --no-install-recommends \
 ### Results and the measurement gate
 
 `paper/scripts/make_results.py` reads the 30-run bundle under
-`paper/generated/evaluation-data/`: it computes each table cell as the mean with
+`paper/measured/evaluation-data/`: it computes each table cell as the mean with
 a two-sided 95% **percentile bootstrap** CI (10,000 resamples) directly from the
 per-run values in `absolute_results_30run.csv`, and renders the normalized
 policy-index table and the three figures from `policy_indices_30run.csv`. The
@@ -139,7 +139,7 @@ The future-work experiments (per-architecture heap sweep, isolated interop
 benchmarks, endurance/adverse battery) have drop-in schemas and collectors:
 
 - `paper/docs/EXPERIMENT_SCHEMAS.md` — CSV schemas and conventions.
-- `paper/generated/evaluation-data/templates/` — header-only CSV templates.
+- `paper/measured/evaluation-data/templates/` — header-only CSV templates.
 - `paper/scripts/collect/` — collector skeletons; implement the `run_one_condition`
   device hook, run on the target device, then drop the CSV into the bundle.
 - `paper/scripts/validate_bundle.py` — validates a bundle CSV against its schema and

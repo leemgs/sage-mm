@@ -7,7 +7,7 @@ the isolated **interop** micro/macro benchmarks (RQ2-extended), and the
 **endurance & adverse** battery (RQ3-extended).
 
 Collect real device runs into files matching these schemas, drop them under
-`paper/generated/evaluation-data/`, validate with
+`paper/measured/evaluation-data/`, validate with
 `python3 paper/scripts/validate_bundle.py`, and the results pipeline
 (`paper/scripts/make_results.py`) can be extended to render them. **You run the
 experiments; the schema and validator make the data drop-in.**
