@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RQ3-extended: endurance + adverse-injection battery.
-# Emits endurance_adverse_30run.csv (see docs/EXPERIMENT_SCHEMAS.md).
+# Emits endurance_adverse_30run.csv (see paper/docs/EXPERIMENT_SCHEMAS.md).
 set -euo pipefail
 
 OUT="${1:-endurance_adverse_30run.csv}"

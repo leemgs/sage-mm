@@ -2,8 +2,8 @@
 """Validate evaluation-bundle CSVs against their schemas and the measurement gate.
 
 Usage:
-    python3 scripts/validate_bundle.py             # all known bundle files
-    python3 scripts/validate_bundle.py PATH.csv    # one specific file
+    python3 paper/scripts/validate_bundle.py             # all known bundle files
+    python3 paper/scripts/validate_bundle.py PATH.csv    # one specific file
 
 Checks, per file:
   * the header matches the expected schema (order-independent, prefix-tolerant);
@@ -21,8 +21,8 @@ import sys
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-DATA = os.path.join(ROOT, "paper", "generated", "evaluation-data")
+PAPER = os.path.dirname(HERE)  # the paper/ directory (scripts live in paper/scripts/)
+DATA = os.path.join(PAPER, "generated", "evaluation-data")
 
 # base column name -> allowed optional prefixes are stripped before matching
 _PREFIXES = ("measured_", "simulated_")
@@ -162,7 +162,7 @@ def main(argv):
 
     if not any_checked and len(argv) == 1:
         print("no bundle files present yet; drop CSVs into "
-              "paper/generated/evaluation-data/ (see docs/EXPERIMENT_SCHEMAS.md)")
+              "paper/generated/evaluation-data/ (see paper/docs/EXPERIMENT_SCHEMAS.md)")
     return 1 if any_fail else 0
 
 

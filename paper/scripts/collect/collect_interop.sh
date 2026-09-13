@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RQ2-extended: value-type (class vs struct) interop micro/macro benchmarks.
-# Emits interop_30run.csv (see docs/EXPERIMENT_SCHEMAS.md).
+# Emits interop_30run.csv (see paper/docs/EXPERIMENT_SCHEMAS.md).
 set -euo pipefail
 
 OUT="${1:-interop_30run.csv}"

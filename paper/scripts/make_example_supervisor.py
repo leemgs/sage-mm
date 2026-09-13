@@ -22,7 +22,7 @@ Intended, visible contrast a real measurement should reproduce:
     oom_events          OOM count (supervisor should reduce it)
 
 Output: paper/examples/adverse_supervisor.example.csv
-Regenerate: python3 scripts/make_example_supervisor.py
+Regenerate: python3 paper/scripts/make_example_supervisor.py
 """
 from __future__ import annotations
 import csv
@@ -30,8 +30,8 @@ import os
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-OUT = os.path.join(ROOT, "paper", "examples", "adverse_supervisor.example.csv")
+PAPER = os.path.dirname(HERE)  # the paper/ directory (scripts live in paper/scripts/)
+OUT = os.path.join(PAPER, "examples", "adverse_supervisor.example.csv")
 
 SEED = 20260201
 N = 30
@@ -116,7 +116,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=COLUMNS)
         w.writeheader()
         w.writerows(allrows)
-    print(f"Wrote {len(allrows)} SYNTHETIC rows to {os.path.relpath(OUT, ROOT)}")
+    print(f"Wrote {len(allrows)} SYNTHETIC rows to {os.path.relpath(OUT, PAPER)}")
 
 
 if __name__ == "__main__":
