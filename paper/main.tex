@@ -67,10 +67,10 @@ measurement provenance. Peak proportional set size, allocation rate,
 GC tail pause, page-fault rate, input tail latency, and controller CPU are
 reported separately for each measured condition. Failed and censored runs
 remain in the run inventory. \MeasurementAbstract{}
-On one memory-constrained ARM platform (a Raspberry~Pi~4 Model~B, in 32- and
-64-bit builds) under a $512$\,MiB swapless budget, across $30$ independent runs
-per condition, the fully coordinated learned policy lowers peak proportional
-set size by about
+On identical Raspberry~Pi~4 Model~B hardware in 32- and 64-bit builds (a
+controlled ISA comparison on one SoC) under a $512$\,MiB swapless budget, across
+$30$ independent runs per condition, the fully coordinated learned policy lowers
+peak proportional set size by about
 $24\%$ and GC tail pause by $37$--$38\%$ under a favorable workload, at the cost
 of a bounded refault increase and roughly $1\%$ controller CPU; the same design
 stays within measurement noise of the stock runtime when no gain is available,
@@ -647,13 +647,17 @@ firmware image hash, compiler flags, and thermal/power/network policy.
 The ARM32 and ARM64 profiles and an independently assembled constrained Linux
 platform are distinct measurement conditions when included in the manifest.
 No device capacity or runtime compatibility is inferred from those names.
-Concretely, both profiles run on a single Raspberry~Pi~4 Model~B (Broadcom
-BCM2711 SoC, quad-core 64-bit ARM Cortex-A72, VideoCore~VI GPU): the
-\textsf{ARM64} profile is the \texttt{aarch64} build and \textsf{ARM32} the
-\texttt{armv7l} build of that same board, each running the Tizen~10.0 unified
-image (build~\texttt{20260910.082900}) from the matching
-\texttt{tizen-boot-*-rpi} image with separate \texttt{/boot}, \texttt{/hal}, and
-\texttt{/lib/modules} partitions. Each profile runs under a fixed per-process
+Concretely, the two profiles run on two \emph{identical} Raspberry~Pi~4 Model~B
+boards with the same Broadcom BCM2711 SoC (quad-core 64-bit ARM Cortex-A72,
+VideoCore~VI GPU): the \textsf{ARM64} profile boots a 64-bit (\texttt{aarch64})
+Linux kernel and Tizen~10.0 platform image, and the \textsf{ARM32} profile a
+32-bit (\texttt{armv7l}) kernel and image (build~\texttt{20260910.082900}, from
+the matching \texttt{tizen-boot-*-rpi} image with separate \texttt{/boot},
+\texttt{/hal}, and \texttt{/lib/modules} partitions). The Cortex-A72 executes
+both instruction sets, so this is a deliberate controlled design: holding the SoC
+and board fixed and varying only the 32-/64-bit kernel, image, and runtime build
+isolates the ARM instruction-set/runtime effect and eliminates confounds from
+differing SoC specifications, giving a clean ARM32-versus-ARM64 comparison. Each profile runs under a fixed per-process
 cgroup memory limit of $512$\,MiB with swap disabled on the $4$\,GiB board, so
 every reported peak PSS (roughly $176$--$363$\,MiB across runs, i.e.\
 $34$--$71\%$ of the budget) is measured against a known ceiling and OOM/watchdog
@@ -661,10 +665,13 @@ outcomes are meaningful. The managed runtime is .NET~8
 (CoreCLR)---packages \texttt{coreclr}, \texttt{corefx}, and \texttt{mscorlib} at
 version~8.0.11 with \texttt{dotnet-launcher}---built from the
 \texttt{platform/upstream/dotnet/runtime} source at commit \texttt{ffd6dad}.
-The two profiles thus share hardware and differ only in ISA and runtime build,
-so their agreement is cross-build rather than cross-device; the released
-manifest records the image build and runtime revision, and the run-level
-per-run measurement bundle (CSVs with checksums) is the released evidence.
+Because the two profiles share the same SoC and board and differ only in the
+32-/64-bit build, cross-profile agreement is evidence of ISA/runtime-build
+robustness on controlled hardware; by the same construction it is not evidence of
+transfer to a physically different SoC, which remains future validation
+(Section~\ref{sec:threats}). The released manifest records the image build and
+runtime revision, and the run-level per-run measurement bundle (CSVs with
+checksums) is the released evidence.
 
 Each case identifies a workload revision, reset procedure, treatment,
 controller configuration, and tuning or reporting phase. The reported bundle
@@ -783,11 +790,11 @@ two-sided $95\%$ percentile bootstrap confidence interval
 and companions); percentages are relative to the per-condition \textsf{Stock}
 baseline, and normalized indices (Table~\ref{tab:policy-index}) set
 $\textsf{Stock}{=}100$ within each regime. The \textsf{ARM32} and \textsf{ARM64}
-profiles are the 32- and 64-bit builds of the \emph{same} Raspberry~Pi~4 Model~B
-(one Broadcom BCM2711 SoC), so agreement between them is cross-build robustness
-on one chip, not diversity across physically distinct SoCs; they agree in
-direction and ordering throughout, so we quote ARM32 in prose and note the ARM64
-value only where it differs materially.
+profiles run on identical Raspberry~Pi~4 Model~B hardware (the same BCM2711 SoC),
+differing only in the 32-/64-bit build, so agreement between them is controlled
+ISA/runtime-build robustness on fixed hardware, not diversity across physically
+distinct SoCs; they agree in direction and ordering throughout, so we quote ARM32
+in prose and note the ARM64 value only where it differs materially.
 
 \subsection{RQ1: layer-by-layer ablation}
 \label{sec:rq1}
@@ -1000,13 +1007,16 @@ statistically significant difference between policies.
 
 \paragraph{External validity.}
 Results are specific to the evaluated runtime commit, device, memory
-limits, storage configuration, and scripted workloads. In particular, both
-platform profiles share one Raspberry~Pi~4 Model~B, so their agreement reflects
-robustness across the 32- and 64-bit ISA and runtime builds on common hardware,
-not diversity across physically distinct devices. Measuring additional,
-independently assembled SoCs probes generality but does not establish it for all
-embedded managed runtimes; broader applicability is stated as future validation,
-not claimed.
+limits, storage configuration, and scripted workloads. The two platform profiles
+deliberately run on identical Raspberry~Pi~4 Model~B hardware (the same BCM2711
+SoC) so that the ARM32-versus-ARM64 comparison varies only the instruction-set
+and runtime build, holding the SoC fixed and thereby eliminating confounds from
+differing hardware specifications. This controlled design is a strength for the
+ISA comparison but, by the same construction, means cross-profile agreement is
+not evidence of transfer to a physically different SoC. Measuring additional,
+independently assembled SoCs probes that generality but does not establish it for
+all embedded managed runtimes; broader applicability is stated as future
+validation, not claimed.
 
 %% =====================================================================
 \section{Limitations}

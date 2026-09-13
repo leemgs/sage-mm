@@ -42,7 +42,19 @@ column (or a constant note) to the run bundle.*
 
 ---
 
-### R-M2. Single physical device; the two "profiles" share one board; RPi ≠ DTV. [EDIT-READY + scope]
+### R-M2. Single SoC; the two "profiles" share the same hardware. [REFRAMED as a controlled design + honest scope]
+
+**Key reframe (measured design intent).** The shared SoC is deliberate, not an
+accident of hardware availability. The evaluation uses two *identical* Raspberry
+Pi 4 Model B boards (same BCM2711 SoC / Cortex-A72); one boots a 32-bit
+(armv7l) Linux kernel + Tizen image and the other a 64-bit (aarch64) image, both
+of which the Cortex-A72 executes. Holding the SoC and board fixed and varying
+only the 32-/64-bit build isolates the ARM instruction-set / runtime-build effect
+and eliminates confounds from differing SoC specifications — a *clean*
+ARM32-vs-ARM64 comparison. This is now stated as a strength in §6 and §8. By the
+same construction it does not test a physically distinct SoC; that transfer
+remains honestly scoped as future validation.
+
 
 **Anticipated comment.** External validity is thin: one SoC, one memory
 configuration, and the two profiles are the same Raspberry Pi 4 in 32- and
