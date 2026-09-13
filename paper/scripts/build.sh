@@ -5,7 +5,7 @@
 #
 # Steps:
 #   1. Regenerate the results fragments from the evaluation bundle under
-#      paper/generated/evaluation-data/ via paper/scripts/make_results.py.
+#      paper/measured/evaluation-data/ via paper/scripts/make_results.py.
 #   2. Compile paper/main.tex with pdflatex + bibtex (elsarticle class).
 #   3. Copy the result to paper/output/main.pdf (the build output the project ships).
 #
@@ -17,7 +17,7 @@ set -euo pipefail
 # This script lives in paper/scripts/, so its parent is the paper/ directory.
 paper=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
-echo "[1/3] regenerating results fragments from paper/generated/evaluation-data/"
+echo "[1/3] regenerating results fragments from paper/measured/evaluation-data/"
 python3 "$paper/scripts/make_results.py"
 
 if ! command -v pdflatex >/dev/null || ! command -v bibtex >/dev/null; then

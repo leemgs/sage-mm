@@ -2,7 +2,7 @@
 %% SAGE-MM --- Journal of Systems Architecture (Elsevier) submission
 %% Template: Elsevier `elsarticle' class (preprint, single column).
 %%
-%% Measured results are generated from paper/generated/evaluation-data/.
+%% Measured results are generated from paper/measured/evaluation-data/.
 
 %% Canonical manuscript source. Edit paper/main.tex directly and build
 %% with bash paper/scripts/build.sh from the repository root.
@@ -32,7 +32,7 @@
 %% source while allowing the results fragments to compile.
 \providecommand{\Description}[1]{}
 
-\input{generated/measurement-state}
+\input{measured/measurement-state}
 
 \journal{Journal of Systems Architecture}
 
@@ -780,9 +780,9 @@ establish input consistency and reproducibility of the reported statistics; the
 investigator remains responsible for instrument calibration, trace
 interpretation, and the authenticity of collection.
 
-\input{generated/measured-results}
+\input{measured/measured-results}
 
-\input{generated/measured-figures}
+\input{measured/measured-figures}
 
 All effects below are reported as the mean of $n{=}30$ run-level values with a
 two-sided $95\%$ percentile bootstrap confidence interval
@@ -872,7 +872,7 @@ recovery thresholds. The supervisor does not turn the adverse regime into a
 \emph{gain}, but it detects it within seconds and bounds the worst case, which is
 the deployment-relevant guarantee.
 
-\input{generated/measured-supervisor}
+\input{measured/measured-supervisor}
 
 \subsection{Discussion}
 \label{sec:discussion}

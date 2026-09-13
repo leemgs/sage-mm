@@ -10,6 +10,6 @@ replace with your instrumentation (EventPipe/vendor GC telemetry, `smaps`
 Workflow:
 1. Implement the `run_one_condition` hook in the relevant script.
 2. Run it on the target device to produce `*_30run.csv`.
-3. Copy the CSV into `paper/generated/evaluation-data/`.
+3. Copy the CSV into `paper/measured/evaluation-data/`.
 4. `python3 paper/scripts/validate_bundle.py` to check schema + provenance.
 5. Extend `paper/scripts/make_results.py` to render the new tables/figures.

@@ -22,7 +22,7 @@ from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PAPER = os.path.dirname(HERE)  # the paper/ directory (scripts live in paper/scripts/)
-DATA = os.path.join(PAPER, "generated", "evaluation-data")
+DATA = os.path.join(PAPER, "measured", "evaluation-data")
 
 # base column name -> allowed optional prefixes are stripped before matching
 _PREFIXES = ("measured_", "simulated_")
@@ -162,7 +162,7 @@ def main(argv):
 
     if not any_checked and len(argv) == 1:
         print("no bundle files present yet; drop CSVs into "
-              "paper/generated/evaluation-data/ (see paper/docs/EXPERIMENT_SCHEMAS.md)")
+              "paper/measured/evaluation-data/ (see paper/docs/EXPERIMENT_SCHEMAS.md)")
     return 1 if any_fail else 0
 
 
