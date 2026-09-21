@@ -304,38 +304,8 @@ def figures(rows):
     xsym = ",".join(short[t] for t in treats)
     out = []
 
-    # ---- Figure 1: ablation ladder (favorable regime) ----
-    out.append(r"""\begin{figure}[t]
-  \centering
-  \begin{tikzpicture}
-  \begin{axis}[
-    width=\linewidth, height=5.2cm, ybar=1pt, bar width=4pt,
-    ymin=55, ymax=175, symbolic x coords={%s}, xtick=data,
-    x tick label style={font=\scriptsize}, ylabel={Index (Stock${=}100$)},
-    ylabel style={font=\scriptsize}, ytick={60,80,100,120,140,160},
-    tick label style={font=\scriptsize},
-    legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south, legend columns=4},
-    enlarge x limits=0.08, ymajorgrids, major grid style={dotted}]
-  \addplot coordinates {%s};
-  \addplot coordinates {%s};
-  \addplot coordinates {%s};
-  \addplot coordinates {%s};
-  \draw[dashed] (axis cs:%s,100) -- (axis cs:%s,100);
-  \legend{PSS, GC p99, Fault, Input p99}
-  \end{axis}
-  \end{tikzpicture}
-  \caption{Ablation ladder under the favorable workload (normalized policy
-  indices, Stock${=}100$, mean of $n{=}30$ runs). Static heap and interop
-  ($\textsf{S-G}\to\textsf{S-GI}$) lower PSS and GC tail with no fault cost;
-  reclamation ($\textsf{S-GIR}$) reaches the lowest PSS but spikes the fault
-  rate, which the online policies ($\textsf{Thr}/\textsf{EWMA}/\textsf{Ridge}$)
-  pull back down while further improving input latency.}
-  \label{fig:ablation}
-\end{figure}""" % (xsym, coords("planning_hypothesis", "peak_pss_index"),
-                   coords("planning_hypothesis", "gc_p99_index"),
-                   coords("planning_hypothesis", "fault_rate_index"),
-                   coords("planning_hypothesis", "input_p99_index"),
-                   short[treats[0]], short[treats[-1]]))
+    # Ablation-ladder figure dropped for the page-limited manuscript; the
+    # ladder's normalized indices are in the policy-index table and RQ1 prose.
 
     # ---- Figure 2: PSS vs fault tradeoff (favorable regime) ----
     marks = " ".join(
@@ -420,7 +390,7 @@ def figures(rows):
 def policy_table(rows):
     means = index_means(rows)
     lines = [
-        r"\begin{table*}[t]",
+        r"\begin{table}[t]",
         r"  \caption{Normalized policy indices (Stock${=}100$ within each "
         r"scenario), mean over $n{=}30$ runs. Values ${<}100$ are improvements; "
         r"${>}100$ are regressions.}",
@@ -446,7 +416,7 @@ def policy_table(rows):
             lines.append("    " + " & ".join(cells) + r" \\")
         lines.append(r"    \midrule")
     lines[-1] = r"    \bottomrule"
-    lines += [r"  \end{tabular}}", r"\end{table*}", ""]
+    lines += [r"  \end{tabular}}", r"\end{table}", ""]
     return "\n".join(lines)
 
 
@@ -517,7 +487,7 @@ def supervisor_table(perrun):
             f"OOM ${oom_off}\\to{oom_on}$")
     body = "\n".join(body).rstrip("\\addlinespace\n")
     return (
-        r"\begin{table*}[t]\caption{RQ3 adverse-regime supervisor (measured, "
+        r"\begin{table}[t]\caption{RQ3 adverse-regime supervisor (measured, "
         r"$n{=}30$). With the AdverseShutdown supervisor on (\textsf{Ridge-GIR-sup}) "
         r"the refault-dominated regression is contained toward the Stock adverse "
         r"baseline; brackets on $\Delta$ are 95\% bootstrap difference intervals "
@@ -529,7 +499,7 @@ def supervisor_table(perrun):
         r"& $\Delta$ (on$-$off) [95\% CI] \\\midrule" "\n"
         + body + "\n\\\\\\bottomrule\n\\end{tabular}}\n"
         r"\par\smallskip\noindent\footnotesize\textit{Supervisor telemetry (on):} "
-        + "; ".join(notes) + r"." "\n\\end{table*}")
+        + "; ".join(notes) + r"." "\n\\end{table}")
 
 
 def main():
@@ -546,20 +516,30 @@ def main():
     if not ready:
         parts.append(watermark())
     tables, scenarios, platforms = summary_tables(perrun)
-    parts.extend(tables)
-    parts.append(contrast_table(perrun))
+    # The per-regime absolute-value tables are verbose (one wide table* each).
+    # For the page-limited IEEE manuscript they are written to a separate file
+    # that main.tex does not \input; the released measurement bundle retains
+    # them, and the normalized policy-index table below carries the cross-regime
+    # comparison in-text.
+    with open(os.path.join(GEN, "measured-results-absolute.tex"), "w") as fh:
+        fh.write("% Per-regime absolute result tables. Retained for the artifact "
+                 "bundle;\n% not \\input by the page-limited manuscript.\n")
+        fh.write("\n".join(tables) + "\n")
+    # contrast_table (tab:policy-contrasts) is omitted from the page-limited
+    # manuscript; the Ridge-EWMA difference intervals are stated in the RQ2 prose.
     if pol:
         parts.append(policy_table(pol))
         figures(pol)
     parts.append(
-        r"\noindent\textit{Reading note.} Each cell is the mean of "
+        r"\noindent\textit{Reading note.} Each reported value is the mean of "
         r"run-level values over $n{=}30$ independent runs with a two-sided 95\% "
         r"percentile bootstrap confidence interval ($10{,}000$ resamples, "
-        r"seed~$20260906$) computed across runs, not across within-run samples; "
-        r"the S/C/F/X column reports started/completed/failed/censored runs. A mean "
-        r"of run-level p99 values is not a pooled-event p99. These descriptive "
-        r"intervals do not by themselves establish factorial interactions or the "
-        r"absence of failures.")
+        r"seed~$20260906$) computed across runs, not across within-run samples. "
+        r"A mean of run-level p99 values is not a pooled-event p99. Per-regime "
+        r"absolute values, and started/completed/failed/censored run counts, are "
+        r"in the released measurement bundle. These descriptive intervals do not "
+        r"by themselves establish factorial interactions or the absence of "
+        r"failures.")
     with open(os.path.join(GEN, "measured-results.tex"), "w") as fh:
         fh.write("\n".join(parts) + "\n")
 
