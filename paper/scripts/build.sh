@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Build the SAGE-MM Journal of Systems Architecture (Elsevier elsarticle) PDF.
+# Build the SAGE-MM IEEE Transactions on Consumer Electronics (IEEEtran) PDF.
 #
 #   bash paper/scripts/build.sh
 #
 # Steps:
 #   1. Regenerate the results fragments from the evaluation bundle under
 #      paper/measured/evaluation-data/ via paper/scripts/make_results.py.
-#   2. Compile paper/main.tex with pdflatex + bibtex (elsarticle class).
+#   2. Compile paper/main.tex with pdflatex + bibtex (IEEEtran class).
 #   3. Copy the result to paper/output/main.pdf (the build output the project ships).
 #
 # Requirements: a TeX Live install providing pdflatex, bibtex, and the
-# elsarticle class (Debian/Ubuntu: texlive-latex-base texlive-latex-recommended
+# IEEEtran class (Debian/Ubuntu: texlive-latex-base texlive-latex-recommended
 # texlive-latex-extra texlive-science texlive-publishers).
 set -euo pipefail
 

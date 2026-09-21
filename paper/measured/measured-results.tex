@@ -2,7 +2,7 @@
 % paper/measured/evaluation-data/. Do not edit by hand; edit the CSV
 % bundle and rerun the generator.
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Favorable workload: mean [two-sided 95\% percentile bootstrap CI] ($10{,}000$ resamples) over $n{=}30$ independent runs per condition. Lower is better for all metrics except controller CPU (an overhead cost).}
   \label{tab:res-planning-hypothesis}
   \scriptsize\setlength{\tabcolsep}{4pt}
@@ -28,9 +28,9 @@
     Ridge-GIR & ARM64 & 30/30/0/0 & 243.3 [241.0, 245.7] & 34.9 [34.4, 35.3] & 24.5 [24.0, 25.1] & 120.9 [118.1, 123.7] & 64.1 [63.2, 65.1] & 1.11 [1.07, 1.14] \\
     \bottomrule
   \end{tabular}}
-\end{table}
+\end{table*}
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Neutral workload (no reclamation gain available): mean [two-sided 95\% percentile bootstrap CI] ($10{,}000$ resamples) over $n{=}30$ independent runs per condition. Lower is better for all metrics except controller CPU (an overhead cost).}
   \label{tab:res-no-benefit}
   \scriptsize\setlength{\tabcolsep}{4pt}
@@ -56,9 +56,9 @@
     Ridge-GIR & ARM64 & 30/30/0/0 & 321.6 [318.8, 324.5] & 47.9 [47.0, 48.9] & 40.0 [39.2, 40.8] & 100.3 [97.9, 102.8] & 79.2 [77.8, 80.7] & 1.10 [1.07, 1.13] \\
     \bottomrule
   \end{tabular}}
-\end{table}
+\end{table*}
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Adverse workload (refault-dominated): mean [two-sided 95\% percentile bootstrap CI] ($10{,}000$ resamples) over $n{=}30$ independent runs per condition. Lower is better for all metrics except controller CPU (an overhead cost).}
   \label{tab:res-regression}
   \scriptsize\setlength{\tabcolsep}{4pt}
@@ -84,7 +84,7 @@
     Ridge-GIR & ARM64 & 30/30/0/0 & 336.8 [333.9, 339.7] & 50.5 [49.9, 51.1] & 44.5 [43.4, 45.6] & 160.4 [157.4, 163.6] & 95.9 [94.0, 97.7] & 2.23 [2.15, 2.30] \\
     \bottomrule
   \end{tabular}}
-\end{table}
+\end{table*}
 
 \begin{table}[t]
   \caption{Direct policy contrasts under the favorable workload. Mean difference $\Delta=\textsf{Ridge-GIR}-\textsf{EWMA-GIR}$ [two-sided 95\% bootstrap CI]; 10{,}000 within-group resamples.}
@@ -105,7 +105,7 @@
   \end{tabular}
 \end{table}
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Normalized policy indices (Stock${=}100$ within each scenario), mean over $n{=}30$ runs. Values ${<}100$ are improvements; ${>}100$ are regressions.}
   \label{tab:policy-index}
   \small\setlength{\tabcolsep}{5pt}
@@ -139,6 +139,6 @@
     Adverse & Ridge-GIR & 104.7 & 104.8 & 110.8 & 161.2 & 120.6 & 2.20 \\
     \bottomrule
   \end{tabular}}
-\end{table}
+\end{table*}
 
 \noindent\textit{Reading note.} Each cell is the mean of run-level values over $n{=}30$ independent runs with a two-sided 95\% percentile bootstrap confidence interval ($10{,}000$ resamples, seed~$20260906$) computed across runs, not across within-run samples; the S/C/F/X column reports started/completed/failed/censored runs. A mean of run-level p99 values is not a pooled-event p99. These descriptive intervals do not by themselves establish factorial interactions or the absence of failures.
