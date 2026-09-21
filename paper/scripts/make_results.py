@@ -190,7 +190,7 @@ def summary_tables(rows):
     out = []
     for scen in scenarios:
         lines = [
-            r"\begin{table}[t]",
+            r"\begin{table*}[t]",
             r"  \caption{%s: mean [two-sided 95\%% percentile bootstrap CI] "
             r"($10{,}000$ resamples) over $n{=}30$ independent runs per condition. "
             r"Lower is better for all metrics except controller CPU (an overhead "
@@ -228,7 +228,7 @@ def summary_tables(rows):
                 lines.append("    " + " & ".join(cells) + r" \\")
             lines.append(r"    \midrule")
         lines[-1] = r"    \bottomrule"
-        lines += [r"  \end{tabular}}", r"\end{table}", ""]
+        lines += [r"  \end{tabular}}", r"\end{table*}", ""]
         out.append("\n".join(lines))
     return out, scenarios, platforms
 
@@ -420,7 +420,7 @@ def figures(rows):
 def policy_table(rows):
     means = index_means(rows)
     lines = [
-        r"\begin{table}[t]",
+        r"\begin{table*}[t]",
         r"  \caption{Normalized policy indices (Stock${=}100$ within each "
         r"scenario), mean over $n{=}30$ runs. Values ${<}100$ are improvements; "
         r"${>}100$ are regressions.}",
@@ -446,7 +446,7 @@ def policy_table(rows):
             lines.append("    " + " & ".join(cells) + r" \\")
         lines.append(r"    \midrule")
     lines[-1] = r"    \bottomrule"
-    lines += [r"  \end{tabular}}", r"\end{table}", ""]
+    lines += [r"  \end{tabular}}", r"\end{table*}", ""]
     return "\n".join(lines)
 
 
@@ -517,7 +517,7 @@ def supervisor_table(perrun):
             f"OOM ${oom_off}\\to{oom_on}$")
     body = "\n".join(body).rstrip("\\addlinespace\n")
     return (
-        r"\begin{table}[t]\caption{RQ3 adverse-regime supervisor (measured, "
+        r"\begin{table*}[t]\caption{RQ3 adverse-regime supervisor (measured, "
         r"$n{=}30$). With the AdverseShutdown supervisor on (\textsf{Ridge-GIR-sup}) "
         r"the refault-dominated regression is contained toward the Stock adverse "
         r"baseline; brackets on $\Delta$ are 95\% bootstrap difference intervals "
@@ -529,7 +529,7 @@ def supervisor_table(perrun):
         r"& $\Delta$ (on$-$off) [95\% CI] \\\midrule" "\n"
         + body + "\n\\\\\\bottomrule\n\\end{tabular}}\n"
         r"\par\smallskip\noindent\footnotesize\textit{Supervisor telemetry (on):} "
-        + "; ".join(notes) + r"." "\n\\end{table}")
+        + "; ".join(notes) + r"." "\n\\end{table*}")
 
 
 def main():

@@ -1,18 +1,16 @@
 %% =====================================================================
-%% SAGE-MM --- Journal of Systems Architecture (Elsevier) submission
-%% Template: Elsevier `elsarticle' class (preprint, single column).
+%% SAGE-MM --- IEEE Transactions on Consumer Electronics submission
+%% Template: IEEE `IEEEtran' class (journal, two-column).
 %%
 %% Measured results are generated from paper/measured/evaluation-data/.
-
 %% Canonical manuscript source. Edit paper/main.tex directly and build
 %% with bash paper/scripts/build.sh from the repository root.
 %% =====================================================================
-\documentclass[preprint,12pt]{elsarticle}
+\documentclass[journal]{IEEEtran}
 
 \usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{array}
-\usepackage{longtable}
 \usepackage{graphicx}
 \usepackage{lmodern}   % scalable fonts (required for microtype font expansion)
 \usepackage[T1]{fontenc}
@@ -26,29 +24,32 @@
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 %% Absorb the last few points of over-long lines (long compound words, URLs)
 %% without altering wording; microtype protrusion handles the rest.
-\setlength{\emergencystretch}{4em}
+\setlength{\emergencystretch}{3em}
 
-%% elsarticle does not define \Description. Keep figure descriptions in the
-%% source while allowing the results fragments to compile.
+%% IEEEtran does not define \Description (an accessibility hook used by the
+%% generated results fragments); provide a no-op so they compile.
 \providecommand{\Description}[1]{}
 
 \input{measured/measurement-state}
 
-\journal{Journal of Systems Architecture}
-
 \begin{document}
 
-\begin{frontmatter}
-
 \title{SAGE-MM: Coordinating Heap Configuration, Interop Allocation, and
-Page Reclamation in Memory-Constrained Embedded .NET Firmware}
+Page Reclamation in Memory-Constrained Consumer-Electronics \mbox{.NET}
+Firmware}
 
-\author[inst1]{Geunsik Lim\corref{cor1}}
-\ead{leemgs@g.skku.edu}
-\cortext[cor1]{Corresponding author.}
-\affiliation[inst1]{organization={Sungkyunkwan University},
-  city={Suwon},
-  country={Republic of Korea}}
+\author{Geunsik~Lim%
+  \thanks{G. Lim is with the College of Computing and Informatics,
+  Sungkyunkwan University, Suwon 16419, Republic of Korea
+  (e-mail: leemgs@g.skku.edu).}%
+  \thanks{Every reported number is produced by a fail-closed measurement
+  pipeline directly from a per-run bundle; no estimated or predicted value is
+  substituted for missing data.}}
+
+\markboth{IEEE Transactions on Consumer Electronics,~Vol.~XX, No.~XX, 2026}%
+{Lim: Coordinating Heap, Interop, and Page Reclamation in Consumer-Electronics .NET Firmware}
+
+\maketitle
 
 \begin{abstract}
 Memory-constrained embedded devices co-locate a managed heap, native
@@ -83,14 +84,12 @@ no benefit is assumed for an unmeasured configuration.
 
 \end{abstract}
 
-\begin{keyword}
-Embedded runtimes \sep memory management \sep garbage collection \sep
-managed/native interop \sep page reclamation \sep \texttt{madvise} \sep
-online control \sep cross-layer coordination \sep .NET \sep CoreCLR \sep
-digital television
-\end{keyword}
-
-\end{frontmatter}
+\begin{IEEEkeywords}
+Consumer electronics, digital television, set-top box, embedded systems,
+memory management, garbage collection, managed runtime, .NET, CoreCLR,
+managed/native interoperability, page reclamation, online control,
+cross-layer coordination, quality of experience.
+\end{IEEEkeywords}
 
 \ifmeasurementready\else
 \begin{center}
@@ -120,6 +119,18 @@ footprint; removing managed allocations lowers GC pressure but shifts cost
 to native marshalling; aggressively reclaiming clean code pages lowers
 resident memory but can reintroduce page faults and interaction-latency
 spikes precisely when the user switches applications.
+
+In consumer-electronics products these are not abstract systems concerns but
+direct determinants of perceived quality. Mass-market DTVs and set-top boxes
+ship with cost-driven DRAM budgets, yet viewers expect instant channel
+changes, smooth application switching, and responsive on-screen interaction.
+A GC tail pause, a burst of refaults after code-page reclamation, or an
+out-of-memory kill during app switching surfaces to the user as a stutter, a
+delayed launch, or a crash. Because the managed heap, interop buffers, and
+executable code pages share one swapless budget, an optimization that
+improves one layer in isolation can regress the user-visible behavior another
+layer governs---which makes cross-layer coordination a quality-of-experience
+requirement for the device, not merely a runtime optimization.
 
 The systems question we address is therefore \emph{not} whether larger
 nursery sizes, value types, \texttt{madvise}-based reclamation, or
@@ -230,7 +241,7 @@ a threshold, EWMA, or ridge policy be replaced without changing mapping
 eligibility or the safety envelope. Table~\ref{tab:novelty} distinguishes that
 coordination contract from independent tuning.
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Architectural novelty relative to independently applied mechanisms.}
   \label{tab:novelty}
   \small
@@ -248,9 +259,9 @@ coordination contract from independent tuning.
       embedded action and failure contract. \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Cross-layer action boundary. Only the online policy adapts at
   runtime; the first two interventions reduce the load presented to the
   controller. ``Transparent'' means visible to a deployed application
@@ -278,7 +289,7 @@ coordination contract from independent tuning.
     gate exposed by the runtime host. \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 Two consequences follow. First, binary-only applications benefit only from
 the firmware-transparent mechanisms (heap build and controller); value-type
@@ -405,11 +416,13 @@ wall-clock sample duration rather than an assumed one second), and positive
 resident growth $\Delta M$ (MiB). Features are dimensionless and clamped to
 $[0,2]$:
 \begin{equation}
-\mathbf{x} = \Bigl[\,1,\;
-  \mathrm{clamp}\!\bigl(\tfrac{L_{\mathrm{gc}}}{30}\bigr),\;
-  \mathrm{clamp}\!\bigl(\tfrac{F_h}{0.12}\bigr),\;
-  \mathrm{clamp}\!\bigl(\tfrac{P_f}{100}\bigr),\;
-  \mathrm{clamp}\!\bigl(\tfrac{\max(0,\Delta M)}{50}\bigr)\Bigr].
+\begin{aligned}
+\mathbf{x} = \bigl[\,1,\;
+  &\mathrm{clamp}\!\bigl(\tfrac{L_{\mathrm{gc}}}{30}\bigr),\;
+  \mathrm{clamp}\!\bigl(\tfrac{F_h}{0.12}\bigr),\\
+  &\mathrm{clamp}\!\bigl(\tfrac{P_f}{100}\bigr),\;
+  \mathrm{clamp}\!\bigl(\tfrac{\max(0,\Delta M)}{50}\bigr)\bigr].
+\end{aligned}
 \end{equation}
 The observed dimensionless pressure is the maximum normalized
 service-objective violation,
@@ -536,9 +549,11 @@ $(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
 For an eligible module $a$ that has been idle for at least a configured
 guard period, the coldness score combines recency, frequency, and size:
 \begin{equation}
-\mathrm{Cold}(a) = 0.6\,\frac{\mathrm{age}(a)}{\mathrm{maxAge}}
-  + 0.3\,\Bigl[1-\frac{\mathrm{accesses}(a)}{\mathrm{maxAccesses}}\Bigr]
-  + 0.1\,\frac{\mathrm{cleanBytes}(a)}{\mathrm{maxCleanBytes}}.
+\begin{aligned}
+\mathrm{Cold}(a) = {}& 0.6\,\frac{\mathrm{age}(a)}{\mathrm{maxAge}}
+  + 0.3\,\Bigl[1-\frac{\mathrm{accesses}(a)}{\mathrm{maxAccesses}}\Bigr]\\
+  &+ 0.1\,\frac{\mathrm{cleanBytes}(a)}{\mathrm{maxCleanBytes}}.
+\end{aligned}
 \end{equation}
 Candidates are ranked in descending score; the number reclaimed, $K$, is
 the smallest prefix whose cumulative clean bytes reach a configured byte
@@ -614,7 +629,7 @@ answers it and to the primary outcomes reported for it, so that every result
 subsection traces back to a stated question and no reported number is
 orphaned from a hypothesis.
 
-\begin{table}[t]
+\begin{table*}[t]
   \caption{Research-question traceability. Each RQ maps to a specific
   experiment and a fixed set of primary outcomes; Section~\ref{sec:results}
   reports results under the same grouping.}
@@ -638,7 +653,7 @@ orphaned from a hypothesis.
     Fig.~\ref{fig:regimes}, Table~\ref{tab:policy-index}. \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Platforms and workloads}
 Each platform entry identifies an actual device, physical and cgroup memory,
@@ -1095,33 +1110,19 @@ experiment, and the public demo is not the production measurement instrument.
 
 %% =====================================================================
 
-%% =====================================================================
-%% Elsevier-required author statements. Single author; no competing
-%% interests; no specific funding. Edit these directly in this manuscript.
-\section*{CRediT authorship contribution statement}
-\textbf{Geunsik Lim:} Conceptualization, Methodology, Software, Validation,
-Formal analysis, Investigation, Data curation, Writing --- original draft,
-Writing --- review \& editing, Visualization.
-
-\section*{Declaration of competing interest}
-The author declares that he has no known competing financial interests or
-personal relationships that could have appeared to influence the work
-reported in this paper.
-
-\section*{Funding}
-This research did not receive any specific grant from funding agencies in the
-public, commercial, or not-for-profit sectors.
-
-\section*{Data availability}
+\section*{Data Availability}
 \MeasurementAvailability
+The author declares no competing financial interests, and this research
+received no specific grant from any funding agency in the public, commercial,
+or not-for-profit sectors.
 
 %% =====================================================================
-\section*{Acknowledgements}
+\section*{Acknowledgment}
 The author thanks the reviewers for feedback that sharpened the scope,
 boundary, and evaluation protocol of this work.
 
 %% =====================================================================
-\bibliographystyle{elsarticle-num}
+\bibliographystyle{IEEEtran}
 \bibliography{sagemm}
 
 \appendix
@@ -1161,7 +1162,7 @@ above.
 
 \begin{table}[h]
   \small
-  \begin{tabular}{@{}ll@{}}
+  \begin{tabular}{@{}l@{\quad}p{0.62\columnwidth}@{}}
     \toprule
     \textbf{Symbol} & \textbf{Meaning} \\
     \midrule
