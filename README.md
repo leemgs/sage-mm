@@ -2,11 +2,11 @@
 
 ## Title
 
-**SAGE-MM: Coordinating Heap Configuration, Interop Allocation, and Page Reclamation in Memory-Constrained Embedded .NET Firmware**
+**SAGE-MM: Coordinating Heap Configuration, Interop Allocation, and Page Reclamation in Memory-Constrained Consumer-Electronics .NET Firmware**
 
 - Author: Geunsik Lim (Sungkyunkwan University, Suwon, South Korea)
 
-- Submission Target: *Journal of Systems Architecture* (Elsevier)
+- Submission Target: *IEEE Transactions on Consumer Electronics*
 
 ## Abstract
 
@@ -81,11 +81,11 @@ bash paper/scripts/build.sh
 
 This regenerates the results fragments from
 `paper/measured/evaluation-data/`, compiles `paper/main.tex` with `pdflatex`
-+ `bibtex` (Elsevier `elsarticle` class), and writes the result to
++ `bibtex` (IEEE `IEEEtran` class), and writes the result to
 **`paper/output/main.pdf`**.
 
 Requirements (Debian/Ubuntu): a TeX Live install providing `pdflatex`,
-`bibtex`, and the `elsarticle` class, e.g.
+`bibtex`, and the `IEEEtran` class, e.g.
 
 ```bash
 sudo apt-get install -y --no-install-recommends \

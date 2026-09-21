@@ -24,8 +24,8 @@ if ! command -v pdflatex >/dev/null || ! command -v bibtex >/dev/null; then
   echo "error: pdflatex and bibtex are required (install TeX Live)" >&2
   exit 2
 fi
-if ! kpsewhich elsarticle.cls >/dev/null; then
-  echo "error: elsarticle.cls not found (install texlive-publishers)" >&2
+if ! kpsewhich IEEEtran.cls >/dev/null; then
+  echo "error: IEEEtran.cls not found (install texlive-publishers)" >&2
   exit 2
 fi
 
