@@ -16,12 +16,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{microtype}
 \usepackage{xurl}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
 \usepackage{xcolor}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.16}
-\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 %% Absorb the last few points of over-long lines (long compound words, URLs)
 %% without altering wording; microtype protrusion handles the rest.
 \setlength{\emergencystretch}{3em}
@@ -323,8 +318,8 @@ The controller runs at a fixed decision cadence and, at each interval,
 chooses the next reclamation interval $T$ and the compaction gate. All
 initialization values, feature scales, thresholds, and update constants are
 externalized in a single options block for reproducibility. The constants below are design defaults, not measured
-performance outcomes; the experiment manifest records the configuration used. Algorithm~\ref{alg:controller} states the complete per-interval
-procedure; the paragraphs below define each step.
+performance outcomes; the experiment manifest records the configuration used. The
+paragraphs below define each step of the per-interval procedure.
 
 \paragraph{Telemetry and normalization.}
 Each decision uses the preceding interval's GC pause
@@ -342,17 +337,14 @@ $[0,2]$:
   \mathrm{clamp}\!\bigl(\tfrac{\max(0,\Delta M)}{50}\bigr)\bigr].
 \end{aligned}
 \end{equation}
-The observed dimensionless pressure is the maximum normalized
+The observed dimensionless pressure is the clamped maximum normalized
 service-objective violation,
-\begin{equation}
-\label{eq:pressure}
-y = \mathrm{clamp}\!\Bigl(
-  \max\bigl(\tfrac{L_{\mathrm{gc}}}{30\,\text{ms}},\;
-            \tfrac{P_f}{100\,\text{s}^{-1}},\;
-            \tfrac{\max(0,\Delta M)}{50\,\text{MiB}}\bigr),\,0,\,2\Bigr),
-\end{equation}
-so that no coefficient silently combines milliseconds, counts, and MiB, and
-a breach in any single dimension is actionable.
+\[
+y=\mathrm{clamp}\bigl(\max(\tfrac{L_{\mathrm{gc}}}{30\,\text{ms}},
+  \tfrac{P_f}{100\,\text{s}^{-1}},\tfrac{\max(0,\Delta M)}{50\,\text{MiB}}),0,2\bigr),
+\]
+so no coefficient silently combines milliseconds, counts, and MiB, and a breach in
+any single dimension is actionable.
 
 \paragraph{Policies.}
 Three interchangeable policies select $T$ under identical bounds
@@ -402,97 +394,29 @@ operator reset). This guard, prompted by the adverse result, is evaluated direct
 in Section~\ref{sec:rq3} (Table~\ref{tab:supervisor}): it detects the adverse
 regime within seconds and contains the regression toward the Stock baseline.
 
-\begin{algorithm}[t]
-\caption{SAGE-MM controller decision for one interval. Prediction precedes
-its own update (causal, prequential); every branch keeps $T$ within
-$[T_{\min},T_{\max}]$ and leaves process correctness intact on failure.}
-\label{alg:controller}
-\small
-\begin{algorithmic}[1]
-\Require raw sample $s=(L_{\mathrm{gc}},L_{\mathrm{input}},F_h,P_f,\Delta M,\mathrm{dt})$; state
-$(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
-\Ensure next reclamation interval $T$ and compaction gate
-\If{$\neg\textsc{Valid}(s)$}\Comment{non-finite, negative rate/pause, or $F_h\notin[0,1]$}
-  \State record \textsf{InvalidTelemetry}; enable compaction; suppress reclamation
-  \State \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$ \Comment{fail-closed: hold, no model update}
-\EndIf
-\State $\mathbf{x}\gets\textsc{Normalize}(s)$; \quad $y\gets\textsc{Pressure}(s)$ \Comment{Eq.~(1),~(2)}
-\If{$\textsc{AdverseForNIntervals}(P_f,L_{\mathrm{input}})$}
-  \State latch reclamation off; enable compaction; clear pending update
-  \State record \textsf{AdverseShutdown}; \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$
-\EndIf
-\If{$\textit{mode}=\textsf{Ridge}$}
-  \State $\hat{y}\gets\mathrm{clamp}(\mathbf{w}^{\!\top}\mathbf{x},0,2)$
-  \If{$\hat{y}$ persistently clipped at $0$ or $2$}
-    \State record \textsf{ModelSaturation}; clear pending update; apply \textsf{Threshold} action
-  \Else
-    \State $T\gets T/\mathrm{clamp}(0.5+\hat{y},0.5,1.5)$
-  \EndIf
-\ElsIf{$\textit{mode}=\textsf{EWMA}$}
-  \State $T\gets \beta T+(1-\beta)\,T/\mathrm{clamp}(y,0.5,2)$
-\ElsIf{$\textit{mode}=\textsf{Threshold}$}
-  \State $T\gets T\cdot(1-0.2)$ if $y>1.1$; $\;T\cdot(1+0.2)$ if $y<0.9$; else hold
-\EndIf
-\State $T\gets\mathrm{clamp}(T,T_{\min},T_{\max})$
-\State \textsc{UpdateGate}$(F_h)$ \Comment{off below $0.05$; force on at $0.12$ or after 3 deferrals}
-\If{$\neg\textsc{InCooldown}$ \textbf{and} reclamation enabled}
-  \State rank modules by $\mathrm{Cold}(\cdot)$; take smallest prefix $K$ meeting the byte budget
-  \State \textsc{FlushModules}$(K)$ excluding recently accessed (hot-reuse guard)
-\EndIf
-\If{$\textit{mode}=\textsf{Ridge}$ \textbf{and} a pending prediction exists \textbf{and} on tuning trace}
-  \State record prequential loss $[\hat{y}-y]^2/2$; take one ridge SGD step \Comment{Eq.~(3)}
-\EndIf
-\State \Return $T$
-\end{algorithmic}
-\end{algorithm}
-
 \subsection{Reclamation implementation}
 \label{sec:reclaim}
 
-\paragraph{Coldness score and budget-driven selection.}
-For an eligible module $a$ that has been idle for at least a configured
-guard period, the coldness score combines recency, frequency, and size:
+For an eligible module $a$ idle for at least a guard period, a coldness score
+combines recency, frequency, and size,
 \begin{equation}
 \begin{aligned}
 \mathrm{Cold}(a) = {}& 0.6\,\frac{\mathrm{age}(a)}{\mathrm{maxAge}}
   + 0.3\,\Bigl[1-\frac{\mathrm{accesses}(a)}{\mathrm{maxAccesses}}\Bigr]\\
-  &+ 0.1\,\frac{\mathrm{cleanBytes}(a)}{\mathrm{maxCleanBytes}}.
+  &+ 0.1\,\frac{\mathrm{cleanBytes}(a)}{\mathrm{maxCleanBytes}},
 \end{aligned}
 \end{equation}
-Candidates are ranked in descending score; the number reclaimed, $K$, is
-the smallest prefix whose cumulative clean bytes reach a configured byte
-budget---it is not fixed at five. A recent-access exclusion is the
-hot-reuse safety guard.
-
-\paragraph{Conservative native helper.}
-The native helper considers page-aligned ranges from
-\texttt{/proc/self/maps}, accepts private \texttt{r-{}-p}/\texttt{r-xp}
-file mappings, and rejects anonymous, writable, shared, and deleted-file
-mappings. \texttt{madvise(MADV\_DONTNEED)} never unmaps a range: a later
-access can fault file content back in. Each syscall result is checked; zero
-means no candidate, a positive value is the number dropped, and a negative
-value is $-\text{errno}$~\cite{madvise}. Callers retain the mapping after
-failure. Because
-\texttt{maps} lacks per-page residency and dirty state, a production port
-must additionally verify \texttt{Private\_Clean} from
-\texttt{/proc/self/smaps}, use \texttt{mincore} for residency, serialize
-against module unload, and allowlist executable modules.
-
-%% =====================================================================
-\section{Implementation and Reproducibility Boundary}
-\label{sec:impl}
-
-The public kit contains a reference controller, policy events, a native mapping
-helper, and an advisory analyzer; its console demo is a wiring exercise whose
-proxy signals (a forced Gen-0 pause, a pinned-object fragmentation estimate,
-process faults/RSS, and module file lengths as size estimates) are \emph{not} the
-device evaluation instrument and do not measure reclaimed \texttt{Private\_Clean}
-bytes or drive a vendor compaction hook. A device experiment therefore supplies
-its own runtime GC traces, live fragmentation accounting, mapping-level
-\texttt{smaps} samples, workload event timestamps, and an implemented compaction
-hook, with the firmware image, runtime patch, collector revision, controller
-configuration, and reset procedure recorded in the manifest and per-run bundle; a
-public-kit execution alone does not establish a production deployment.
+and candidates are reclaimed in descending order up to the smallest prefix $K$
+meeting a configured byte budget (not a fixed count), with a recent-access
+exclusion as the hot-reuse guard. The native helper accepts only private
+\texttt{r-{}-p}/\texttt{r-xp} file mappings from \texttt{/proc/self/maps} and
+rejects anonymous, writable, shared, and deleted-file mappings;
+\texttt{madvise(MADV\_DONTNEED)} never unmaps (a later access refaults the file),
+each syscall result is checked, and callers retain the mapping on
+failure~\cite{madvise}. Because \texttt{maps} lacks per-page residency, a
+production port must additionally verify \texttt{Private\_Clean} from
+\texttt{smaps}, use \texttt{mincore}, serialize against unload, and allowlist
+executable modules.
 
 %% =====================================================================
 \section{Evaluation Methodology}
@@ -501,6 +425,10 @@ public-kit execution alone does not establish a production deployment.
 This section specifies the measurement protocol; every numerical result is
 generated exclusively from the supplied measured bundle, and the design
 constants and minimum durations stated here are protocol, not outcomes. The
+public reference kit's proxy signals are a wiring demo, not the device
+instrument: a device experiment supplies its own runtime GC traces,
+\texttt{smaps} samples, and compaction hook, recorded in the manifest and per-run
+bundle. The
 campaign answers three questions bounded by the bundle; per-architecture heap
 sweeps, isolated interop benchmarks, and multi-hour endurance are specified below
 but reserved as future evaluation (Section~\ref{sec:limitations}).
@@ -609,8 +537,6 @@ interpretation, and the authenticity of collection.
 
 \input{measured/measured-results}
 
-\input{measured/measured-figures}
-
 All effects below are reported as the mean of $n{=}30$ run-level values with a
 two-sided $95\%$ percentile bootstrap confidence interval (per-regime absolute
 values are in the released measurement bundle);
@@ -625,65 +551,47 @@ in prose and note the ARM64 value only where it differs materially.
 
 \subsection{RQ1: layer-by-layer ablation}
 \label{sec:rq1}
-The normalized coordination ladder under the favorable workload
-(Table~\ref{tab:policy-index}) moves different metrics at each step. The
-increment from Stock
-to \textsf{Static-G} is a lower GC tail---GC p99 falls to $76\%$ of stock
-($-24\%$; $49.7\to37.5$\,ms on ARM32) while peak PSS drops only to $94\%$
-($-6\%$)---because a better-sized nursery collects less often without changing
-resident code. The $G\rightarrow GI$ step coincides with lower managed
-allocation (allocation rate $-29\%$) and takes PSS to $87\%$ and GC p99
-to $73\%$, with the fault rate essentially unchanged ($\pm1\%$): interop shifts
-cost off the heap without touching file-backed pages. The $GI\rightarrow GIR$
-step has the largest footprint decrement, to $79\%$ PSS
-($-22\%$; $-20\%$ on ARM64), but is the first layer to move the fault rate---up
-to $162\%$ of stock ($+60\%$; $+63\%$ on ARM64)---and that refault pressure
-cancels the input-latency gain, leaving input p99 back near $91\%$. The static
-ladder therefore associates later configurations with lower footprint and GC
-tail, but it cannot identify main effects or interactions without the unmeasured
-factorial cells. What the ladder does establish is that the layers
-\emph{compose}: each step adds a bounded, separately attributable increment
-under one safety contract---the property an integrator actually tunes---whereas
-isolating individual main effects and interactions requires the $2^4$ design of
-Section~\ref{sec:limitations}. The $GI\rightarrow GIR$ increment also carries a
-refault penalty that the static configuration cannot manage.
+The normalized ladder under the favorable workload (Table~\ref{tab:policy-index})
+moves different metrics at each step. \textsf{Static-G} lowers the GC tail (GC p99
+to $76\%$ of stock, $49.7\to37.5$\,ms on ARM32) at little footprint change (PSS
+$94\%$); $G{\to}GI$ cuts managed allocation ($-29\%$), taking PSS to $87\%$ and GC
+p99 to $73\%$ with the fault rate unchanged ($\pm1\%$); and $GI{\to}GIR$ gives the
+largest footprint drop (PSS $79\%$) but is the first layer to raise the fault rate
+(to $162\%$; $+63\%$ on ARM64), which cancels the input-latency gain (input p99
+back near $91\%$). The static ladder thus associates later configurations with
+lower footprint and GC tail but cannot identify interactions without the
+unmeasured factorial cells; what it does establish is that the layers
+\emph{compose}---each step adds a bounded, separately attributable increment under
+one safety contract---while the $GI{\to}GIR$ refault penalty is one the static
+configuration cannot manage (the $2^4$ design is deferred, Section~\ref{sec:limitations}).
 
 \subsection{RQ2: online policy comparison}
 \label{sec:rq2}
-Figure~\ref{fig:tradeoff} plots the footprint--refault trade-off across the
-static ladder and the three online policies. The online controller is added on
-top of \textsf{Static-GIR} and does not lower
-PSS further---all three policies hold peak PSS at $76$--$78\%$ of stock, within
-each other's confidence intervals. Its measured contribution is refault
-recovery: at essentially the same footprint, the
-fault-rate index falls from $162$ (\textsf{Static-GIR}) to $132$
-(\textsf{Threshold}), $124$ (\textsf{EWMA}), and $123$ (\textsf{Ridge}), i.e.\
-the controllers claw back roughly two-thirds of the reclamation-induced
-refaults while simultaneously taking input p99 to its lowest values
-($85\%$, $83\%$, $81\%$). Among policies the ordering is consistent but the
-margins are small: \textsf{Ridge-GIR} gives the best GC p99 ($62\%$ vs.\ EWMA
-$65\%$) and input p99 ($81\%$ vs.\ EWMA $83\%$), but at $1.11\%$ controller CPU
-versus $0.70\%$ for EWMA and $0.51\%$ for the non-learning threshold. The learned
-policy is numerically lower on these latency metrics than a tuned threshold at
-roughly twice the controller cost. Direct Ridge--EWMA difference intervals
-(unpaired bootstrap) include zero for ARM32 GC p99 and ARM64 input p99 but
-exclude it for ARM32 input p99 and ARM64 GC p99; consistent with our fail-closed
-stance, the threshold policy remains a defensible default when CPU headroom is
-tight.
+Added on top of \textsf{Static-GIR}, the online controller does not lower PSS
+further (all three policies hold peak PSS at $76$--$78\%$ of stock, within each
+other's intervals); its measured contribution is refault recovery. At the same
+footprint the fault-rate index falls from $162$ (\textsf{Static-GIR}) to $132$,
+$124$, and $123$ for Threshold, EWMA, and Ridge---roughly two-thirds of the
+reclamation-induced refaults clawed back---while input p99 reaches its lowest
+values ($85/83/81\%$). The ordering is consistent but the margins are small:
+\textsf{Ridge-GIR} gives the best GC p99 ($62\%$ vs.\ EWMA $65\%$) and input p99
+($81\%$ vs.\ $83\%$) at $1.11\%$ controller CPU versus $0.70\%$ (EWMA) and
+$0.51\%$ (threshold). Direct Ridge--EWMA difference intervals (unpaired bootstrap)
+include zero for ARM32 GC p99 and ARM64 input p99 but exclude it for ARM32 input
+p99 and ARM64 GC p99; the non-learning threshold thus remains a defensible default
+when CPU headroom is tight.
 
 \subsection{RQ3: robustness across workload regimes}
 \label{sec:rq3}
-Figure~\ref{fig:regimes} places \textsf{Ridge-GIR} in all three regimes. In the
-favorable regime it is a clear win (PSS $76$, fault $123$, input $81$). In the
-neutral regime, where no cold reclaimable pages exist, every index sits within
-$\pm2$ of $100$ (PSS $101$, fault $101$, input $99$): the design neither helps
-nor harms, and its only cost is $\approx1.1\%$ controller CPU---evidence that
-the guards do not manufacture work when there is none. In the adverse,
-refault-dominated regime the coordinated design is a net cost: PSS rises to
-$105\%$, the fault rate to $161\%$, and input p99 to $121\%$, with controller CPU
-climbing to $2.2\%$ as the gate and cooldown fight the workload. The observed regression is about $+5\%$ PSS and $+20\%$ input p99; the online
-guards alone do not eliminate it, and the adverse regime is exactly the case a
-deployment must detect and where reclamation should be disabled outright.
+Table~\ref{tab:policy-index} places \textsf{Ridge-GIR} in all three regimes. It is
+a clear win in the favorable regime (PSS $76$, fault $123$, input $81$). In the
+neutral regime, with no cold reclaimable pages, every index sits within $\pm2$ of
+$100$ (PSS $101$, fault $101$, input $99$) at only $\approx1.1\%$ controller
+CPU---the guards do not manufacture work when there is none. In the adverse,
+refault-dominated regime the design is a net cost (PSS $105\%$, fault $161\%$,
+input p99 $121\%$, controller CPU $2.2\%$): the online guards alone do not
+eliminate the regression, and this is exactly the case a deployment must detect
+and disable reclamation outright.
 
 Table~\ref{tab:supervisor} measures that detection directly. Enabling the
 AdverseShutdown supervisor (\textsf{Ridge-GIR-sup}) latches reclamation off after
@@ -702,27 +610,21 @@ the deployment-relevant guarantee.
 \subsection{Discussion}
 \label{sec:discussion}
 Three findings follow. First, footprint and refault behavior are governed by
-\emph{different} layers: the static heap/interop/reclamation stack sets peak PSS
-and GC tail, while the online controller almost exclusively governs the refault
-rate and input latency. Reporting a single ``SAGE-MM improvement'' would blur
-this; the ablation shows that removing reclamation removes most of the footprint
-benefit, and removing the controller removes most of the refault safety.
-Second, the learned policy is numerically better than a tuned threshold on
-the reported latency means, but the effect is small and comes with a measurable CPU cost, which supports treating the ridge model as
-an option to be justified per deployment rather than as a default; the
-controller contribution is the interchangeable policy slot inside a fixed safety
-envelope, with the non-learning threshold as the recommended default and ridge
-as one instantiation whose modest margin is measured, not assumed. Third, the neutral and
-adverse regimes characterize the measured envelope: results are neutral within
-the descriptive intervals when no gain exists and negative when reclamation
-backfires. The supervisor treats the adverse regime as a detection
-target for disabling reclamation, and Section~\ref{sec:rq3}
-(Table~\ref{tab:supervisor}) measures that it contains the regression toward the
-baseline---detecting within seconds, halving controller CPU, and eliminating the
-OOM events---rather than leaving the adverse case unhandled. The ARM32
-and ARM64 profiles agree throughout, which strengthens internal validity across
-these two profiles but does not by itself establish generality to other devices
-or runtimes (Section~\ref{sec:threats}).
+\emph{different} layers---the static heap/interop/reclamation stack sets peak PSS
+and GC tail, the online controller almost exclusively governs refault rate and
+input latency---so a single ``SAGE-MM improvement'' would blur the design:
+removing reclamation removes most of the footprint benefit, removing the
+controller most of the refault safety. Second, the learned policy is numerically
+better than a tuned threshold on the reported latency means, but the effect is
+small and carries a measurable CPU cost, so ridge is best treated as an option
+justified per deployment inside a fixed safety envelope, with the non-learning
+threshold the recommended default. Third, the neutral and adverse regimes
+characterize the measured envelope---neutral within the descriptive intervals
+when no gain exists, negative when reclamation backfires, with the supervisor
+containing the adverse regression rather than leaving it unhandled. The ARM32 and
+ARM64 profiles agree throughout, strengthening internal validity across these two
+builds without establishing generality to other devices or runtimes
+(Section~\ref{sec:threats}).
 
 %% =====================================================================
 \section{Related Work}
@@ -734,14 +636,14 @@ boundary, assessed on real devices.
 
 \emph{GC, heap sizing, and virtual-memory interaction.} Automatic memory
 management has a deep literature---generational and region/pause-oriented
-collection~\cite{ungar1984scavenging,appel1989generational,boehm1988uncooperative,
-blackburn2008immix,detlefs2004g1,bacon2003metronome}, the collected-versus-explicit
-trade-off~\cite{hertz2005quantifying}, textbook surveys~\cite{jones1996gc,
-jones2011handbook}, and the allocation layer beneath it~\cite{wilson1995survey,
-berger2002reconsidering}. Because heap footprint depends strongly on the memory
+collection~\cite{detlefs2004g1}, the
+collected-versus-explicit
+trade-off, textbook surveys, and the allocation layer beneath
+it~\cite{wilson1995survey}. Because heap
+footprint depends strongly on the memory
 given to the collector, controlling heap growth and selecting or sizing the
-collector are established levers~\cite{brecht2006heapgrowth,soman2004dynamic,
-stefanovic1999age}. The footprint-versus-refault tension SAGE-MM manages is the
+collector are established levers~\cite{brecht2006heapgrowth}. The
+footprint-versus-refault tension SAGE-MM manages is the
 one studied when a collector competes with the pager: bookmarking
 collection~\cite{hertz2005paging}, feedback-driven heap
 sizing~\cite{grzegorczyk2007islavista}, and VM-aware collector
@@ -754,7 +656,7 @@ in fixed embedded firmware.
 \emph{Tail-oriented collectors and learned controllers.} Advanced collectors such
 as LXR~\cite{lxr2022} and Platinum~\cite{platinum2020} change collection itself to
 attack GC tail latency, a first-order concern for interactive and data-parallel
-services~\cite{dean2013tail,maas2015trashday,lion2016coldjvm}; SAGE-MM introduces
+services~\cite{dean2013tail}; SAGE-MM introduces
 no collector but coordinates an existing one with process-level actions, and
 claims no superiority over collectors that cannot be ported to the vendor
 firmware. Among controllers we compare fixed intervals, a tuned threshold, EWMA,
@@ -768,8 +670,8 @@ tuned threshold.
 
 \emph{Reclamation, page ranking, and interop.} Our coldness score ranks mappings
 by recency, frequency, and size, echoing working-set
-models~\cite{denning1968working,carr1981wsclock}, recency/frequency
-replacement~\cite{jiang2002lirs,megiddo2003arc,zhou2001multiqueue}, flash/device-aware
+models~\cite{denning1968working}, recency/frequency
+replacement~\cite{jiang2002lirs}, flash/device-aware
 variants~\cite{park2006cflru}, and host/guest reclamation such as
 ballooning~\cite{waldspurger2002esx}; its differentiator is coldness-ranked,
 budget-driven selection with a hot-reuse exclusion and fail-closed guards,

@@ -529,7 +529,12 @@ def main():
     # manuscript; the Ridge-EWMA difference intervals are stated in the RQ2 prose.
     if pol:
         parts.append(policy_table(pol))
-        figures(pol)
+    # Result figures are omitted from the page-limited (8-page) manuscript; the
+    # normalized policy-index and supervisor tables carry the results. The
+    # figures() generator is retained but no longer emitted or \input.
+    with open(os.path.join(GEN, "measured-figures.tex"), "w") as fh:
+        fh.write("% Result figures omitted from the page-limited manuscript; "
+                 "not \\input.\n")
     parts.append(
         r"\noindent\textit{Reading note.} Each reported value is the mean of "
         r"run-level values over $n{=}30$ independent runs with a two-sided 95\% "
