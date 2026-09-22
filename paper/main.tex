@@ -65,7 +65,8 @@ measurement provenance. Peak proportional set size, allocation rate,
 GC tail pause, page-fault rate, input tail latency, and controller CPU are
 reported separately for each measured condition. Failed and censored runs
 remain in the run inventory. \MeasurementAbstract{}
-On identical Raspberry~Pi~4 Model~B hardware in 32- and 64-bit builds (a
+On identical Raspberry~Pi~4 Model~B hardware---an official Tizen reference board
+running the actual Tizen DTV platform---in 32- and 64-bit builds (a
 controlled ISA comparison on one SoC) under a $512$\,MiB swapless budget, across
 $30$ independent runs per condition, the fully coordinated design lowers
 peak proportional set size by about $24\%$ and GC tail pause by $37$--$38\%$ under
@@ -373,7 +374,11 @@ latency: if $P_f>P_{\mathrm{high}}$ and $L_{\mathrm{input}}>L_{\mathrm{SLO}}$ fo
 $N$ consecutive intervals it latches reclamation off, enables compaction, clears
 pending learning, and records \textsf{AdverseShutdown}; reclamation resumes only
 after both signals stay below lower hysteresis thresholds for $M$ intervals (or an
-operator reset). This guard, prompted by the adverse result, is evaluated directly
+operator reset). The reported runs use $P_{\mathrm{high}}{=}120$\,faults/s,
+$L_{\mathrm{SLO}}{=}90$\,ms, $N{=}3$ (a ${\approx}1$\,s cadence), and $M{=}10$, set
+between the measured Stock and adverse fault/latency levels so the guard fires on
+both platforms' adverse regime but not on Stock. This guard, prompted by
+the adverse result, is evaluated directly
 in Section~\ref{sec:rq3} (Table~\ref{tab:supervisor}): it detects the adverse
 regime within seconds and contains the regression toward the Stock baseline.
 
@@ -431,11 +436,12 @@ Each result subsection (\S\ref{sec:results}) reports under this same grouping,
 so every reported number traces back to a stated question.
 
 \subsection{Platforms and workloads}
-The Raspberry~Pi~4 Model~B serves as an open, reproducible memory-constrained ARM
-stand-in for DTV/set-top-box firmware---the same class of quad-core Cortex-A
-application processor, a cost-driven DRAM budget (here enforced by a cgroup
-limit), and the same managed-runtime-on-Linux software stack---rather than a
-production DTV; transfer to a specific vendor SoC is future validation
+The Raspberry~Pi~4 Model~B is one of the official Tizen reference boards, and we
+reproduced the \emph{actual} Tizen DTV platform on it: the measured firmware is a
+Tizen~10.0 DTV image and its managed runtime, not a generic Linux stack, on an
+ARM Cortex-A processor under a cost-driven, cgroup-enforced DRAM budget---a
+faithful, openly reproducible DTV-class target rather than a bespoke dev-board
+setup. Measuring a physically distinct vendor DTV SoC remains future validation
 (Section~\ref{sec:threats}).
 Each platform entry identifies an actual device with its physical and cgroup
 memory, swap configuration, storage, kernel, runtime commit, patch and image

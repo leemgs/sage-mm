@@ -37,9 +37,13 @@ explicit non-learning threshold fallback.
 
 The work sits squarely in the journal's scope: it concerns the engineering of
 mass-market consumer-electronics firmware, targeting DTV/set-top-box memory
-behavior on real ARM platforms, and treats memory, user-facing latency, and
-on-device reliability as a joint consumer-device design problem rather than a
-language-runtime detail.
+behavior, and treats memory, user-facing latency, and on-device reliability as a
+joint consumer-device design problem rather than a language-runtime detail.
+Crucially, the evaluation is not run on a generic developer board: the Raspberry
+Pi 4 Model B is one of the **official Tizen reference boards**, and we set up and
+reproduced the **actual Tizen DTV platform** (a Tizen 10.0 DTV image and its
+managed runtime) on it, so the measurements are taken on a faithful, openly
+reproducible DTV-class target.
 
 ## Principal contributions and measured findings
 
@@ -47,12 +51,13 @@ language-runtime detail.
   online interventions, so that only the controller adapts at runtime.
 - An implementable controller with a causal (prequential) update order, bounded
   actions, and fail-closed guards.
-- A measured ablation and policy comparison over the coordination ladder on two
-  ISA/runtime builds of one consumer-class ARM board, with 30 independent runs
-  per condition and 95% percentile bootstrap confidence intervals. Under a
-  favorable workload the fully coordinated policy lowers peak PSS by about 24%
-  and GC tail pause by 37–38% at roughly 1% controller CPU, and the online
-  controller recovers most of the refault cost introduced by static reclamation.
+- A measured ablation and policy comparison over the coordination ladder on the
+  reproduced Tizen DTV platform, evaluated across its 32- and 64-bit ISA/runtime
+  builds, with 30 independent runs per condition and 95% percentile bootstrap
+  confidence intervals. Under a favorable workload the fully coordinated design
+  lowers peak PSS by about 24% and GC tail pause by 37–38% (set by the static
+  layers) while the online controller recovers most of the refault cost of static
+  reclamation at roughly 1% controller CPU.
 - A robustness study across favorable, neutral, and adverse workload regimes
   showing the design is fail-safe where no gain exists and only bounded-negative
   where reclamation backfires, with an adverse-regime supervisor that detects the
