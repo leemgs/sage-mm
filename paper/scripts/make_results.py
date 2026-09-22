@@ -307,47 +307,7 @@ def figures(rows):
     # Ablation-ladder figure dropped for the page-limited manuscript; the
     # ladder's normalized indices are in the policy-index table and RQ1 prose.
 
-    # ---- Figure 2: PSS vs fault tradeoff (favorable regime) ----
-    marks = " ".join(
-        f"({m[('planning_hypothesis', t)]['peak_pss_index']:.1f},"
-        f"{m[('planning_hypothesis', t)]['fault_rate_index']:.1f})"
-        for t in treats)
-    # Per-point label anchors, hand-placed so the clustered controller points
-    # (Thr/EWMA/Ridge) do not overlap.
-    anchors = {"Stock": "west", "S-G": "north", "S-GI": "north",
-               "S-GIR": "south west", "Thr": "west", "EWMA": "east",
-               "Ridge": "north"}
-    nodes = "\n".join(
-        r"  \node[anchor=%s, font=\tiny, inner sep=1.5pt] at "
-        r"(axis cs:%.1f,%.1f) {%s};" % (
-            anchors.get(short[t], "west"),
-            m[("planning_hypothesis", t)]["peak_pss_index"],
-            m[("planning_hypothesis", t)]["fault_rate_index"], short[t])
-        for t in treats)
-    out.append(r"""\begin{figure}[t]
-  \centering
-  \begin{tikzpicture}
-  \begin{axis}[
-    width=\linewidth, height=5.6cm,
-    xlabel={Peak PSS index (Stock${=}100$; lower is better)},
-    ylabel={Fault-rate index}, xlabel style={font=\scriptsize},
-    ylabel style={font=\scriptsize}, tick label style={font=\scriptsize},
-    xmin=72, xmax=106, ymin=88, ymax=178, grid=both,
-    major grid style={dotted}]
-  \addplot[only marks, mark=*, mark size=1.6pt, color=blue!60!black]
-    coordinates {%s};
-%s
-  \end{axis}
-  \end{tikzpicture}
-  \caption{Footprint--refault tradeoff under the favorable workload. Static
-  reclamation ($\textsf{S-GIR}$) buys the lowest PSS at a large refault
-  penalty; the online controllers recover most of that penalty at nearly the
-  same PSS, i.e.\ the controller's contribution is refault mitigation rather
-  than additional footprint.}
-  \label{fig:tradeoff}
-\end{figure}""" % (marks, nodes))
-
-    # ---- Figure 3: cross-regime robustness for Ridge-GIR ----
+    # ---- Cross-regime robustness for Ridge-GIR (single restored figure) ----
     regimes = [("planning_hypothesis", "Favorable"), ("no_benefit", "Neutral"),
                ("regression", "Adverse")]
     regimes = [(s, lab) for s, lab in regimes if (s, "Ridge-GIR") in m]
@@ -529,12 +489,9 @@ def main():
     # manuscript; the Ridge-EWMA difference intervals are stated in the RQ2 prose.
     if pol:
         parts.append(policy_table(pol))
-    # Result figures are omitted from the page-limited (8-page) manuscript; the
-    # normalized policy-index and supervisor tables carry the results. The
-    # figures() generator is retained but no longer emitted or \input.
-    with open(os.path.join(GEN, "measured-figures.tex"), "w") as fh:
-        fh.write("% Result figures omitted from the page-limited manuscript; "
-                 "not \\input.\n")
+        # One result figure is restored (cross-regime robustness); the ablation
+        # and footprint-refault figures remain omitted for the page limit.
+        figures(pol)
     parts.append(
         r"\noindent\textit{Reading note.} Each reported value is the mean of "
         r"run-level values over $n{=}30$ independent runs with a two-sided 95\% "

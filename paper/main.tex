@@ -17,6 +17,8 @@
 \usepackage{microtype}
 \usepackage{xurl}
 \usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
 %% Absorb the last few points of over-long lines (long compound words, URLs)
 %% without altering wording; microtype protrusion handles the rest.
 \setlength{\emergencystretch}{3em}
@@ -65,10 +67,11 @@ reported separately for each measured condition. Failed and censored runs
 remain in the run inventory. \MeasurementAbstract{}
 On identical Raspberry~Pi~4 Model~B hardware in 32- and 64-bit builds (a
 controlled ISA comparison on one SoC) under a $512$\,MiB swapless budget, across
-$30$ independent runs per condition, the fully coordinated learned policy lowers
-peak proportional set size by about
-$24\%$ and GC tail pause by $37$--$38\%$ under a favorable workload, at the cost
-of a bounded refault increase and roughly $1\%$ controller CPU; the same design
+$30$ independent runs per condition, the fully coordinated design lowers
+peak proportional set size by about $24\%$ and GC tail pause by $37$--$38\%$ under
+a favorable workload---set by the static heap, interop, and reclamation
+layers---while the online controller recovers most of the reclamation-induced
+refaults at roughly $1\%$ controller CPU; the same design
 stays within measurement noise of the stock runtime when no gain is available,
 and in an adverse refault-dominated workload it regresses within a bounded
 margin that an adverse-regime supervisor detects within seconds and contains
@@ -216,28 +219,8 @@ heterogeneous runtime and OS signals into a dimensionless pressure contract;
 prediction, actuation, and learning causally; and (v) place fail-closed and
 supervisory guards outside the interchangeable policy. This decomposition lets
 a threshold, EWMA, or ridge policy be replaced without changing mapping
-eligibility or the safety envelope. Table~\ref{tab:novelty} distinguishes that
-coordination contract from independent tuning.
-
-\begin{table*}[t]
-  \caption{Architectural novelty relative to independently applied mechanisms.}
-  \label{tab:novelty}
-  \small
-  \begin{tabular}{@{}p{2.6cm}p{2.6cm}p{5.5cm}@{}}
-    \toprule
-    \textbf{Existing approach} & \textbf{Usual scope} & \textbf{SAGE-MM distinction} \\
-    \midrule
-    Heap sizing & Runtime/GC & Recorded static budget decision upstream of a
-      shared runtime/OS controller. \\
-    VM-aware GC & Heap $\leftrightarrow$ VM & Also controls an executable
-      working set outside the managed heap. \\
-    \texttt{madvise} reclamation & OS/application & Latency- and
-      reuse-aware scheduling with eligibility and shutdown guards. \\
-    ML controller & Generic policy & Interchangeable policy inside a bounded
-      embedded action and failure contract. \\
-    \bottomrule
-  \end{tabular}
-\end{table*}
+eligibility or the safety envelope, which is what distinguishes the coordination
+contract (Table~\ref{tab:boundary}) from independently applied mechanisms.
 
 \begin{table*}[t]
   \caption{Cross-layer action boundary. Only the online policy adapts at
@@ -448,6 +431,12 @@ Each result subsection (\S\ref{sec:results}) reports under this same grouping,
 so every reported number traces back to a stated question.
 
 \subsection{Platforms and workloads}
+The Raspberry~Pi~4 Model~B serves as an open, reproducible memory-constrained ARM
+stand-in for DTV/set-top-box firmware---the same class of quad-core Cortex-A
+application processor, a cost-driven DRAM budget (here enforced by a cgroup
+limit), and the same managed-runtime-on-Linux software stack---rather than a
+production DTV; transfer to a specific vendor SoC is future validation
+(Section~\ref{sec:threats}).
 Each platform entry identifies an actual device with its physical and cgroup
 memory, swap configuration, storage, kernel, runtime commit, patch and image
 hashes, compiler flags, and thermal/power/network policy; nothing is inferred
@@ -520,7 +509,7 @@ zero are described only as numerical differences.
 \paragraph{Measurement provenance.}
 The released bundle provides per-run values for every metric, condition, and
 run index, together with run-level summary statistics and the normalized policy
-indices from which the tables and figures in this section are generated; a fixed
+indices from which the tables and figure in this section are generated; a fixed
 seed records the workload configuration. The build pipeline regenerates every
 table and figure directly from the per-run values---computing each reported mean
 and its $95\%$ percentile bootstrap confidence interval---and is fail-closed: it
@@ -583,7 +572,9 @@ when CPU headroom is tight.
 
 \subsection{RQ3: robustness across workload regimes}
 \label{sec:rq3}
-Table~\ref{tab:policy-index} places \textsf{Ridge-GIR} in all three regimes. It is
+\input{measured/measured-figures}
+Figure~\ref{fig:regimes} and Table~\ref{tab:policy-index} place \textsf{Ridge-GIR}
+in all three regimes. It is
 a clear win in the favorable regime (PSS $76$, fault $123$, input $81$). In the
 neutral regime, with no cold reclaimable pages, every index sits within $\pm2$ of
 $100$ (PSS $101$, fault $101$, input $99$) at only $\approx1.1\%$ controller
