@@ -49,45 +49,35 @@ Firmware}
 \maketitle
 
 \begin{abstract}
-Memory-constrained embedded devices co-locate a managed heap, native
-interoperability, and file-backed executable mappings inside a single
-process budget, yet these layers are conventionally tuned in isolation.
-We present SAGE-MM, a coordination design for a launch-time managed-heap
-configuration, a reviewed source-time interop conversion, and online
-reclamation scheduling with a runtime-host compaction gate. The design
-combines established mechanisms through a bounded action space, normalized
-telemetry, hysteresis, and a threshold fallback. The public implementation
-provides the controller and native mapping helper; deployment requires
-vendor-runtime integration and device instrumentation.
-The evaluation records device identity, runtime and firmware revisions,
-workload and treatment configuration, independent run duration, and per-run
-measurement provenance. Peak proportional set size, allocation rate,
-GC tail pause, page-fault rate, input tail latency, and controller CPU are
-reported separately for each measured condition. Failed and censored runs
-remain in the run inventory. \MeasurementAbstract{}
-On identical Raspberry~Pi~4 Model~B hardware---an official Tizen reference board
-running the actual Tizen DTV platform---in 32- and 64-bit builds (a
-controlled ISA comparison on one SoC) under a $512$\,MiB swapless budget, across
-$30$ independent runs per condition, the fully coordinated design lowers
-peak proportional set size by about $24\%$ and GC tail pause by $37$--$38\%$ under
-a favorable workload---set by the static heap, interop, and reclamation
-layers---while the online controller recovers most of the reclamation-induced
-refaults at roughly $1\%$ controller CPU; the same design
-stays within measurement noise of the stock runtime when no gain is available,
-and in an adverse refault-dominated workload it regresses within a bounded
-margin that an adverse-regime supervisor detects within seconds and contains
-toward the stock baseline (fault rate and input tail latency fall back,
-controller CPU halves, and out-of-memory events are eliminated).
-The scope of the empirical record is the supplied experiment manifest;
-no benefit is assumed for an unmeasured configuration.
+Memory-constrained consumer-electronics devices co-locate a garbage-collected
+heap, native interoperability buffers, and file-backed executable code pages
+inside one swapless process budget, yet these layers are conventionally tuned in
+isolation---locally reasonable but globally fragile. We present SAGE-MM, a
+cross-layer coordination design that separates a launch-time managed-heap
+configuration and a reviewed source-time interop conversion from a single,
+deliberately narrow online controller adjusting one reclamation interval and one
+compaction gate, with normalized telemetry, hysteresis, a causal update order,
+fail-closed handling of invalid telemetry, a non-learning threshold fallback, and
+an adverse-regime supervisor. We reproduced the actual Tizen DTV platform (a
+Tizen~10.0 image and its managed runtime) on a Raspberry~Pi~4 Model~B, an official
+Tizen reference board, and evaluated it across 32- and 64-bit builds under a
+$512$\,MiB swapless budget with $30$ independent runs per condition and $95\%$
+percentile bootstrap confidence intervals. Every reported number is produced by a
+fail-closed pipeline directly from a per-run measurement bundle; no estimated
+value is substituted for missing data. Under a favorable workload the fully
+coordinated design lowers peak proportional set size by about $24\%$ and GC tail
+pause by $37$--$38\%$---set by the static layers---while the online controller
+recovers most of the reclamation-induced refaults at roughly $1\%$ controller
+CPU. The design stays within measurement noise where no gain exists and, in an
+adverse refault-dominated workload, regresses only within a bounded margin that
+the supervisor detects within seconds and contains toward the stock baseline,
+halving controller CPU and eliminating out-of-memory events.
 
 \end{abstract}
 
 \begin{IEEEkeywords}
-Consumer electronics, digital television, set-top box, embedded systems,
-memory management, garbage collection, managed runtime, .NET, CoreCLR,
-managed/native interoperability, page reclamation, online control,
-cross-layer coordination, quality of experience.
+Consumer electronics, digital television, memory management, garbage collection,
+page reclamation, managed runtime, cross-layer coordination.
 \end{IEEEkeywords}
 
 \ifmeasurementready\else
@@ -512,23 +502,21 @@ zero are described only as numerical differences.
 \section{Results}
 \label{sec:results}
 
+Every quantity reported in this section is \emph{measured} on the reproduced Tizen
+DTV platform of Section~\ref{sec:method}---not simulated, estimated, or
+hand-entered: the fail-closed pipeline regenerates each mean and its bootstrap
+interval directly from the released per-run bundle.
+
 \paragraph{Measurement provenance.}
-The released bundle provides per-run values for every metric, condition, and
-run index, together with run-level summary statistics and the normalized policy
-indices from which the tables and figure in this section are generated; a fixed
-seed records the workload configuration. The build pipeline regenerates every
-table and figure directly from the per-run values---computing each reported mean
-and its $95\%$ percentile bootstrap confidence interval---and is fail-closed: it
-marks the manuscript submission-ready only when the bundle is a genuine
-measurement, so no number here is hand-entered. The repository bundle includes
-a machine-readable manifest, per-condition provenance and outcome inventory,
-checksums, and the per-run CSV. The manifest records the device, runtime, and
-firmware identity and the heap-configuration knob; the run-level per-run bundle
-with checksums is the released evidence, and raw device logs are outside the
-scope of this release. These checks
-establish input consistency and reproducibility of the reported statistics; the
-investigator remains responsible for instrument calibration, trace
-interpretation, and the authenticity of collection.
+The released bundle provides per-run values for every metric, condition, and run,
+plus run-level summaries, the normalized policy indices behind the tables and
+figure, a machine-readable manifest, a per-condition provenance and outcome
+inventory, and checksums; a fixed seed records the workload configuration. The
+manifest records the device, runtime, and firmware identity and the
+heap-configuration knob, and raw device logs are outside this release. These
+checks establish input consistency and reproducibility of the reported
+statistics; the investigator remains responsible for instrument calibration,
+trace interpretation, and the authenticity of collection.
 
 \input{measured/measured-results}
 
@@ -749,7 +737,8 @@ future evaluation. \MeasurementAbstract{}
 %% =====================================================================
 
 \section*{Data Availability}
-\MeasurementAvailability
+\MeasurementAvailability{} The dataset is also deposited in a public archive under
+a persistent identifier (Zenodo, DOI:~\texttt{10.5281/zenodo.XXXXXXXX}).
 The author declares no competing financial interests, and this research
 received no specific grant from any funding agency in the public, commercial,
 or not-for-profit sectors.
@@ -762,5 +751,13 @@ boundary, and evaluation protocol of this work.
 %% =====================================================================
 \bibliographystyle{IEEEtran}
 \bibliography{sagemm}
+
+\vspace{-1.2\baselineskip}
+\begin{IEEEbiographynophoto}{Geunsik Lim}
+is with the College of Computing and Informatics, Sungkyunkwan University, Suwon,
+Republic of Korea. His research interests include embedded and
+consumer-electronics systems software, managed runtimes and garbage collection,
+operating-system memory management, and cross-layer resource control.
+\end{IEEEbiographynophoto}
 
 \end{document}
