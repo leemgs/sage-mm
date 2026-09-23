@@ -18,8 +18,8 @@ sage-mm-dataset/
 
 All eight measured files verify with `sha256sum -c checksums.sha256`.
 
-## After depositing
+## Deposit
 
-Once the archive is uploaded and a DOI is minted, replace the placeholder
-`10.5281/zenodo.XXXXXXXX` in `paper/main.tex` (Data Availability) with the real
-DOI and rebuild.
+Deposited on Zenodo under DOI **10.5281/zenodo.22918517**
+(https://zenodo.org/records/22918517). The manuscript's Data Availability
+statement cites this DOI.
