@@ -19,6 +19,7 @@
 \usepackage{xcolor}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
+\usepackage{orcidlink}   % ORCID icon in the author block (pulls in hyperref)
 %% Absorb the last few points of over-long lines (long compound words, URLs)
 %% without altering wording; microtype protrusion handles the rest.
 \setlength{\emergencystretch}{3em}
@@ -35,9 +36,10 @@
 Page Reclamation in Memory-Constrained Consumer-Electronics \mbox{.NET}
 Firmware}
 
-\author{Geunsik~Lim%
-  \thanks{G. Lim is with the College of Computing and Informatics,
-  Sungkyunkwan University, Suwon 16419, Republic of Korea
+\author{Geunsik~Lim~\orcidlink{0000-0003-1845-7132},~\IEEEmembership{Student
+  Member,~IEEE}%
+  \thanks{G. Lim is with the Department of Electrical and Computer Engineering,
+  Sungkyunkwan University, Suwon, Republic of Korea
   (e-mail: leemgs@g.skku.edu).}%
   \thanks{Every reported number is produced by a fail-closed measurement
   pipeline directly from a per-run bundle; no estimated or predicted value is
@@ -754,10 +756,14 @@ boundary, and evaluation protocol of this work.
 
 \vspace{-1.2\baselineskip}
 \begin{IEEEbiographynophoto}{Geunsik Lim}
-is with the College of Computing and Informatics, Sungkyunkwan University, Suwon,
-Republic of Korea. His research interests include embedded and
-consumer-electronics systems software, managed runtimes and garbage collection,
-operating-system memory management, and cross-layer resource control.
+received the B.S. degree in computer science and engineering from Ajou
+University, South Korea, in 2003, and the M.S. degree from the College of
+Information and Communication Engineering, Sungkyunkwan University, South Korea,
+in 2014, where he is currently pursuing the Ph.D. degree in the Department of
+Electrical and Computer Engineering. He is also a principal software engineer
+with Samsung Electronics, South Korea. His research interests include system
+optimization, operating systems, software platforms, embedded and
+consumer-electronics systems, and on-device artificial intelligence.
 \end{IEEEbiographynophoto}
 
 \end{document}
