@@ -271,6 +271,11 @@ guarded reclamation path; only the control path adapts online.
 \subsection{Static interventions}
 \label{sec:static}
 
+The two static interventions run ahead of any online control and only reduce the
+load the controller later sees: \emph{(a)}~an architecture-specific heap
+configuration fixed at firmware/launch time, and \emph{(b)}~a reviewed
+source-time value-type interop conversion. Neither adapts at runtime.
+
 \paragraph{Architecture-specific heap configuration.}
 A heap-configuration experiment records the gen0 nursery budget
 (\texttt{DOTNET\_GCgen0size}), compiler flags, source revision, and patch hash
