@@ -181,7 +181,7 @@ from a marketing label: the platform manifest identifies physical and cgroup
 memory, swap configuration, storage, kernel, firmware, and the exact runtime
 revision---here .NET~8 (CoreCLR)~8.0.11; Mono and CoreCLR are distinct
 implementations, so the collector and vendor patches are recorded
-explicitly~\cite{monoruntime}---and OOM/watchdog outcomes are kept in a failure
+explicitly~\cite{snowflake2017}---and OOM/watchdog outcomes are kept in a failure
 inventory. Three cross-layer tensions motivate coordination and are all
 \emph{measured}, not assumed: a larger nursery trades collection frequency
 against resident footprint; value-type interop conversion removes managed
@@ -282,7 +282,7 @@ across the managed/native boundary. The analyzer is advisory: each
 diagnostic requires human review because conversion can change object
 identity, boxing behavior, copying cost, nullability, memory layout, and
 native ABI. It must not be described as requiring no application
-modification~\cite{dotnetinterop}. RQ2 measures allocation rate, copying
+modification~\cite{xlang2018}. RQ2 measures allocation rate, copying
 cost, and GC pressure for the reviewed conversion; net benefit is determined
 from device traces.
 
@@ -392,7 +392,7 @@ exclusion as the hot-reuse guard. The native helper accepts only private
 rejects anonymous, writable, shared, and deleted-file mappings;
 \texttt{madvise(MADV\_DONTNEED)} never unmaps (a later access refaults the file),
 each syscall result is checked, and callers retain the mapping on
-failure~\cite{madvise}. Because \texttt{maps} lacks per-page residency, a
+failure~\cite{farmem2019}. Because \texttt{maps} lacks per-page residency, a
 production port must additionally verify \texttt{Private\_Clean} from
 \texttt{smaps}, use \texttt{mincore}, serialize against unload, and allowlist
 executable modules.
@@ -664,7 +664,7 @@ ballooning~\cite{waldspurger2002esx}; its differentiator is coldness-ranked,
 budget-driven selection with a hot-reuse exclusion and fail-closed guards,
 evaluated for refault cost rather than assumed safe. Finally, we distinguish
 ABI/source interop transformations (value-type conversion, which requires
-ownership review and recompilation~\cite{dotnetinterop}) from transparent runtime
+ownership review and recompilation~\cite{xlang2018}) from transparent runtime
 optimization.
 
 %% =====================================================================
