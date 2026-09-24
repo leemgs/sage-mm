@@ -722,9 +722,10 @@ a production-stability or per-architecture-tuning claim.
 \section{Conclusion}
 \label{sec:conclusion}
 
-SAGE-MM specifies how heap configuration, interop allocation, and clean-page
-reclamation can be coordinated under a single embedded-process memory budget
-through a narrow, safety-guarded online action, rather than tuned in isolation: a
+On memory-constrained consumer-electronics devices such as digital TVs and
+set-top boxes, SAGE-MM coordinates heap configuration, interop allocation, and
+clean-page reclamation under a single process memory budget through a narrow,
+safety-guarded online action, rather than tuning them in isolation: a
 launch-time heap decision and a source-time allocation decision are separated from
 one online policy that adjusts a single reclamation interval and compaction gate,
 with fail-closed telemetry handling and a learned policy that must justify itself
