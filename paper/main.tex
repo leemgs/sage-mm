@@ -412,14 +412,15 @@ campaign answers three questions bounded by the bundle; per-architecture heap
 sweeps, isolated interop benchmarks, and multi-hour endurance are specified below
 but reserved as future evaluation (Section~\ref{sec:limitations}).
 \begin{description}
-  \item[RQ1 (Ablation)] Along the coordination ladder---stock, heap build
-  ($G$), interop ($I$), reclamation ($R$), controller ($C$)---what sequential
-  increment does each step add for peak PSS, GC tail pause, refault rate, and
-  input tail latency on the two profiles?
-  \item[RQ2 (Policy)] Under identical bounds, telemetry, cooldown, and candidate
-  budget, does the controller recover the refault cost of static reclamation, and
-  does the learned ridge policy justify its cost over threshold and EWMA?
-  \item[RQ3 (Robustness)] Across favorable, neutral, and adverse
+  \item \textbf{RQ1 (Ablation).} Along the coordination ladder---stock, heap
+  build ($G$), interop ($I$), reclamation ($R$), controller ($C$)---what
+  sequential increment does each step add for peak PSS, GC tail pause, refault
+  rate, and input tail latency on the two profiles?
+  \item \textbf{RQ2 (Policy).} Under identical bounds, telemetry, cooldown, and
+  candidate budget, does the controller recover the refault cost of static
+  reclamation, and does the learned ridge policy justify its cost over threshold
+  and EWMA?
+  \item \textbf{RQ3 (Robustness).} Across favorable, neutral, and adverse
   (refault-dominated) regimes, does the design avoid regressions where no gain
   exists, and how large is the cost when reclamation backfires?
 \end{description}
