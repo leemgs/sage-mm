@@ -139,9 +139,8 @@ firmware/launch-time decision (a fixed \texttt{DOTNET\_GCgen0size} budget);
 value-type conversion is a reviewed source-and-recompile decision; only
 reclamation scheduling and compaction gating change online. Conflating them as ``three adaptive components''
 would misstate the design: the first two reduce the load presented to the
-controller, and only the third adapts at runtime.
-
-This paper makes four bounded contributions.
+controller, and only the third adapts at runtime. This paper makes four bounded
+contributions:
 \begin{enumerate}
   \item It specifies a cross-layer action boundary: heap sizing is a
   firmware/launch-time decision, value-type conversion is a reviewed source
