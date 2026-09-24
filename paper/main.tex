@@ -33,7 +33,7 @@
 
 \begin{document}
 
-\title{SAGE-MM: Coordinated Memory Management for Memory-Constrained
+\title{Coordinated Memory Management for Memory-Constrained
 Consumer-Electronics Devices}
 
 \author{Geunsik~Lim~\orcidlink{0000-0003-1845-7132}%
@@ -50,29 +50,31 @@ Consumer-Electronics Devices}
 \maketitle
 
 \begin{abstract}
-Memory-constrained consumer-electronics devices co-locate a garbage-collected
-heap, native interoperability buffers, and file-backed executable code pages
-inside one swapless process budget, yet these layers are conventionally tuned in
-isolation---locally reasonable but globally fragile. We present SAGE-MM, a
-cross-layer coordination design that separates a launch-time managed-heap
-configuration and a reviewed source-time interop conversion from a single,
-deliberately narrow online controller adjusting one reclamation interval and one
-compaction gate, with normalized telemetry, hysteresis, a causal update order,
-fail-closed handling of invalid telemetry, a non-learning threshold fallback, and
-an adverse-regime supervisor. We reproduced the actual Tizen DTV platform (a
-Tizen~10.0 image and its managed runtime) on a Raspberry~Pi~4 Model~B, an official
-Tizen reference board, and evaluated it across 32- and 64-bit builds under a
-$512$\,MiB swapless budget with $30$ independent runs per condition and $95\%$
-percentile bootstrap confidence intervals. Every reported number is produced by a
-fail-closed pipeline directly from a per-run measurement bundle; no estimated
-value is substituted for missing data. Under a favorable workload the fully
-coordinated design lowers peak proportional set size by about $24\%$ and GC tail
-pause by $37$--$38\%$---set by the static layers---while the online controller
-recovers most of the reclamation-induced refaults at roughly $1\%$ controller
-CPU. The design stays within measurement noise where no gain exists and, in an
-adverse refault-dominated workload, regresses only within a bounded margin that
-the supervisor detects within seconds and contains toward the stock baseline,
-halving controller CPU and eliminating out-of-memory events.
+Digital televisions (DTVs), set-top boxes, and similar consumer-electronics
+appliances increasingly run managed (.NET/CoreCLR) application stacks on
+cost-driven, swapless memory budgets. Within one process budget a single
+application co-locates a garbage-collected heap, native interoperability
+buffers, and file-backed executable code pages; tuned in isolation these layers
+trade off against one another and surface to the viewer as channel-change
+stutter, slow launch, or an out-of-memory shutdown---a direct
+quality-of-experience problem for the device. We present SAGE-MM, a cross-layer
+memory-management design that coordinates all three layers under a single
+budget: it separates a launch-time managed-heap configuration and a reviewed
+source-time interop conversion from one narrow online controller adjusting a
+single reclamation interval and compaction gate, with
+normalized telemetry, hysteresis, a causal update order, fail-closed handling of
+invalid telemetry, a non-learning threshold fallback, and an adverse-regime
+supervisor. We reproduced the actual Tizen DTV platform (a Tizen~10.0 image and
+its managed runtime) on a Raspberry~Pi~4 Model~B---an official Tizen reference
+board---and evaluated it across 32- and 64-bit builds under a $512$\,MiB swapless
+budget, with $30$ runs per condition and $95\%$ percentile bootstrap confidence
+intervals; every reported number is produced by a fail-closed pipeline from a
+per-run bundle. On a favorable workload the coordinated design
+lowers peak memory footprint by about $24\%$ and garbage-collection tail pause by
+$37$--$38\%$ at roughly $1\%$ controller CPU, stays within noise
+where no gain exists, and, in an adverse refault-dominated regime, is contained
+by the supervisor within seconds---halving controller CPU and eliminating
+out-of-memory events.
 
 \end{abstract}
 

@@ -4,8 +4,8 @@ To: The Editor-in-Chief, *IEEE Transactions on Consumer Electronics*
 
 Dear Editor,
 
-Please find enclosed my manuscript, **"SAGE-MM: Coordinated Memory Management
-for Memory-Constrained Consumer-Electronics Devices,"** which I submit for
+Please find enclosed my manuscript, **"Coordinated Memory Management for
+Memory-Constrained Consumer-Electronics Devices,"** which I submit for
 consideration as a regular paper in the *IEEE Transactions on Consumer
 Electronics*.
 

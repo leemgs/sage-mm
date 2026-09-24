@@ -2,7 +2,7 @@
 
 ## Title
 
-**SAGE-MM: Coordinated Memory Management for Memory-Constrained Consumer-Electronics Devices**
+**Coordinated Memory Management for Memory-Constrained Consumer-Electronics Devices**
 
 - Author: Geunsik Lim (Sungkyunkwan University, Suwon, South Korea)
 
