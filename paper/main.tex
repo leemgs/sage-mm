@@ -27,6 +27,7 @@
 %% IEEEtran does not define \Description (an accessibility hook used by the
 %% generated results fragments); provide a no-op so they compile.
 \providecommand{\Description}[1]{}
+\providecommand{\doi}[1]{\href{https://doi.org/#1}{#1}}
 
 \input{measured/measurement-state}
 
@@ -751,7 +752,7 @@ The author thanks the reviewers for feedback that sharpened the scope,
 boundary, and evaluation protocol of this work.
 
 %% =====================================================================
-\bibliographystyle{IEEEtran}
+\bibliographystyle{IEEEtranDOI}
 \bibliography{sagemm}
 
 \vspace{-1.2\baselineskip}
