@@ -2,7 +2,7 @@
 
 ## Title
 
-**SAGE-MM: Coordinating Heap Configuration, Interop Allocation, and Page Reclamation in Memory-Constrained Consumer-Electronics .NET Firmware**
+**SAGE-MM: Coordinated Memory Management for Memory-Constrained Consumer-Electronics Devices**
 
 - Author: Geunsik Lim (Sungkyunkwan University, Suwon, South Korea)
 

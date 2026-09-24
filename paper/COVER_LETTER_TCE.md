@@ -4,10 +4,10 @@ To: The Editor-in-Chief, *IEEE Transactions on Consumer Electronics*
 
 Dear Editor,
 
-Please find enclosed my manuscript, **"SAGE-MM: Coordinating Heap
-Configuration, Interop Allocation, and Page Reclamation in Memory-Constrained
-Consumer-Electronics .NET Firmware,"** which I submit for consideration as a
-regular paper in the *IEEE Transactions on Consumer Electronics*.
+Please find enclosed my manuscript, **"SAGE-MM: Coordinated Memory Management
+for Memory-Constrained Consumer-Electronics Devices,"** which I submit for
+consideration as a regular paper in the *IEEE Transactions on Consumer
+Electronics*.
 
 ## What the paper is about
 
