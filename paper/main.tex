@@ -117,7 +117,7 @@ direct determinants of perceived quality. Mass-market DTVs and set-top boxes
 ship with cost-driven DRAM budgets, yet viewers expect instant channel
 changes, smooth application switching, and responsive on-screen interaction.
 A GC tail pause, a burst of refaults after code-page reclamation, or an
-out-of-memory kill during app switching surfaces to the user as a stutter, a
+out-of-memory (OOM) kill during app switching surfaces to the user as a stutter, a
 delayed launch, or a crash. Because the managed heap, interop buffers, and
 executable code pages share one swapless budget, an optimization that
 improves one layer in isolation can regress the user-visible behavior another
@@ -187,7 +187,8 @@ explicitly~\cite{snowflake2017}---and OOM/watchdog outcomes are kept in a failur
 inventory. Three cross-layer tensions motivate coordination and are all
 \emph{measured}, not assumed: a larger nursery trades collection frequency
 against resident footprint; value-type interop conversion removes managed
-allocation but shifts cost to native ABI handling and is not transparent to
+allocation but shifts cost to native application binary interface (ABI) handling
+and is not transparent to
 existing binaries; and \texttt{madvise(MADV\_DONTNEED)} on clean code pages
 lowers residency but can force refaults on immediate hot-code reuse during rapid
 application switching. Both improved and regressed measurements are retained
@@ -212,7 +213,8 @@ heterogeneous runtime and OS signals into a dimensionless pressure contract;
 (iii) restrict online authority to a bounded interval and one gate; (iv) order
 prediction, actuation, and learning causally; and (v) place fail-closed and
 supervisory guards outside the interchangeable policy. This decomposition lets
-a threshold, EWMA, or ridge policy be replaced without changing mapping
+a threshold, exponentially weighted moving average (EWMA), or ridge policy be
+replaced without changing mapping
 eligibility or the safety envelope, which is what distinguishes the coordination
 contract (Table~\ref{tab:boundary}) from independently applied mechanisms.
 
@@ -340,7 +342,8 @@ $[T_{\min},T_{\max}]$, telemetry, cooldown, and candidate budget.
 \paragraph{Causal learning.}
 The ridge prediction is computed \emph{before} its update; when the true
 $y(t{+}1)$ arrives, the controller records the prequential loss
-$[\hat{y}(t{+}1)-y(t{+}1)]^2/2$ and takes one online ridge SGD step,
+$[\hat{y}(t{+}1)-y(t{+}1)]^2/2$ and takes one online ridge stochastic gradient
+descent (SGD) step,
 \begin{equation}
 w_i(t{+}1) \leftarrow w_i(t) -
   \eta\,\bigl[x_i(t)\,(\hat{y}(t{+}1)-y(t{+}1)) + \lambda\, w_i(t)\bigr],
@@ -363,7 +366,8 @@ no-ops. The evaluation reports the frequency and outcome of every fallback class
 
 \paragraph{Adverse-regime supervisory shutdown.}
 A policy-independent supervisor watches fault pressure and end-to-end input
-latency: if $P_f>P_{\mathrm{high}}$ and $L_{\mathrm{input}}>L_{\mathrm{SLO}}$ for
+latency against a service-level objective (SLO): if $P_f>P_{\mathrm{high}}$ and
+$L_{\mathrm{input}}>L_{\mathrm{SLO}}$ for
 $N$ consecutive intervals it latches reclamation off, enables compaction, clears
 pending learning, and records \textsf{AdverseShutdown}; reclamation resumes only
 after both signals stay below lower hysteresis thresholds for $M$ intervals (or an
@@ -410,13 +414,15 @@ public reference kit's proxy signals are a wiring demo, not the device
 instrument: a device experiment supplies its own runtime GC traces,
 \texttt{smaps} samples, and compaction hook, recorded in the manifest and per-run
 bundle. The
-campaign answers three questions bounded by the bundle; per-architecture heap
+campaign answers three research questions (RQ1--RQ3) bounded by the bundle;
+per-architecture heap
 sweeps, isolated interop benchmarks, and multi-hour endurance are specified below
 but reserved as future evaluation (Section~\ref{sec:limitations}).
 \par\smallskip
 \noindent\textbf{RQ1 (Ablation).} Along the coordination ladder---stock, heap
 build ($G$), interop ($I$), reclamation ($R$), controller ($C$)---what
-sequential increment does each step add for peak PSS, GC tail pause, refault
+sequential increment does each step add for peak proportional set size (PSS), GC
+tail pause, refault
 rate, and input tail latency on the two profiles?
 
 \noindent\textbf{RQ2 (Policy).} Under identical bounds, telemetry, cooldown, and
@@ -449,7 +455,8 @@ Model~B boards with the same Broadcom BCM2711 SoC (quad-core Cortex-A72): the
 image, the \textsf{ARM32} profile a 32-bit (\texttt{armv7l}) one
 (build~\texttt{20260910.082900}). Because the Cortex-A72 executes both
 instruction sets, holding the SoC and board fixed and varying only the
-32-/64-bit kernel, image, and runtime build isolates the ISA/runtime effect and
+32-/64-bit kernel, image, and runtime build isolates the instruction-set
+architecture (ISA)/runtime effect and
 removes SoC-specification confounds---a clean ARM32-versus-ARM64 comparison, but
 by the same construction not evidence of transfer to a physically different SoC
 (Section~\ref{sec:threats}). Each profile runs under a fixed $512$\,MiB
