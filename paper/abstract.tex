@@ -1,0 +1,26 @@
+Memory-constrained embedded devices increasingly run managed (.NET/CoreCLR)
+application stacks inside a single, swapless process budget, where one
+application co-locates a garbage-collected heap, native interoperability
+buffers, and file-backed executable code pages. These three layers are
+conventionally tuned in isolation---locally reasonable but globally fragile:
+enlarging the nursery lowers collection frequency but raises footprint,
+removing managed allocations shifts cost to native marshalling, and reclaiming
+clean code pages lowers residency but can reintroduce refault-driven latency.
+We present SAGE-MM, a cross-layer memory-management design that coordinates all
+three layers under one budget: it separates a launch-time managed-heap
+configuration and a reviewed source-time interop conversion from one narrow
+online controller adjusting a single reclamation interval and compaction gate,
+with normalized telemetry, hysteresis, a causal (prequential) update order,
+fail-closed handling of invalid telemetry, a non-learning threshold fallback,
+and an adverse-regime supervisor. We evaluate SAGE-MM on a representative
+embedded managed-runtime platform---a Tizen~10.0 image and its .NET~8 (CoreCLR)
+runtime reproduced on a Raspberry~Pi~4 Model~B---across 32- and 64-bit builds
+under a $512$\,MiB swapless budget, with $30$ runs per condition and $95\%$
+percentile bootstrap confidence intervals; every reported number is produced by
+a fail-closed pipeline directly from a per-run measurement bundle. On a
+favorable workload the coordinated design lowers peak memory footprint by about
+$24\%$ and garbage-collection tail pause by $37$--$38\%$ at roughly $1\%$
+controller CPU, stays within measurement noise where no gain exists, and, in an
+adverse refault-dominated regime, is contained by the supervisor within
+seconds---halving controller CPU and eliminating the observed out-of-memory
+events.

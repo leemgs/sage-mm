@@ -1,0 +1,66 @@
+%% =====================================================================
+%% SAGE-MM --- Software: Practice and Experience (Wiley) submission
+%% Official Wiley New Journal Design class (WileyNJD-v2).
+%%
+%% The class and its support files are vendored in paper/wiley/
+%% (WileyNJD-v2.cls, NJDnatbib.sty, WileyNJD-AMA.bst, ulem.sty). The class
+%% also requires the standard `soul' package and STIX2/Lato fonts, which are
+%% present in any full TeX Live and on Overleaf's "Wiley NJD v2" template.
+%%
+%% Build:  bash paper/scripts/build-wiley.sh      (from the repo root)
+%% or on Overleaf: upload this file, paper/wiley/*, paper/measured/*,
+%% paper/sagemm.bib, and the shared fragments abstract.tex/keywords.tex/
+%% body.tex/bio.tex; set the main document to main-wiley.tex.
+%%
+%% This file shares its body with the standard build (paper/main.tex) through
+%% the same abstract.tex / keywords.tex / body.tex / bio.tex fragments, so the
+%% two stay in sync.
+%% =====================================================================
+\documentclass[STIX2COL]{WileyNJD-v2}
+
+\articletype{Research Article}%
+
+%% Packages used by the shared body that the class does not already provide.
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+%% The Wiley class manages hyperref itself; keep \orcidlink a no-op here to
+%% avoid reloading hyperref. The ORCID iD is given as text in the ORCID section.
+\providecommand{\orcidlink}[1]{}
+\providecommand{\Description}[1]{}
+\providecommand{\doi}[1]{\href{https://doi.org/#1}{#1}}
+
+\input{measured/measurement-state}
+
+\begin{document}
+
+\title{SAGE-MM: Cross-Layer Coordination of Managed Heap, Native Interop, and
+Page Reclamation for Managed Runtimes under Fixed Memory Budgets}
+
+\author[1]{Geunsik Lim}
+
+\address[1]{Department of Electrical and Computer Engineering,
+Sungkyunkwan University, Suwon, Republic of Korea}
+
+\corres{Geunsik Lim, Department of Electrical and Computer Engineering,
+Sungkyunkwan University, Suwon, Republic of Korea.
+\email{leemgs@g.skku.edu}}
+
+\abstract[Abstract]{\input{abstract}}
+
+\keywords{\input{keywords}}
+
+\maketitle
+
+\input{body}
+
+\bibliographystyle{WileyNJD-AMA}
+\bibliography{sagemm}
+
+\section*{Author Biography}
+\noindent\textbf{Geunsik Lim} \input{bio}
+
+\end{document}
