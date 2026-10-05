@@ -2,15 +2,15 @@
 
 ## Title
 
-**Coordinated Memory Management for Memory-Constrained Consumer-Electronics Devices**
+**SAGE-MM: Cross-Layer Coordination of Managed Heap, Native Interop, and Page Reclamation for Managed Runtimes under Fixed Memory Budgets**
 
 - Author: Geunsik Lim (Sungkyunkwan University, Suwon, South Korea)
 
-- Submission Target: *IEEE Transactions on Consumer Electronics*
+- Submission Target: *Software: Practice and Experience* (Wiley)
 
 ## Abstract
 
-Severely memory-constrained embedded devices (digital TVs, set-top boxes, etc.) handle the **managed heap**, **native interop**, and **file-based execution code mapping** together within a single process budget. However, these layers are conventionally tuned independently of each other; while reasonable locally, this is vulnerable overall. (e.g., growing the nursery reduces GC frequency but increases resident memory, while aggressively reclaiming code pages reduces resident memory but causes page faults and latency to spike during app switching.)
+Severely memory-constrained embedded devices running managed (.NET/CoreCLR) runtimes handle the **managed heap**, **native interop**, and **file-based execution code mapping** together within a single process budget. However, these layers are conventionally tuned independently of each other; while reasonable locally, this is vulnerable overall. (e.g., growing the nursery reduces GC frequency but increases resident memory, while aggressively reclaiming code pages reduces resident memory but causes page faults and latency to spike during app switching.)
 
 SAGE-MM is a design that **cooperatively coordinates** these three layers under a single memory budget. Its components are (1) build-time managed heap configuration, (2) reviewed source-time interop conversion, and (3) online reclamation scheduling including runtime host compression gates. The design combines existing proven mechanisms through **constrained action space, normalized telemetry, hysteresis, and threshold fallback**.
 

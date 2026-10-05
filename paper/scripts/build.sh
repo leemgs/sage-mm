@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build the SAGE-MM IEEE Transactions on Consumer Electronics (IEEEtran) PDF.
+# Build the SAGE-MM Software: Practice and Experience submission PDF
+# (single-column standard LaTeX article class).
 #
 #   bash paper/scripts/build.sh
 #
@@ -24,8 +25,8 @@ if ! command -v pdflatex >/dev/null || ! command -v bibtex >/dev/null; then
   echo "error: pdflatex and bibtex are required (install TeX Live)" >&2
   exit 2
 fi
-if ! kpsewhich IEEEtran.cls >/dev/null; then
-  echo "error: IEEEtran.cls not found (install texlive-publishers)" >&2
+if ! kpsewhich article.cls >/dev/null; then
+  echo "error: a standard LaTeX install (article.cls) is required" >&2
   exit 2
 fi
 

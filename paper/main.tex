@@ -1,13 +1,16 @@
 %% =====================================================================
-%% SAGE-MM --- IEEE Transactions on Consumer Electronics submission
-%% Template: IEEE `IEEEtran' class (journal, two-column).
+%% SAGE-MM --- Software: Practice and Experience submission
+%% Single-column manuscript (standard LaTeX `article' class). The Wiley
+%% production class (WileyNJD-v2) is applied by the publisher at the
+%% typesetting stage and is not required for submission.
 %%
 %% Measured results are generated from paper/measured/evaluation-data/.
 %% Canonical manuscript source. Edit paper/main.tex directly and build
 %% with bash paper/scripts/build.sh from the repository root.
 %% =====================================================================
-\documentclass[journal]{IEEEtran}
+\documentclass[11pt]{article}
 
+\usepackage[a4paper,margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{array}
@@ -19,13 +22,14 @@
 \usepackage{xcolor}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
-\usepackage{orcidlink}   % ORCID icon in the author block (pulls in hyperref)
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+\usepackage{orcidlink}   % ORCID icon in the author block
 %% Absorb the last few points of over-long lines (long compound words, URLs)
 %% without altering wording; microtype protrusion handles the rest.
 \setlength{\emergencystretch}{3em}
 
-%% IEEEtran does not define \Description (an accessibility hook used by the
-%% generated results fragments); provide a no-op so they compile.
+%% Accessibility hook used by the generated results fragments; no-op.
 \providecommand{\Description}[1]{}
 \providecommand{\doi}[1]{\href{https://doi.org/#1}{#1}}
 
@@ -33,55 +37,52 @@
 
 \begin{document}
 
-\title{Coordinated Memory Management for Memory-Constrained
-Consumer-Electronics Devices}
+\title{\textbf{SAGE-MM: Cross-Layer Coordination of Managed Heap, Native
+Interop, and Page Reclamation for Managed Runtimes under Fixed Memory Budgets}}
 
-\author{Geunsik~Lim~\orcidlink{0000-0003-1845-7132}%
-  \thanks{G. Lim is with the Department of Electrical and Computer Engineering,
-  Sungkyunkwan University, Suwon, Republic of Korea
-  (e-mail: leemgs@g.skku.edu).}%
-  \thanks{Every reported number is produced by a fail-closed measurement
-  pipeline directly from a per-run bundle; no estimated or predicted value is
-  substituted for missing data.}}
-
-\markboth{IEEE Transactions on Consumer Electronics,~Vol.~XX, No.~XX, 2026}%
-{Lim: Coordinated Memory Management for Consumer-Electronics Devices}
+\author{Geunsik Lim~\orcidlink{0000-0003-1845-7132}\\[4pt]
+  \normalsize Department of Electrical and Computer Engineering,
+  Sungkyunkwan University, Suwon, Republic of Korea\\
+  \normalsize \texttt{leemgs@g.skku.edu}}
+\date{}
 
 \maketitle
 
 \begin{abstract}
-Digital televisions (DTVs), set-top boxes, and similar consumer-electronics
-appliances increasingly run managed (.NET/CoreCLR) application stacks on
-cost-driven, swapless memory budgets. Within one process budget a single
+\noindent
+Memory-constrained embedded devices increasingly run managed (.NET/CoreCLR)
+application stacks inside a single, swapless process budget, where one
 application co-locates a garbage-collected heap, native interoperability
-buffers, and file-backed executable code pages; tuned in isolation these layers
-trade off against one another and surface to the viewer as channel-change
-stutter, slow launch, or an out-of-memory shutdown---a direct
-quality-of-experience problem for the device. We present SAGE-MM, a cross-layer
-memory-management design that coordinates all three layers under a single
-budget: it separates a launch-time managed-heap configuration and a reviewed
-source-time interop conversion from one narrow online controller adjusting a
-single reclamation interval and compaction gate, with
-normalized telemetry, hysteresis, a causal update order, fail-closed handling of
-invalid telemetry, a non-learning threshold fallback, and an adverse-regime
-supervisor. We reproduced the actual Tizen DTV platform (a Tizen~10.0 image and
-its managed runtime) on a Raspberry~Pi~4 Model~B---an official Tizen reference
-board---and evaluated it across 32- and 64-bit builds under a $512$\,MiB swapless
-budget, with $30$ runs per condition and $95\%$ percentile bootstrap confidence
-intervals; every reported number is produced by a fail-closed pipeline from a
-per-run bundle. On a favorable workload the coordinated design
-lowers peak memory footprint by about $24\%$ and garbage-collection tail pause by
-$37$--$38\%$ at roughly $1\%$ controller CPU, stays within noise
-where no gain exists, and, in an adverse refault-dominated regime, is contained
-by the supervisor within seconds---halving controller CPU and eliminating
-out-of-memory events.
-
+buffers, and file-backed executable code pages. These three layers are
+conventionally tuned in isolation---locally reasonable but globally fragile:
+enlarging the nursery lowers collection frequency but raises footprint,
+removing managed allocations shifts cost to native marshalling, and reclaiming
+clean code pages lowers residency but can reintroduce refault-driven latency.
+We present SAGE-MM, a cross-layer memory-management design that coordinates all
+three layers under one budget: it separates a launch-time managed-heap
+configuration and a reviewed source-time interop conversion from one narrow
+online controller adjusting a single reclamation interval and compaction gate,
+with normalized telemetry, hysteresis, a causal (prequential) update order,
+fail-closed handling of invalid telemetry, a non-learning threshold fallback,
+and an adverse-regime supervisor. We evaluate SAGE-MM on a representative
+embedded managed-runtime platform---a Tizen~10.0 image and its .NET~8 (CoreCLR)
+runtime reproduced on a Raspberry~Pi~4 Model~B---across 32- and 64-bit builds
+under a $512$\,MiB swapless budget, with $30$ runs per condition and $95\%$
+percentile bootstrap confidence intervals; every reported number is produced by
+a fail-closed pipeline directly from a per-run measurement bundle. On a
+favorable workload the coordinated design lowers peak memory footprint by about
+$24\%$ and garbage-collection tail pause by $37$--$38\%$ at roughly $1\%$
+controller CPU, stays within measurement noise where no gain exists, and, in an
+adverse refault-dominated regime, is contained by the supervisor within
+seconds---halving controller CPU and eliminating the observed out-of-memory
+events.
 \end{abstract}
 
-\begin{IEEEkeywords}
-Consumer electronics, digital television, memory management, garbage collection,
-page reclamation, managed runtime, cross-layer coordination.
-\end{IEEEkeywords}
+\medskip
+\noindent\textbf{KEYWORDS}\\
+memory management, garbage collection, managed runtime, page reclamation,
+.NET CoreCLR, embedded systems, cross-layer coordination, online control
+\medskip
 
 \ifmeasurementready\else
 \begin{center}
@@ -95,13 +96,12 @@ No estimated or generated performance outcomes are substituted for missing data.
 \section{Introduction}
 \label{sec:intro}
 
-Memory-constrained embedded consumer devices---digital televisions (DTVs),
-set-top boxes, and similar appliances---increasingly run managed
+Memory-constrained embedded devices increasingly run managed
 application stacks on a small, swapless memory budget. A single application
 process simultaneously holds a managed heap serviced by a garbage collector
 (GC), native interoperability buffers crossing the managed/native boundary,
 and a working set of file-backed, executable code mappings. Each of these
-layers has a mature body of tuning techniques, but in production firmware
+layers has a mature body of tuning techniques, but in production deployments
 they are almost always configured independently: the runtime is built with
 a fixed nursery size, application code is written without allocation
 review, and the operating system reclaims pages using generic global
@@ -112,17 +112,17 @@ to native marshalling; aggressively reclaiming clean code pages lowers
 resident memory but can reintroduce page faults and interaction-latency
 spikes precisely when the user switches applications.
 
-In consumer-electronics products these are not abstract systems concerns but
-direct determinants of perceived quality. Mass-market DTVs and set-top boxes
-ship with cost-driven DRAM budgets, yet viewers expect instant channel
-changes, smooth application switching, and responsive on-screen interaction.
-A GC tail pause, a burst of refaults after code-page reclamation, or an
-out-of-memory (OOM) kill during app switching surfaces to the user as a stutter, a
-delayed launch, or a crash. Because the managed heap, interop buffers, and
-executable code pages share one swapless budget, an optimization that
-improves one layer in isolation can regress the user-visible behavior another
-layer governs---which makes cross-layer coordination a quality-of-experience
-requirement for the device, not merely a runtime optimization.
+On such devices these are not abstract concerns but direct determinants of
+user-facing behavior. Cost-driven hardware ships with tight DRAM budgets, yet
+interactive applications must stay responsive and must not be killed under
+memory pressure. A GC tail pause, a burst of refaults after code-page
+reclamation, or an out-of-memory (OOM) kill during application switching
+surfaces to the user as a stutter, a delayed launch, or a crash. Because the
+managed heap, interop buffers, and executable code pages share one swapless
+budget, an optimization that improves one layer in isolation can regress the
+behavior another layer governs---which makes cross-layer coordination a
+reliability and tail-latency requirement for memory-constrained managed
+runtimes, not merely a single-layer optimization.
 
 The systems question we address is therefore \emph{not} whether larger
 nursery sizes, value types, \texttt{madvise}-based reclamation, or
@@ -283,7 +283,7 @@ memory are measured separately for each architecture and configuration;
 no improvement is inferred from the chosen size.
 
 \paragraph{Value-type interop conversion.}
-A source-time analyzer (diagnostic \textsf{DTV0001}) flags plain-old-data
+A source-time analyzer (diagnostic \textsf{SMM0001}) flags plain-old-data
 wrapper classes whose conversion to \texttt{struct} removes heap allocation
 across the managed/native boundary. The analyzer is advisory: each
 diagnostic requires human review because conversion can change object
@@ -442,13 +442,14 @@ exists, and how large is the cost when reclamation backfires?
 so every reported number traces back to a stated question.
 
 \subsection{Platforms and workloads}
-The Raspberry~Pi~4 Model~B is one of the official Tizen reference boards, and we
-reproduced the \emph{actual} Tizen DTV platform on it: the measured firmware is a
-Tizen~10.0 DTV image and its managed runtime, not a generic Linux stack, on an
-ARM Cortex-A processor under a cost-driven, cgroup-enforced DRAM budget---a
-faithful, openly reproducible DTV-class target rather than a bespoke dev-board
-setup. Measuring a physically distinct vendor DTV SoC remains future validation
-(Section~\ref{sec:threats}).
+We evaluate on a representative embedded managed-runtime platform: a Tizen~10.0
+system image and its .NET runtime reproduced on a Raspberry~Pi~4 Model~B, a
+widely available board for which Tizen provides official reference images.
+Running a full system image rather than a generic Linux stack, on an ARM
+Cortex-A processor under a cost-driven, cgroup-enforced DRAM budget, gives a
+faithful and openly reproducible constrained-device target rather than a bespoke
+dev-board setup. Measuring a physically distinct vendor SoC remains future
+validation (Section~\ref{sec:threats}).
 Each platform entry identifies an actual device with its physical and cgroup
 memory, swap configuration, storage, kernel, runtime commit, patch and image
 hashes, compiler flags, and thermal/power/network policy; nothing is inferred
@@ -472,7 +473,7 @@ at commit \texttt{ffd6dad}; the released manifest and per-run CSV bundle (with
 checksums) are the evidence.
 
 The reported bundle covers both profiles under three workload regimes, each
-defined by a DTV usage pattern: \emph{favorable}---steady single-application
+defined by an application usage pattern: \emph{favorable}---steady single-application
 playback leaving cold, reclaimable code pages with no immediate reuse
 (reclamation should help); \emph{neutral}---a compact working set with no cold
 reclaimable pages (coordination should do nothing); and \emph{adverse}---rapid
@@ -519,8 +520,8 @@ zero are described only as numerical differences.
 \section{Results}
 \label{sec:results}
 
-Every quantity reported in this section is \emph{measured} on the reproduced Tizen
-DTV platform of Section~\ref{sec:method}---not simulated, estimated, or
+Every quantity reported in this section is \emph{measured} on the reproduced
+embedded platform of Section~\ref{sec:method}---not simulated, estimated, or
 hand-entered: the fail-closed pipeline regenerates each mean and its bootstrap
 interval directly from the released per-run bundle.
 
@@ -732,10 +733,10 @@ a production-stability or per-architecture-tuning claim.
 \section{Conclusion}
 \label{sec:conclusion}
 
-On memory-constrained consumer-electronics devices such as digital TVs and
-set-top boxes, SAGE-MM coordinates heap configuration, interop allocation, and
-clean-page reclamation under a single process memory budget through a narrow,
-safety-guarded online action, rather than tuning them in isolation: a
+On memory-constrained embedded devices running managed runtimes, SAGE-MM
+coordinates heap configuration, interop allocation, and clean-page reclamation
+under a single process memory budget through a narrow, safety-guarded online
+action, rather than tuning them in isolation: a
 launch-time heap decision and a source-time allocation decision are separated from
 one online policy that adjusts a single reclamation interval and compaction gate,
 with fail-closed telemetry handling and a learned policy that must justify itself
@@ -770,16 +771,18 @@ boundary, and evaluation protocol of this work.
 \bibliographystyle{IEEEtranDOI}
 \bibliography{sagemm}
 
-\vspace{-1.2\baselineskip}
-\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{figures/author-lim}}]{Geunsik Lim}
+\vspace{1em}
+\noindent\textbf{AUTHOR BIOGRAPHY}
+
+\medskip
+\noindent\textbf{Geunsik Lim}
 received the B.S. degree in computer science and engineering from Ajou
 University, South Korea, in 2003, and the M.S. degree from the College of
 Information and Communication Engineering, Sungkyunkwan University, South Korea,
 in 2014, where he is currently pursuing the Ph.D. degree in the Department of
 Electrical and Computer Engineering. He is also a principal software engineer
 with Samsung Electronics, South Korea. His research interests include system
-optimization, operating systems, software platforms, embedded and
-consumer-electronics systems, and on-device artificial intelligence.
-\end{IEEEbiography}
+optimization, operating systems, software platforms, embedded systems, and
+on-device artificial intelligence.
 
 \end{document}
