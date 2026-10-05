@@ -304,10 +304,78 @@ def figures(rows):
     xsym = ",".join(short[t] for t in treats)
     out = []
 
-    # Ablation-ladder figure dropped for the page-limited manuscript; the
-    # ladder's normalized indices are in the policy-index table and RQ1 prose.
+    # ---- Figure: ablation ladder (favorable regime) ----
+    out.append(r"""\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+    width=\linewidth, height=5.2cm, ybar=1pt, bar width=4pt,
+    ymin=55, ymax=175, symbolic x coords={%s}, xtick=data,
+    x tick label style={font=\scriptsize}, ylabel={Index (Stock${=}100$)},
+    ylabel style={font=\scriptsize}, ytick={60,80,100,120,140,160},
+    tick label style={font=\scriptsize},
+    legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south, legend columns=4},
+    enlarge x limits=0.08, ymajorgrids, major grid style={dotted}]
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \addplot coordinates {%s};
+  \draw[dashed] (axis cs:%s,100) -- (axis cs:%s,100);
+  \legend{PSS, GC p99, Fault, Input p99}
+  \end{axis}
+  \end{tikzpicture}
+  \caption{Ablation ladder under the favorable workload (normalized policy
+  indices, Stock${=}100$, mean of $n{=}30$ runs). Static heap and interop
+  ($\textsf{S-G}\to\textsf{S-GI}$) lower PSS and GC tail with no fault cost;
+  reclamation ($\textsf{S-GIR}$) reaches the lowest PSS but spikes the fault
+  rate, which the online policies ($\textsf{Thr}/\textsf{EWMA}/\textsf{Ridge}$)
+  pull back down while further improving input latency.}
+  \label{fig:ablation}
+\end{figure}""" % (xsym, coords("planning_hypothesis", "peak_pss_index"),
+                   coords("planning_hypothesis", "gc_p99_index"),
+                   coords("planning_hypothesis", "fault_rate_index"),
+                   coords("planning_hypothesis", "input_p99_index"),
+                   short[treats[0]], short[treats[-1]]))
 
-    # ---- Cross-regime robustness for Ridge-GIR (single restored figure) ----
+    # ---- Figure: PSS vs fault tradeoff (favorable regime) ----
+    marks = " ".join(
+        f"({m[('planning_hypothesis', t)]['peak_pss_index']:.1f},"
+        f"{m[('planning_hypothesis', t)]['fault_rate_index']:.1f})"
+        for t in treats)
+    anchors = {"Stock": "west", "S-G": "north", "S-GI": "north",
+               "S-GIR": "south west", "Thr": "west", "EWMA": "east",
+               "Ridge": "north"}
+    nodes = "\n".join(
+        r"  \node[anchor=%s, font=\tiny, inner sep=1.5pt] at "
+        r"(axis cs:%.1f,%.1f) {%s};" % (
+            anchors.get(short[t], "west"),
+            m[("planning_hypothesis", t)]["peak_pss_index"],
+            m[("planning_hypothesis", t)]["fault_rate_index"], short[t])
+        for t in treats)
+    out.append(r"""\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+    width=\linewidth, height=5.6cm,
+    xlabel={Peak PSS index (Stock${=}100$; lower is better)},
+    ylabel={Fault-rate index}, xlabel style={font=\scriptsize},
+    ylabel style={font=\scriptsize}, tick label style={font=\scriptsize},
+    xmin=72, xmax=106, ymin=88, ymax=178, grid=both,
+    major grid style={dotted}]
+  \addplot[only marks, mark=*, mark size=1.6pt, color=blue!60!black]
+    coordinates {%s};
+%s
+  \end{axis}
+  \end{tikzpicture}
+  \caption{Footprint--refault tradeoff under the favorable workload. Static
+  reclamation ($\textsf{S-GIR}$) buys the lowest PSS at a large refault
+  penalty; the online controllers recover most of that penalty at nearly the
+  same PSS, i.e.\ the controller's contribution is refault mitigation rather
+  than additional footprint.}
+  \label{fig:tradeoff}
+\end{figure}""" % (marks, nodes))
+
+    # ---- Cross-regime robustness for Ridge-GIR ----
     regimes = [("planning_hypothesis", "Favorable"), ("no_benefit", "Neutral"),
                ("regression", "Adverse")]
     regimes = [(s, lab) for s, lab in regimes if (s, "Ridge-GIR") in m]

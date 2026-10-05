@@ -25,6 +25,8 @@
 \usepackage{hyperref}
 \hypersetup{hidelinks}
 \usepackage{orcidlink}   % ORCID icon in the author block
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 %% Absorb the last few points of over-long lines (long compound words, URLs)
 %% without altering wording; microtype protrusion handles the rest.
 \setlength{\emergencystretch}{3em}
@@ -382,6 +384,55 @@ the adverse result, is evaluated directly
 in Section~\ref{sec:rq3} (Table~\ref{tab:supervisor}): it detects the adverse
 regime within seconds and contains the regression toward the Stock baseline.
 
+Algorithm~\ref{alg:controller} states the full per-interval decision, showing
+how the validity check, the adverse-regime latch, the three interchangeable
+policies, the bounded interval update, the compaction gate, the guarded
+reclamation pass, and the prequential model update compose within one cadence.
+
+\begin{algorithm}[t]
+\caption{SAGE-MM controller decision for one interval. Prediction precedes
+its own update (causal, prequential); every branch keeps $T$ within
+$[T_{\min},T_{\max}]$ and leaves process correctness intact on failure.}
+\label{alg:controller}
+\small
+\begin{algorithmic}[1]
+\Require raw sample $s=(L_{\mathrm{gc}},L_{\mathrm{input}},F_h,P_f,\Delta M,\mathrm{dt})$; state
+$(T,\mathbf{w},\textit{mode})$; bounds $[T_{\min},T_{\max}]$
+\Ensure next reclamation interval $T$ and compaction gate
+\If{$\neg\textsc{Valid}(s)$}\Comment{non-finite, negative rate/pause, or $F_h\notin[0,1]$}
+  \State record \textsf{InvalidTelemetry}; enable compaction; suppress reclamation
+  \State \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$ \Comment{fail-closed: hold, no model update}
+\EndIf
+\State $\mathbf{x}\gets\textsc{Normalize}(s)$; \quad $y\gets\textsc{Pressure}(s)$ \Comment{Eq.~(1),~(2)}
+\If{$\textsc{AdverseForNIntervals}(P_f,L_{\mathrm{input}})$}
+  \State latch reclamation off; enable compaction; clear pending update
+  \State record \textsf{AdverseShutdown}; \Return $\mathrm{clamp}(T,T_{\min},T_{\max})$
+\EndIf
+\If{$\textit{mode}=\textsf{Ridge}$}
+  \State $\hat{y}\gets\mathrm{clamp}(\mathbf{w}^{\!\top}\mathbf{x},0,2)$
+  \If{$\hat{y}$ persistently clipped at $0$ or $2$}
+    \State record \textsf{ModelSaturation}; clear pending update; apply \textsf{Threshold} action
+  \Else
+    \State $T\gets T/\mathrm{clamp}(0.5+\hat{y},0.5,1.5)$
+  \EndIf
+\ElsIf{$\textit{mode}=\textsf{EWMA}$}
+  \State $T\gets \beta T+(1-\beta)\,T/\mathrm{clamp}(y,0.5,2)$
+\ElsIf{$\textit{mode}=\textsf{Threshold}$}
+  \State $T\gets T\cdot(1-0.2)$ if $y>1.1$; $\;T\cdot(1+0.2)$ if $y<0.9$; else hold
+\EndIf
+\State $T\gets\mathrm{clamp}(T,T_{\min},T_{\max})$
+\State \textsc{UpdateGate}$(F_h)$ \Comment{off below $0.05$; force on at $0.12$ or after 3 deferrals}
+\If{$\neg\textsc{InCooldown}$ \textbf{and} reclamation enabled}
+  \State rank modules by $\mathrm{Cold}(\cdot)$; take smallest prefix $K$ meeting the byte budget
+  \State \textsc{FlushModules}$(K)$ excluding recently accessed (hot-reuse guard)
+\EndIf
+\If{$\textit{mode}=\textsf{Ridge}$ \textbf{and} a pending prediction exists \textbf{and} on tuning trace}
+  \State record prequential loss $[\hat{y}-y]^2/2$; take one ridge SGD step \Comment{Eq.~(3)}
+\EndIf
+\State \Return $T$
+\end{algorithmic}
+\end{algorithm}
+
 \subsection{Reclamation implementation}
 \label{sec:reclaim}
 
@@ -552,8 +603,9 @@ in prose and note the ARM64 value only where it differs materially.
 
 \subsection{RQ1: layer-by-layer ablation}
 \label{sec:rq1}
-The normalized ladder under the favorable workload (Table~\ref{tab:policy-index})
-moves different metrics at each step. \textsf{Static-G} lowers the GC tail (GC p99
+\input{measured/measured-figures}
+The normalized ladder under the favorable workload (Table~\ref{tab:policy-index}
+and Figure~\ref{fig:ablation}) moves different metrics at each step. \textsf{Static-G} lowers the GC tail (GC p99
 to $76\%$ of stock, $49.7\to37.5$\,ms on ARM32) at little footprint change (PSS
 $94\%$); $G{\to}GI$ cuts managed allocation ($-29\%$), taking PSS to $87\%$ and GC
 p99 to $73\%$ with the fault rate unchanged ($\pm1\%$); and $GI{\to}GIR$ gives the
@@ -570,7 +622,8 @@ configuration cannot manage (the $2^4$ design is deferred, Section~\ref{sec:limi
 \label{sec:rq2}
 Added on top of \textsf{Static-GIR}, the online controller does not lower PSS
 further (all three policies hold peak PSS at $76$--$78\%$ of stock, within each
-other's intervals); its measured contribution is refault recovery. At the same
+other's intervals); its measured contribution is refault recovery
+(Figure~\ref{fig:tradeoff}). At the same
 footprint the fault-rate index falls from $162$ (\textsf{Static-GIR}) to $132$,
 $124$, and $123$ for Threshold, EWMA, and Ridge---roughly two-thirds of the
 reclamation-induced refaults clawed back---while input p99 reaches its lowest
@@ -584,7 +637,6 @@ when CPU headroom is tight.
 
 \subsection{RQ3: robustness across workload regimes}
 \label{sec:rq3}
-\input{measured/measured-figures}
 Figure~\ref{fig:regimes} and Table~\ref{tab:policy-index} place \textsf{Ridge-GIR}
 in all three regimes. It is
 a clear win in the favorable regime (PSS $76$, fault $123$, input $81$). In the
